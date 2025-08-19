@@ -1,6 +1,6 @@
 // minifi/src/processor.rs
 
-use crate::wrapper::{Descriptor, Logger, ProcessContext, Session};
+pub use crate::wrapper::{Descriptor, Logger, ProcessContext, Session};
 use minifi_sys::*; // Import all the raw C types from the -sys crate
 use std::ffi::c_void;
 use std::ptr;
