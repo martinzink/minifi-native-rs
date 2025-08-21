@@ -11,7 +11,7 @@ mod wrapper;
 
 // Re-export the public-facing types that a processor developer will need.
 pub use processor::{ProcessContext, Processor, ProcessorBridge};
-pub use wrapper::{Descriptor, FlowFile, Logger, Session};
+pub use wrapper::{Descriptor, FlowFile, Logger, Relationship, Session, SessionFactory};
 
 // Also re-export the raw C types from the -sys crate under a `sys` module,
 // which is a common convention. This allows users to access the raw types

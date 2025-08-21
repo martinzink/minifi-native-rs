@@ -1,20 +1,19 @@
 // minifi/src/processor.rs
 
-pub use crate::wrapper::{Descriptor, Logger, ProcessContext, Session};
+pub use crate::wrapper::{Descriptor, Logger, ProcessContext, Session, SessionFactory};
 use minificpp_sys::*; // Import all the raw C types from the -sys crate
 use std::ffi::c_void;
 use std::ptr;
 
 /// A safe, idiomatic Rust trait for implementing a MiNiFi Processor.
 pub trait Processor: Sized + 'static {
-    /// Called once to create an instance of your processor.
     fn new(logger: Logger) -> Self;
 
-    /// Called to set the processor's supported properties and relationships.
     fn initialize(&mut self, descriptor: &mut Descriptor);
-
-    /// The main entry point for your processor's logic.
     fn on_trigger(&mut self, context: &ProcessContext, session: &mut Session);
+    fn on_schedule(&mut self, context: &ProcessContext, session_factory: &mut SessionFactory);
+
+    fn getName(&self) -> &'static str;
 }
 
 /// A generic FFI bridge that wraps any struct implementing the `Processor` trait.
@@ -60,15 +59,15 @@ impl<T: Processor> ProcessorBridge<T> {
                     supportsDynamicProperties: None,
                     supportsDynamicRelationships: None,
                     isSingleThreaded: None,
-                    getProcessorType: None,
-                    getTriggerWhenEmpty: None,
-                    onSchedule: None,
+                    getProcessorType: Some(Self::get_processor_type),
+                    getTriggerWhenEmpty: Some(Self::get_trigger_when_empty),
+                    onSchedule: Some(Self::on_schedule_processor),
                     onUnSchedule: None,
                     notifyStop: None,
-                    getInputRequirement: None,
+                    getInputRequirement: Some(Self::get_input_requirement),
                     serializeMetrics: None,
                     calculateMetrics: None,
-                    forEachLogger: None,
+                    forEachLogger: Some(Self::for_each_logger),
                 },
                 class_properties_count: 0,
                 class_properties_ptr: ptr::null(),
@@ -114,6 +113,18 @@ impl<T: Processor> ProcessorBridge<T> {
         0
     }
 
+    unsafe extern "C" fn on_schedule_processor(
+        processor_ptr: *mut c_void,
+        context_ptr: MinifiProcessContext,
+        session_factory_ptr: MinifiProcessSessionFactory,
+    ) -> MinifiStatus {
+        let processor = &mut *(processor_ptr as *mut T);
+        let context = ProcessContext::new(context_ptr);
+        let mut session_factory = SessionFactory::new(session_factory_ptr);
+        processor.on_schedule(&context, &mut session_factory);
+        0
+    }
+
     unsafe extern "C" fn initialize_processor(
         processor_ptr: *mut c_void,
         descriptor_ptr: MinifiProcessorDescriptor,
@@ -121,5 +132,35 @@ impl<T: Processor> ProcessorBridge<T> {
         let processor = &mut *(processor_ptr as *mut T);
         let mut descriptor = Descriptor::new(descriptor_ptr);
         processor.initialize(&mut descriptor);
+    }
+
+    unsafe extern "C" fn for_each_logger(
+        processor_ptr: *mut c_void,
+        minifi_logger_callback: MinifiLoggerCallback
+    ) {
+        // TODO(mzink): Implement this
+    }
+
+    unsafe extern "C" fn get_input_requirement(
+        processor_ptr: *mut c_void,
+    ) -> MinifiInputRequirement {
+        MinifiInputRequirement_MINIFI_INPUT_ALLOWED
+    }
+
+    unsafe extern "C" fn get_processor_type(
+        processor_ptr: *mut c_void,
+    ) -> MinifiString {
+        let processor = &mut *(processor_ptr as *mut T);
+        let minifi_string_view = MinifiStringView {
+            data: processor.getName().as_ptr() as *const i8,
+            length: processor.getName().len() as u32,
+        };
+        MinifiCreateString(minifi_string_view)
+    }
+
+    unsafe extern "C" fn get_trigger_when_empty(
+        processor_ptr: *mut c_void,
+    ) -> MinifiBool {
+        MINIFI_FALSE
     }
 }

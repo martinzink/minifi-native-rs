@@ -5,6 +5,29 @@
 use minificpp_sys::*;
 use std::ffi::CString;
 
+pub struct Relationship {
+    // This holds the C-compatible struct internally.
+    c_struct: MinifiRelationship,
+}
+
+impl Relationship {
+    /// Creates a new Relationship with a name and a description.
+    pub fn new(name: &'static str, description: &'static str) -> Self {
+        Self {
+            c_struct: MinifiRelationship {
+                name: MinifiStringView {
+                    data: name.as_ptr() as *const i8,
+                    length: name.len() as u32,
+                },
+                description: MinifiStringView {
+                    data: description.as_ptr() as *const i8,
+                    length: description.len() as u32,
+                },
+            },
+        }
+    }
+}
+
 /// A safe wrapper around a `MinifiLogger` pointer.
 #[derive(Clone, Copy)]
 pub struct Logger(MinifiLogger);
@@ -93,6 +116,20 @@ impl<'a> Session<'a> {
     }
 }
 
+pub struct SessionFactory<'a> {
+    ptr: MinifiProcessSessionFactory,
+    _lifetime: std::marker::PhantomData<&'a ()>,
+}
+
+impl<'a> SessionFactory<'a> {
+    pub fn new(ptr: MinifiProcessSessionFactory) -> Self {
+        Self {
+            ptr,
+            _lifetime: std::marker::PhantomData,
+        }
+    }
+}
+
 /// A safe wrapper around a `MinifiProcessorDescriptor` pointer.
 pub struct Descriptor<'a> {
     ptr: MinifiProcessorDescriptor,
@@ -107,13 +144,16 @@ impl<'a> Descriptor<'a> {
         }
     }
 
-    /// Sets the supported relationships for the processor.
-    pub fn set_supported_relationships(&mut self, relationships: &[MinifiRelationship]) {
+    /// Sets the supported relationships for the processor using the new safe `Relationship` struct.
+    pub fn set_supported_relationships(&mut self, relationships: &[Relationship]) {
+        // Convert the slice of safe Rust structs to a slice of the raw C structs.
+        let c_relationships: Vec<MinifiRelationship> =
+            relationships.iter().map(|r| r.c_struct).collect();
         unsafe {
             MinifiProcessorDescriptorSetSupportedRelationships(
                 self.ptr,
-                relationships.len() as u32,
-                relationships.as_ptr(),
+                c_relationships.len() as u32,
+                c_relationships.as_ptr(),
             );
         }
     }
