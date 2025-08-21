@@ -1,7 +1,7 @@
 // minifi/src/processor.rs
 
 pub use crate::wrapper::{Descriptor, Logger, ProcessContext, Session};
-use minifi_sys::*; // Import all the raw C types from the -sys crate
+use minificpp_sys::*; // Import all the raw C types from the -sys crate
 use std::ffi::c_void;
 use std::ptr;
 
@@ -106,12 +106,12 @@ impl<T: Processor> ProcessorBridge<T> {
         processor_ptr: *mut c_void,
         context_ptr: MinifiProcessContext,
         session_ptr: MinifiProcessSession,
-        _error: MinifiString,
-    ) {
+    ) -> MinifiStatus {
         let processor = &mut *(processor_ptr as *mut T);
         let context = ProcessContext::new(context_ptr);
         let mut session = Session::new(session_ptr);
         processor.on_trigger(&context, &mut session);
+        0
     }
 
     unsafe extern "C" fn initialize_processor(

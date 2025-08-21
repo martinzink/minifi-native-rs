@@ -1,5 +1,5 @@
 [package]
-name = "minifi"
+name = "minificpp"
 version = "0.1.0"
 edition = "2021"
 description = "A safe, idiomatic Rust wrapper for the Apache NiFi MiNiFi C API"
@@ -9,4 +9,4 @@ license = "Apache-2.0"
 # This line tells Cargo that our safe `minifi` crate depends on the
 # `minifi-sys` crate. The `path` key is used to point to its location
 # on the local filesystem, which is typical for a workspace setup.
-minifi-sys = { path = "../minifi-sys", version = "0.1.0" }
+minificpp-sys = { path = "../minificpp-sys-rs", version = "0.1.0" }

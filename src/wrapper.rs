@@ -2,7 +2,7 @@
 
 //! Safe Rust wrappers around the raw C API types from `minifi-sys`.
 
-use minifi_sys::*;
+use minificpp_sys::*;
 use std::ffi::CString;
 
 /// A safe wrapper around a `MinifiLogger` pointer.
