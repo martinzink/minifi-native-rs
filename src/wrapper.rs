@@ -1,32 +1,8 @@
-// minifi/src/wrapper.rs
-
-//! Safe Rust wrappers around the raw C API types from `minifi-sys`.
-
 use minificpp_sys::*;
-use std::ffi::CString;
-
-pub struct Relationship {
-    // This holds the C-compatible struct internally.
-    c_struct: MinifiRelationship,
-}
-
-impl Relationship {
-    /// Creates a new Relationship with a name and a description.
-    pub fn new(name: &'static str, description: &'static str) -> Self {
-        Self {
-            c_struct: MinifiRelationship {
-                name: MinifiStringView {
-                    data: name.as_ptr() as *const i8,
-                    length: name.len() as u32,
-                },
-                description: MinifiStringView {
-                    data: description.as_ptr() as *const i8,
-                    length: description.len() as u32,
-                },
-            },
-        }
-    }
-}
+use std::ffi::{c_void, CString};
+pub(crate) use crate::relationship_wrapper::Relationship;
+pub(crate) use crate::property_wrapper::Property;
+pub(crate) use crate::primitives::create_string_view;
 
 /// A safe wrapper around a `MinifiLogger` pointer.
 #[derive(Clone, Copy)]
@@ -144,9 +120,7 @@ impl<'a> Descriptor<'a> {
         }
     }
 
-    /// Sets the supported relationships for the processor using the new safe `Relationship` struct.
     pub fn set_supported_relationships(&mut self, relationships: &[Relationship]) {
-        // Convert the slice of safe Rust structs to a slice of the raw C structs.
         let c_relationships: Vec<MinifiRelationship> =
             relationships.iter().map(|r| r.c_struct).collect();
         unsafe {
@@ -154,6 +128,18 @@ impl<'a> Descriptor<'a> {
                 self.ptr,
                 c_relationships.len() as u32,
                 c_relationships.as_ptr(),
+            );
+        }
+    }
+
+    pub fn set_supported_properties(&mut self, properties: &[Property]) {
+        let c_properties: Vec<MinifiProperty> =
+            properties.iter().map(|p| p.c_struct).collect();
+        unsafe {
+            MinifiProcessorDescriptorSetSupportedProperties(
+                self.ptr,
+                c_properties.len() as u32,
+                c_properties.as_ptr(),
             );
         }
     }
@@ -165,6 +151,20 @@ pub struct ProcessContext<'a> {
     _lifetime: std::marker::PhantomData<&'a ()>,
 }
 
+unsafe extern "C" fn property_callback(data: *mut c_void, result_sv: MinifiStringView) {
+    let result_target = &mut *(data as *mut Option<String>);
+
+    if result_sv.data.is_null() {
+        *result_target = None;
+        return;
+    }
+
+    let value_slice = std::slice::from_raw_parts(result_sv.data as *const u8, result_sv.length as usize);
+    if let Ok(string_value) = String::from_utf8(value_slice.to_vec()) {
+        *result_target = Some(string_value);
+    }
+}
+
 impl<'a> ProcessContext<'a> {
     pub fn new(ptr: MinifiProcessContext) -> Self {
         Self {
@@ -172,5 +172,30 @@ impl<'a> ProcessContext<'a> {
             _lifetime: std::marker::PhantomData,
         }
     }
-    // Add safe methods to interact with the context here, e.g., get_property
+
+    pub fn get_property(
+        &self,
+        property: &Property,
+        flow_file: Option<&FlowFile>,
+    ) -> Option<String> {
+        let ff_ptr = flow_file.map_or(std::ptr::null_mut(), |ff| ff.0);
+
+        let mut result: Option<String> = None;
+
+        let status = unsafe {
+            MinifiProcessContextGetProperty(
+                self.ptr,
+                property.c_struct.name,
+                ff_ptr,
+                Some(property_callback),
+                &mut result as *mut _ as *mut c_void,
+            )
+        };
+
+        match status {
+            MinifiStatus_MINIFI_SUCCESS => result,
+            MinifiStatus_MINIFI_PROPERTY_NOT_SET => None,
+            _ => None,
+        }
+    }
 }

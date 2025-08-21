@@ -1,7 +1,5 @@
-// minifi/src/processor.rs
-
 pub use crate::wrapper::{Descriptor, Logger, ProcessContext, Session, SessionFactory};
-use minificpp_sys::*; // Import all the raw C types from the -sys crate
+use minificpp_sys::*;
 use std::ffi::c_void;
 use std::ptr;
 
@@ -13,7 +11,7 @@ pub trait Processor: Sized + 'static {
     fn on_trigger(&mut self, context: &ProcessContext, session: &mut Session);
     fn on_schedule(&mut self, context: &ProcessContext, session_factory: &mut SessionFactory);
 
-    fn getName(&self) -> &'static str;
+    fn get_name(&self) -> &'static str;
 }
 
 /// A generic FFI bridge that wraps any struct implementing the `Processor` trait.
@@ -135,8 +133,8 @@ impl<T: Processor> ProcessorBridge<T> {
     }
 
     unsafe extern "C" fn for_each_logger(
-        processor_ptr: *mut c_void,
-        minifi_logger_callback: MinifiLoggerCallback
+        _processor_ptr: *mut c_void,
+        _minifi_logger_callback: MinifiLoggerCallback
     ) {
         // TODO(mzink): Implement this
     }
@@ -152,8 +150,8 @@ impl<T: Processor> ProcessorBridge<T> {
     ) -> MinifiString {
         let processor = &mut *(processor_ptr as *mut T);
         let minifi_string_view = MinifiStringView {
-            data: processor.getName().as_ptr() as *const i8,
-            length: processor.getName().len() as u32,
+            data: processor.get_name().as_ptr() as *const i8,
+            length: processor.get_name().len() as u32,
         };
         MinifiCreateString(minifi_string_view)
     }
