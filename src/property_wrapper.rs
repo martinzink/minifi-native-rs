@@ -13,6 +13,7 @@ impl Property {
         is_required: bool,
         is_sensitive: bool,
         supports_expr_lang: bool,
+        default_value: Option<&'static str>,
     ) -> Self {
         Self {
             c_struct: MinifiProperty {
