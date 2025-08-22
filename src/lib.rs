@@ -21,4 +21,4 @@ pub use property_wrapper::Property;
 // Also re-export the raw C types from the -sys crate under a `sys` module,
 // which is a common convention. This allows users to access the raw types
 // if they have an advanced use case that requires it.
-pub use minificpp_sys as sys;
+pub use minifi_native_sys as sys;

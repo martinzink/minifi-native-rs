@@ -1,5 +1,5 @@
 pub use crate::wrapper::{Descriptor, Logger, ProcessContext, Session, SessionFactory};
-use minificpp_sys::*;
+use minifi_native_sys::*;
 use std::ffi::c_void;
 use std::ptr;
 

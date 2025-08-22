@@ -1,4 +1,4 @@
-use minificpp_sys::{MinifiRelationship};
+use minifi_native_sys::{MinifiRelationship};
 use crate::primitives::create_string_view;
 
 pub struct Relationship {

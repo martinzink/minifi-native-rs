@@ -1,4 +1,4 @@
-use minificpp_sys::*;
+use minifi_native_sys::*;
 use std::ffi::{c_void, CString};
 pub(crate) use crate::relationship_wrapper::Relationship;
 pub(crate) use crate::property_wrapper::Property;

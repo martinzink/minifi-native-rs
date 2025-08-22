@@ -1,6 +1,6 @@
 use std::ptr;
 use crate::primitives::{create_bool, create_string_view};
-use minificpp_sys::MinifiProperty;
+use minifi_native_sys::MinifiProperty;
 
 pub struct Property {
     pub c_struct: MinifiProperty,
