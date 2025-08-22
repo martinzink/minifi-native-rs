@@ -1,11 +1,11 @@
 use minifi_native_sys::*;
 use std::ffi::{c_void, CString};
-use crate::primitives::{create_bool, StringView};
+use crate::primitives::{create_bool, static_minifi_string_view, StringView};
 pub(crate) use crate::relationship_wrapper::Relationship;
 pub(crate) use crate::property_wrapper::Property;
 
 /// A safe wrapper around a `MinifiLogger` pointer.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct Logger(MinifiLogger);
 
 impl Logger {
@@ -137,19 +137,13 @@ impl<'a> Descriptor<'a> {
         let c_properties: Vec<MinifiProperty> = properties
             .iter()
             .map(|p| {
-                let default_value_ptr = if let Some(dv) = p.default_value.as_ref() {
-                    let sv = StringView::new(dv);
-                    // Push the raw C struct into the Vec.
-                    default_value_views.push(unsafe { sv.as_raw() });
-                    // Now take a pointer to the data that is guaranteed to be stable inside the Vec.
+                let default_value_ptr = if let Some(dv) = p.default_value {
+                    default_value_views.push(static_minifi_string_view(dv));
                     default_value_views.last().unwrap() as *const _
                 } else {
                     std::ptr::null()
                 };
 
-                // The `unsafe` block here is our explicit acknowledgement that we are
-                // dropping the lifetime information for the C call. The scoping of this
-                // function guarantees the pointers are valid.
                 unsafe {
                     let standard_validator = MinifiGetStandardValidator(p.validator.getMinifiPropertyValidatorValue());
                     MinifiProperty {

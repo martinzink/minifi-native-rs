@@ -27,12 +27,12 @@ impl StandardPropertyValidator {
 }
 
 pub struct Property {
-    pub name: String,
-    pub description: String,
+    pub name: &'static str,
+    pub description: &'static str,
     pub is_required: bool,
     pub is_sensitive: bool,
     pub supports_expr_lang: bool,
-    pub default_value: Option<String>,
+    pub default_value: Option<&'static str>,
     pub validator: StandardPropertyValidator,
 }
 
