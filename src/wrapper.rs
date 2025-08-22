@@ -1,8 +1,9 @@
 use minifi_native_sys::*;
 use std::ffi::{c_void, CString};
+use crate::primitives::{create_bool, StringView};
 pub(crate) use crate::relationship_wrapper::Relationship;
 pub(crate) use crate::property_wrapper::Property;
-pub(crate) use crate::primitives::create_string_view;
+pub(crate) use crate::primitives::static_minifi_string_view;
 
 /// A safe wrapper around a `MinifiLogger` pointer.
 #[derive(Clone, Copy)]
@@ -133,8 +134,47 @@ impl<'a> Descriptor<'a> {
     }
 
     pub fn set_supported_properties(&mut self, properties: &[Property]) {
-        let c_properties: Vec<MinifiProperty> =
-            properties.iter().map(|p| p.c_struct).collect();
+        let mut default_value_views: Vec<MinifiStringView> = Vec::with_capacity(properties.len());
+        let c_properties: Vec<MinifiProperty> = properties
+            .iter()
+            .map(|p| {
+                let default_value_ptr = if let Some(dv) = p.default_value.as_ref() {
+                    let sv = StringView::new(dv);
+                    // Push the raw C struct into the Vec.
+                    default_value_views.push(unsafe { sv.as_raw() });
+                    // Now take a pointer to the data that is guaranteed to be stable inside the Vec.
+                    default_value_views.last().unwrap() as *const _
+                } else {
+                    std::ptr::null()
+                };
+
+                // The `unsafe` block here is our explicit acknowledgement that we are
+                // dropping the lifetime information for the C call. The scoping of this
+                // function guarantees the pointers are valid.
+                unsafe {
+                    MinifiProperty {
+                        name: StringView::new(&p.name).as_raw(),
+                        display_name: StringView::new(&p.name).as_raw(),
+                        description: StringView::new(&p.description).as_raw(),
+                        is_required: create_bool(p.is_required),
+                        is_sensitive: create_bool(p.is_sensitive),
+                        default_value: default_value_ptr,
+                        supports_expression_language: create_bool(p.supports_expr_lang),
+                        dependent_properties_count: 0,
+                        dependent_properties_ptr: std::ptr::null(),
+                        exclusive_of_properties_count: 0,
+                        exclusive_of_property_names_ptr: std::ptr::null(),
+                        exclusive_of_property_values_ptr: std::ptr::null(),
+                        allowed_values_count: 0,
+                        allowed_values_ptr: std::ptr::null(),
+                        validator: std::ptr::null(),
+                        types_count: 0,
+                        types_ptr: std::ptr::null(),
+                    }
+                }
+            })
+            .collect();
+
         unsafe {
             MinifiProcessorDescriptorSetSupportedProperties(
                 self.ptr,
@@ -175,17 +215,18 @@ impl<'a> ProcessContext<'a> {
 
     pub fn get_property(
         &self,
-        property: &Property,
+        property_name: &'a str,
         flow_file: Option<&FlowFile>,
     ) -> Option<String> {
         let ff_ptr = flow_file.map_or(std::ptr::null_mut(), |ff| ff.0);
 
         let mut result: Option<String> = None;
+        let property_name: StringView<'a> = StringView::new(property_name);
 
         let status = unsafe {
             MinifiProcessContextGetProperty(
                 self.ptr,
-                property.c_struct.name,
+                property_name.as_raw(),
                 ff_ptr,
                 Some(property_callback),
                 &mut result as *mut _ as *mut c_void,

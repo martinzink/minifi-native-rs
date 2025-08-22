@@ -2,6 +2,7 @@ pub use crate::wrapper::{Descriptor, Logger, ProcessContext, Session, SessionFac
 use minifi_native_sys::*;
 use std::ffi::c_void;
 use std::ptr;
+use crate::primitives::static_minifi_string_view;
 
 /// A safe, idiomatic Rust trait for implementing a MiNiFi Processor.
 pub trait Processor: Sized + 'static {
@@ -31,22 +32,10 @@ impl<T: Processor> ProcessorBridge<T> {
     ) -> Self {
         Self {
             description: MinifiProcessorClassDescription {
-                module_name: MinifiStringView {
-                    data: module_name.as_ptr() as *const i8,
-                    length: module_name.len() as u32,
-                },
-                short_name: MinifiStringView {
-                    data: short_name.as_ptr() as *const i8,
-                    length: short_name.len() as u32,
-                },
-                full_name: MinifiStringView {
-                    data: full_name.as_ptr() as *const i8,
-                    length: full_name.len() as u32,
-                },
-                description: MinifiStringView {
-                    data: description_text.as_ptr() as *const i8,
-                    length: description_text.len() as u32,
-                },
+                module_name: static_minifi_string_view(module_name),
+                short_name: static_minifi_string_view(short_name),
+                full_name: static_minifi_string_view(full_name),
+                description: static_minifi_string_view(description_text),
                 callbacks: MinifiProcessorCallbacks {
                     create: Some(Self::create_processor),
                     destroy: Some(Self::destroy_processor),
