@@ -3,7 +3,6 @@ use std::ffi::{c_void, CString};
 use crate::primitives::{create_bool, StringView};
 pub(crate) use crate::relationship_wrapper::Relationship;
 pub(crate) use crate::property_wrapper::Property;
-pub(crate) use crate::primitives::static_minifi_string_view;
 
 /// A safe wrapper around a `MinifiLogger` pointer.
 #[derive(Clone, Copy)]
@@ -152,6 +151,7 @@ impl<'a> Descriptor<'a> {
                 // dropping the lifetime information for the C call. The scoping of this
                 // function guarantees the pointers are valid.
                 unsafe {
+                    let standard_validator = MinifiGetStandardValidator(p.validator.getMinifiPropertyValidatorValue());
                     MinifiProperty {
                         name: StringView::new(&p.name).as_raw(),
                         display_name: StringView::new(&p.name).as_raw(),
@@ -167,7 +167,7 @@ impl<'a> Descriptor<'a> {
                         exclusive_of_property_values_ptr: std::ptr::null(),
                         allowed_values_count: 0,
                         allowed_values_ptr: std::ptr::null(),
-                        validator: std::ptr::null(),
+                        validator: standard_validator,
                         types_count: 0,
                         types_ptr: std::ptr::null(),
                     }
