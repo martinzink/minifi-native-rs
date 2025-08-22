@@ -16,7 +16,7 @@ mod primitives;
 pub use processor::{ProcessContext, Processor, ProcessorBridge};
 pub use wrapper::{Descriptor, FlowFile, Logger, Session, SessionFactory};
 pub use relationship_wrapper::Relationship;
-pub use property_wrapper::Property;
+pub use property_wrapper::{Property, StandardPropertyValidator};
 
 // Also re-export the raw C types from the -sys crate under a `sys` module,
 // which is a common convention. This allows users to access the raw types
