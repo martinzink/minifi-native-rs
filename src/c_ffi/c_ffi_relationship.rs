@@ -1,10 +1,6 @@
-use crate::primitives::StaticStrAsMinifiCStr;
 use minifi_native_sys::MinifiRelationship;
-
-pub struct Relationship {
-    pub name: &'static str,
-    pub description: &'static str,
-}
+use super::c_ffi_primitives::{StaticStrAsMinifiCStr};
+use crate::Relationship;
 
 impl Relationship {
     pub(crate) fn create_c_vec(relationships: &[Self]) -> Vec<MinifiRelationship> {

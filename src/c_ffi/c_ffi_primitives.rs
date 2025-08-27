@@ -1,4 +1,5 @@
-use minifi_native_sys::{MinifiBool, MinifiStringView, MINIFI_FALSE, MINIFI_TRUE};
+use minifi_native_sys::{MinifiBool, MinifiInputRequirement, MinifiInputRequirement_MINIFI_INPUT_ALLOWED, MinifiInputRequirement_MINIFI_INPUT_FORBIDDEN, MinifiInputRequirement_MINIFI_INPUT_REQUIRED, MinifiStringView, MINIFI_FALSE, MINIFI_TRUE};
+use crate::ProcessorInputRequirement;
 
 #[derive(Debug)]
 pub(crate) struct StringView<'a> {
@@ -45,6 +46,16 @@ impl BoolAsMinifiCBool for bool {
             MINIFI_TRUE
         } else {
             MINIFI_FALSE
+        }
+    }
+}
+
+impl ProcessorInputRequirement {
+    pub fn as_minifi_c_type(&self) -> MinifiInputRequirement {
+        match self {
+            ProcessorInputRequirement::Required => MinifiInputRequirement_MINIFI_INPUT_REQUIRED,
+            ProcessorInputRequirement::Allowed => MinifiInputRequirement_MINIFI_INPUT_ALLOWED,
+            ProcessorInputRequirement::Forbidden => MinifiInputRequirement_MINIFI_INPUT_FORBIDDEN,
         }
     }
 }

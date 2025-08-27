@@ -1,8 +1,8 @@
 use minifi_native_sys::*;
 use std::ffi::{c_void};
-use crate::primitives::{StringView};
+use super::c_ffi_primitives::{StringView};
 use crate::api::{ProcessContext};
-use crate::c_ffi_flowfile_wrapper::CffiFlowFile;
+use super::c_ffi_flow_file::CffiFlowFile;
 
 /// A safe wrapper around a `MinifiProcessContext` pointer.
 pub struct CffiProcessContext<'a> {

@@ -2,9 +2,9 @@ use minifi_native_sys::{MinifiInputStreamSize, MinifiInputStream, MinifiOutputSt
 use std::ffi::{c_void, CString};
 
 use crate::api::ProcessSession;
-use crate::c_ffi_flowfile_wrapper::{CffiFlowFile};
+use super::c_ffi_flow_file::{CffiFlowFile};
 
-pub struct CffiSession<'a> {
+pub struct CffiProcessSession<'a> {
     ptr: MinifiProcessSession,
     // The lifetime ensures the session cannot outlive the `on_trigger` call.
     _lifetime: std::marker::PhantomData<&'a ()>,
@@ -50,7 +50,7 @@ unsafe extern "C" fn read_callback(output_option: *mut c_void, input_stream: Min
     }
 }
 
-impl<'a> CffiSession<'a> {
+impl<'a> CffiProcessSession<'a> {
     pub fn new(ptr: MinifiProcessSession) -> Self {
         Self {
             ptr,
@@ -59,7 +59,7 @@ impl<'a> CffiSession<'a> {
     }
 }
 
-impl<'a> ProcessSession for CffiSession<'a> {
+impl<'a> ProcessSession for CffiProcessSession<'a> {
     type FlowFile = CffiFlowFile;
 
     fn create(&mut self) -> Option<Self::FlowFile> {

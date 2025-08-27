@@ -1,58 +1,16 @@
-pub(crate) use crate::primitives::{BoolAsMinifiCBool, StaticStrAsMinifiCStr};
-pub use crate::session_wrapper::CffiSession;
-use crate::{Property};
-use minifi_native_sys::*;
 use std::ffi::c_void;
 use std::ptr;
 
-use crate::api;
-use crate::c_ffi_logger::CffiLogger;
-use crate::c_ffi_process_context::CffiProcessContext;
-use crate::relationship::Relationship;
-use crate::session_factory_wrapper::CffiProcessSessionFactory;
+use super::c_ffi_logger::CffiLogger;
+use super::c_ffi_process_session::CffiProcessSession;
+use super::c_ffi_process_context::CffiProcessContext;
+use super::c_ffi_process_session_factory::CffiProcessSessionFactory;
+use crate::api::{Processor, ProcessorInputRequirement};
+use crate::Property;
+use crate::Relationship;
+use minifi_native_sys::*;
+use super::c_ffi_primitives::{BoolAsMinifiCBool, StaticStrAsMinifiCStr};
 
-pub enum ProcessorInputRequirement {
-    Required,
-    Allowed,
-    Forbidden,
-}
-
-
-impl ProcessorInputRequirement {
-    pub fn as_minifi_c_type(&self) -> MinifiInputRequirement {
-        match self {
-            ProcessorInputRequirement::Required => MinifiInputRequirement_MINIFI_INPUT_REQUIRED,
-            ProcessorInputRequirement::Allowed => MinifiInputRequirement_MINIFI_INPUT_ALLOWED,
-            ProcessorInputRequirement::Forbidden => MinifiInputRequirement_MINIFI_INPUT_FORBIDDEN,
-        }
-    }
-}
-
-
-/// A safe, idiomatic Rust trait for implementing a MiNiFi Processor.
-pub trait Processor<L: api::Logger>: Sized {
-    fn new(logger: L)-> Self;
-
-    fn restore(&self) -> bool {
-        false
-    }
-
-    fn get_trigger_when_empty(&self) -> bool {
-        false
-    }
-
-    fn is_work_available(&self) -> bool {
-        false
-    }
-
-    fn on_trigger<P: api::ProcessContext, S: api::ProcessSession>(&mut self, context: &P, session: &mut S);
-    fn on_schedule<P: api::ProcessContext, F: api::ProcessSessionFactory>(&mut self, context: &P, session_factory: &mut F);
-    fn on_unschedule(&mut self) {}
-}
-
-/// A generic FFI bridge that wraps any struct implementing the `Processor` trait.
-/// This struct is public, so it can be used in the final processor binary but
-/// is not intended for direct use by most developers.
 pub struct ProcessorBridge<T> where T: Processor<CffiLogger> {
     module_name: &'static str,
     name: &'static str,
@@ -151,7 +109,7 @@ impl<T> ProcessorBridge<T> where T: Processor<CffiLogger> {
     ) -> MinifiStatus {
         let processor = &mut *(processor_ptr as *mut T);
         let context = CffiProcessContext::new(context_ptr);
-        let mut session = CffiSession::new(session_ptr);
+        let mut session = CffiProcessSession::new(session_ptr);
         processor.on_trigger(&context, &mut session);
         0
     }
