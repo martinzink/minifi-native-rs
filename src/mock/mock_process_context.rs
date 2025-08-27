@@ -9,7 +9,7 @@ pub struct MockProcessContext {
 impl ProcessContext for MockProcessContext {
     type FlowFile = MockFlowFile;
 
-    fn get_property(&self, property_name: &str, flow_file: Option<&Self::FlowFile>) -> Option<String> {
+    fn get_property(&self, property_name: &str, _flow_file: Option<&Self::FlowFile>) -> Option<String> {
         self.properties.get(property_name).cloned()
     }
 }

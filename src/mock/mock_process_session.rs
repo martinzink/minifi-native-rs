@@ -3,6 +3,7 @@ use crate::api::ProcessSession;
 use crate::MockFlowFile;
 
 pub struct MockProcessSession {
+    pub input_flow_files: Vec<MockFlowFile>,
     pub transferred_flow_files: HashMap<String, MockFlowFile>,
 }
 
@@ -14,7 +15,7 @@ impl ProcessSession for MockProcessSession {
     }
 
     fn get(&mut self) -> Option<Self::FlowFile> {
-        None
+        self.input_flow_files.pop()
     }
 
     fn transfer(&mut self, flow_file: Self::FlowFile, relationship: &str) {
@@ -34,6 +35,7 @@ impl MockProcessSession {
     pub fn new() -> Self {
         Self {
             transferred_flow_files: HashMap::new(),
+            input_flow_files: Vec::new(),
         }
     }
 }
