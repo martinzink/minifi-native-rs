@@ -22,17 +22,29 @@ impl<'a> StringView<'a> {
     }
 }
 
-pub(crate) const fn static_minifi_string_view(str: &'static str) -> MinifiStringView {
-    MinifiStringView {
-        data: str.as_ptr() as *const i8,
-        length: str.len() as u32,
+pub trait StaticStrAsMinifiCStr {
+    fn as_minifi_c_type(&self) -> MinifiStringView;
+}
+
+impl StaticStrAsMinifiCStr for &'static str{
+    fn as_minifi_c_type(&self) -> MinifiStringView {
+        MinifiStringView {
+            data: self.as_ptr() as *const i8,
+            length: self.len() as u32,
+        }
     }
 }
 
-pub(crate) const fn create_bool(value: bool) -> MinifiBool {
-    if value {
-        MINIFI_TRUE
-    } else {
-        MINIFI_FALSE
+pub trait BoolAsMinifiCBool {
+    fn as_minifi_c_type(&self) -> MinifiBool;
+}
+
+impl BoolAsMinifiCBool for bool {
+    fn as_minifi_c_type(&self) -> MinifiBool {
+        if *self {
+            MINIFI_TRUE
+        } else {
+            MINIFI_FALSE
+        }
     }
 }

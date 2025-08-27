@@ -10,3 +10,5 @@ license = "Apache-2.0"
 # `minifi-sys` crate. The `path` key is used to point to its location
 # on the local filesystem, which is typical for a workspace setup.
 minifi-native-sys = { path = "../minifi-native-sys-rs", version = "0.1.0" }
+strum = "0.27.2"
+strum_macros = "0.27.2"

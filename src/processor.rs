@@ -1,76 +1,127 @@
-pub use crate::wrapper::{Descriptor, Logger, ProcessContext, Session, SessionFactory};
+pub(crate) use crate::primitives::{BoolAsMinifiCBool, StaticStrAsMinifiCStr};
+pub use crate::wrapper::{ProcessContext, SessionFactory};
+pub use crate::session_wrapper::Session;
+pub use crate::Logger;
+use crate::{Property, Relationship};
 use minifi_native_sys::*;
 use std::ffi::c_void;
 use std::ptr;
-use crate::primitives::static_minifi_string_view;
+
+pub enum ProcessorInputRequirement {
+    Required,
+    Allowed,
+    Forbidden,
+}
+
+impl ProcessorInputRequirement {
+    pub fn as_minifi_c_type(&self) -> MinifiInputRequirement {
+        match self {
+            ProcessorInputRequirement::Required => MinifiInputRequirement_MINIFI_INPUT_REQUIRED,
+            ProcessorInputRequirement::Allowed => MinifiInputRequirement_MINIFI_INPUT_ALLOWED,
+            ProcessorInputRequirement::Forbidden => MinifiInputRequirement_MINIFI_INPUT_FORBIDDEN,
+        }
+    }
+}
+
 
 /// A safe, idiomatic Rust trait for implementing a MiNiFi Processor.
 pub trait Processor: Sized + 'static {
     fn new(logger: Logger) -> Self;
 
-    fn initialize(&mut self, descriptor: &mut Descriptor);
+    fn restore(&self) -> bool {
+        false
+    }
+
+    fn get_trigger_when_empty(&self) -> bool {
+        false
+    }
+
+    fn is_work_available(&self) -> bool {
+        false
+    }
+
     fn on_trigger(&mut self, context: &ProcessContext, session: &mut Session);
     fn on_schedule(&mut self, context: &ProcessContext, session_factory: &mut SessionFactory);
-
-    fn get_name(&self) -> &'static str;
+    fn on_unschedule(&mut self) {}
 }
 
 /// A generic FFI bridge that wraps any struct implementing the `Processor` trait.
-/// This struct is public so it can be used in the final processor binary, but
+/// This struct is public, so it can be used in the final processor binary but
 /// is not intended for direct use by most developers.
 pub struct ProcessorBridge<T: Processor> {
-    pub description: MinifiProcessorClassDescription,
+    module_name: &'static str,
+    name: &'static str,
+    description_text: &'static str,
+    pub input_requirement: ProcessorInputRequirement,
+    pub supports_dynamic_properties: bool,
+    pub supports_dynamic_relationships: bool,
+    pub is_single_threaded: bool,
+    pub relationships: Vec<Relationship>,
+    pub properties: Vec<Property>,
     _phantom: std::marker::PhantomData<T>,
 }
 
 impl<T: Processor> ProcessorBridge<T> {
     pub fn new(
         module_name: &'static str,
-        short_name: &'static str,
-        full_name: &'static str,
+        name: &'static str,
         description_text: &'static str,
     ) -> Self {
         Self {
-            description: MinifiProcessorClassDescription {
-                module_name: static_minifi_string_view(module_name),
-                short_name: static_minifi_string_view(short_name),
-                full_name: static_minifi_string_view(full_name),
-                description: static_minifi_string_view(description_text),
-                callbacks: MinifiProcessorCallbacks {
-                    create: Some(Self::create_processor),
-                    destroy: Some(Self::destroy_processor),
-                    onTrigger: Some(Self::on_trigger_processor),
-                    initialize: Some(Self::initialize_processor),
-                    isWorkAvailable: None,
-                    restore: None,
-                    supportsDynamicProperties: None,
-                    supportsDynamicRelationships: None,
-                    isSingleThreaded: None,
-                    getProcessorType: Some(Self::get_processor_type),
-                    getTriggerWhenEmpty: Some(Self::get_trigger_when_empty),
-                    onSchedule: Some(Self::on_schedule_processor),
-                    onUnSchedule: None,
-                    notifyStop: None,
-                    getInputRequirement: Some(Self::get_input_requirement),
-                    serializeMetrics: None,
-                    calculateMetrics: None,
-                    forEachLogger: Some(Self::for_each_logger),
-                },
-                class_properties_count: 0,
-                class_properties_ptr: ptr::null(),
-                dynamic_properties_count: 0,
-                dynamic_properties_ptr: ptr::null(),
-                class_relationships_count: 0,
-                class_relationships_ptr: ptr::null(),
-                output_attributes_count: 0,
-                output_attributes_ptr: ptr::null(),
-                supports_dynamic_properties: MINIFI_FALSE,
-                supports_dynamic_relationships: MINIFI_FALSE,
-                input_requirement: MinifiInputRequirement_MINIFI_INPUT_REQUIRED,
-                is_single_threaded: MINIFI_FALSE,
-                internal_name: MinifiStringView { data: ptr::null(), length: 0 },
-            },
+            module_name,
+            name,
+            description_text,
+            input_requirement: ProcessorInputRequirement::Allowed,
+            supports_dynamic_properties: false,
+            supports_dynamic_relationships: false,
+            is_single_threaded: false,
+            relationships: vec![],
+            properties: vec![],
             _phantom: std::marker::PhantomData,
+        }
+    }
+
+    pub fn register_class(&self) {
+        let c_relationships = Relationship::create_c_vec(&self.relationships);
+
+        let c_default_values = Property::create_c_default_value_holder(&self.properties);
+        let c_allowed_values = Property::create_c_allowed_values_vec_vec(&self.properties);
+        let c_allowed_types = Property::create_c_allowed_types_vec_vec(&self.properties);
+        let c_validators = Property::create_c_validators_vec(&self.properties);
+
+        let c_properties = Property::create_c_properties(&self.properties, &c_default_values, &c_allowed_values, &c_allowed_types, &c_validators);
+
+
+        let class_description = MinifiProcessorClassDescription {
+            module_name: self.module_name.as_minifi_c_type(),
+            full_name: self.name.as_minifi_c_type(),
+            description: self.description_text.as_minifi_c_type(),
+            class_properties_count: c_properties.properties.len() as u32,
+            class_properties_ptr: c_properties.properties.as_ptr(),
+            dynamic_properties_count: 0,
+            dynamic_properties_ptr: ptr::null(),
+            class_relationships_count: c_relationships.len() as u32,
+            class_relationships_ptr: c_relationships.as_ptr(),
+            output_attributes_count: 0,
+            output_attributes_ptr: ptr::null(),
+            supports_dynamic_properties: self.supports_dynamic_properties.as_minifi_c_type(),
+            supports_dynamic_relationships: self.supports_dynamic_relationships.as_minifi_c_type(),
+            input_requirement: self.input_requirement.as_minifi_c_type(),
+            is_single_threaded: self.is_single_threaded.as_minifi_c_type(),
+            callbacks: MinifiProcessorCallbacks {
+                create: Some(Self::create_processor),
+                destroy: Some(Self::destroy_processor),
+                isWorkAvailable: Some(Self::is_work_available),
+                restore: Some(Self::restore),
+                getTriggerWhenEmpty: Some(Self::get_trigger_when_empty),
+                onTrigger: Some(Self::on_trigger_processor),
+                onSchedule: Some(Self::on_schedule_processor),
+                onUnSchedule: Some(Self::on_unschedule_processor),
+            },
+        };
+
+        unsafe {
+            MinifiRegisterProcessorClass(&class_description);
         }
     }
 
@@ -112,42 +163,24 @@ impl<T: Processor> ProcessorBridge<T> {
         0
     }
 
-    unsafe extern "C" fn initialize_processor(
-        processor_ptr: *mut c_void,
-        descriptor_ptr: MinifiProcessorDescriptor,
+    unsafe extern "C" fn on_unschedule_processor(
+        processor_ptr: *mut c_void
     ) {
         let processor = &mut *(processor_ptr as *mut T);
-        let mut descriptor = Descriptor::new(descriptor_ptr);
-        processor.initialize(&mut descriptor);
+        processor.on_unschedule();
     }
 
-    unsafe extern "C" fn for_each_logger(
-        _processor_ptr: *mut c_void,
-        _minifi_logger_callback: MinifiLoggerCallback
-    ) {
-        // TODO(mzink): Implement this
-    }
-
-    unsafe extern "C" fn get_input_requirement(
-        processor_ptr: *mut c_void,
-    ) -> MinifiInputRequirement {
-        MinifiInputRequirement_MINIFI_INPUT_ALLOWED
-    }
-
-    unsafe extern "C" fn get_processor_type(
-        processor_ptr: *mut c_void,
-    ) -> MinifiString {
+    unsafe extern "C" fn is_work_available(processor_ptr: *mut c_void) -> MinifiBool {
         let processor = &mut *(processor_ptr as *mut T);
-        let minifi_string_view = MinifiStringView {
-            data: processor.get_name().as_ptr() as *const i8,
-            length: processor.get_name().len() as u32,
-        };
-        MinifiCreateString(minifi_string_view)
+        processor.is_work_available().as_minifi_c_type()
     }
 
-    unsafe extern "C" fn get_trigger_when_empty(
-        processor_ptr: *mut c_void,
-    ) -> MinifiBool {
-        MINIFI_FALSE
+    unsafe extern "C" fn restore(_processor_ptr: *mut c_void, _flow_file: *mut MinifiFlowFile_T) {
+        panic!("restore not implemented");
+    }
+
+    unsafe extern "C" fn get_trigger_when_empty(processor_ptr: *mut c_void) -> MinifiBool {
+        let processor = &mut *(processor_ptr as *mut T);
+        processor.get_trigger_when_empty().as_minifi_c_type()
     }
 }

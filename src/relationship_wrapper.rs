@@ -1,17 +1,19 @@
-use minifi_native_sys::{MinifiRelationship};
-use crate::primitives::static_minifi_string_view;
+use crate::primitives::StaticStrAsMinifiCStr;
+use minifi_native_sys::MinifiRelationship;
 
 pub struct Relationship {
-    pub c_struct: MinifiRelationship,
+    pub name: &'static str,
+    pub description: &'static str,
 }
 
 impl Relationship {
-    pub const fn new(name: &'static str, description: &'static str) -> Self {
-        Self {
-            c_struct: MinifiRelationship {
-                name: static_minifi_string_view(name),
-                description: static_minifi_string_view(description),
-            },
-        }
+    pub(crate) fn create_c_vec(relationships: &[Self]) -> Vec<MinifiRelationship> {
+        relationships
+            .iter()
+            .map(|r| MinifiRelationship {
+                name: r.name.as_minifi_c_type(),
+                description: r.description.as_minifi_c_type(),
+            })
+            .collect()
     }
 }

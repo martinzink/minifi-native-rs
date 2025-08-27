@@ -11,14 +11,18 @@ mod wrapper;
 mod relationship_wrapper;
 mod property_wrapper;
 mod primitives;
+mod logger_wrapper;
+mod session_wrapper;
+mod flowfile_wrapper;
 
 // Re-export the public-facing types that a processor developer will need.
-pub use processor::{ProcessContext, Processor, ProcessorBridge};
-pub use wrapper::{Descriptor, FlowFile, Logger, Session, SessionFactory};
+pub use processor::{ProcessContext, Processor, ProcessorBridge, ProcessorInputRequirement};
+pub use wrapper::{SessionFactory};
+pub use flowfile_wrapper::FlowFile;
+pub use session_wrapper::Session;
+pub use logger_wrapper::LogLevel;
+pub use logger_wrapper::Logger;
 pub use relationship_wrapper::Relationship;
 pub use property_wrapper::{Property, StandardPropertyValidator};
 
-// Also re-export the raw C types from the -sys crate under a `sys` module,
-// which is a common convention. This allows users to access the raw types
-// if they have an advanced use case that requires it.
 pub use minifi_native_sys as sys;
