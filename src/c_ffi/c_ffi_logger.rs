@@ -1,3 +1,5 @@
+use crate::api::LogLevel;
+use crate::api::Logger;
 use minifi_native_sys::{
     MinifiLogLevel, MinifiLogLevel_MINIFI_CRITICAL, MinifiLogLevel_MINIFI_DEBUG,
     MinifiLogLevel_MINIFI_ERROR, MinifiLogLevel_MINIFI_INFO, MinifiLogLevel_MINIFI_OFF,
@@ -5,8 +7,6 @@ use minifi_native_sys::{
     MinifiLoggerLogString, MinifiStringView,
 };
 use std::ffi::CString;
-use crate::api::LogLevel;
-use crate::api::Logger;
 
 impl From<LogLevel> for MinifiLogLevel {
     fn from(level: LogLevel) -> Self {
@@ -29,7 +29,7 @@ pub struct CffiLogger {
 
 impl CffiLogger {
     pub fn new(logger: MinifiLogger) -> Self {
-        Self{ptr: logger}
+        Self { ptr: logger }
     }
 }
 

@@ -1,5 +1,5 @@
-use minifi_native_sys::MinifiProcessSessionFactory;
 use crate::api::ProcessSessionFactory;
+use minifi_native_sys::MinifiProcessSessionFactory;
 
 pub struct CffiProcessSessionFactory<'a> {
     _ptr: MinifiProcessSessionFactory,

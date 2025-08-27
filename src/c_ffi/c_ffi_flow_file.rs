@@ -1,10 +1,8 @@
-use minifi_native_sys::MinifiFlowFile;
 use crate::api::FlowFile;
+use minifi_native_sys::MinifiFlowFile;
 
 pub struct CffiFlowFile {
-    pub ptr : MinifiFlowFile,
+    pub ptr: MinifiFlowFile,
 }
 
-impl FlowFile for CffiFlowFile {
-
-}
+impl FlowFile for CffiFlowFile {}

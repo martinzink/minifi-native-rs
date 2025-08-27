@@ -1,5 +1,9 @@
-use minifi_native_sys::{MinifiBool, MinifiInputRequirement, MinifiInputRequirement_MINIFI_INPUT_ALLOWED, MinifiInputRequirement_MINIFI_INPUT_FORBIDDEN, MinifiInputRequirement_MINIFI_INPUT_REQUIRED, MinifiStringView, MINIFI_FALSE, MINIFI_TRUE};
 use crate::ProcessorInputRequirement;
+use minifi_native_sys::{
+    MinifiBool, MinifiInputRequirement, MinifiInputRequirement_MINIFI_INPUT_ALLOWED,
+    MinifiInputRequirement_MINIFI_INPUT_FORBIDDEN, MinifiInputRequirement_MINIFI_INPUT_REQUIRED,
+    MinifiStringView, MINIFI_FALSE, MINIFI_TRUE,
+};
 
 #[derive(Debug)]
 pub(crate) struct StringView<'a> {
@@ -27,7 +31,7 @@ pub trait StaticStrAsMinifiCStr {
     fn as_minifi_c_type(&self) -> MinifiStringView;
 }
 
-impl StaticStrAsMinifiCStr for &'static str{
+impl StaticStrAsMinifiCStr for &'static str {
     fn as_minifi_c_type(&self) -> MinifiStringView {
         MinifiStringView {
             data: self.as_ptr() as *const i8,

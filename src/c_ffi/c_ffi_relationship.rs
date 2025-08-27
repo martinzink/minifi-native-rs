@@ -1,6 +1,6 @@
-use minifi_native_sys::MinifiRelationship;
-use super::c_ffi_primitives::{StaticStrAsMinifiCStr};
+use super::c_ffi_primitives::StaticStrAsMinifiCStr;
 use crate::Relationship;
+use minifi_native_sys::MinifiRelationship;
 
 impl Relationship {
     pub(crate) fn create_c_vec(relationships: &[Self]) -> Vec<MinifiRelationship> {

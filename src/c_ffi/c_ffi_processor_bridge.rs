@@ -2,16 +2,19 @@ use std::ffi::c_void;
 use std::ptr;
 
 use super::c_ffi_logger::CffiLogger;
-use super::c_ffi_process_session::CffiProcessSession;
+use super::c_ffi_primitives::{BoolAsMinifiCBool, StaticStrAsMinifiCStr};
 use super::c_ffi_process_context::CffiProcessContext;
+use super::c_ffi_process_session::CffiProcessSession;
 use super::c_ffi_process_session_factory::CffiProcessSessionFactory;
 use crate::api::{Processor, ProcessorInputRequirement};
 use crate::Property;
 use crate::Relationship;
 use minifi_native_sys::*;
-use super::c_ffi_primitives::{BoolAsMinifiCBool, StaticStrAsMinifiCStr};
 
-pub struct ProcessorBridge<T> where T: Processor<CffiLogger> {
+pub struct ProcessorBridge<T>
+where
+    T: Processor<CffiLogger>,
+{
     module_name: &'static str,
     name: &'static str,
     description_text: &'static str,
@@ -24,7 +27,10 @@ pub struct ProcessorBridge<T> where T: Processor<CffiLogger> {
     _phantom: std::marker::PhantomData<T>,
 }
 
-impl<T> ProcessorBridge<T> where T: Processor<CffiLogger> {
+impl<T> ProcessorBridge<T>
+where
+    T: Processor<CffiLogger>,
+{
     pub fn new(
         module_name: &'static str,
         name: &'static str,
@@ -52,8 +58,13 @@ impl<T> ProcessorBridge<T> where T: Processor<CffiLogger> {
         let c_allowed_types = Property::create_c_allowed_types_vec_vec(&self.properties);
         let c_validators = Property::create_c_validators_vec(&self.properties);
 
-        let c_properties = Property::create_c_properties(&self.properties, &c_default_values, &c_allowed_values, &c_allowed_types, &c_validators);
-
+        let c_properties = Property::create_c_properties(
+            &self.properties,
+            &c_default_values,
+            &c_allowed_values,
+            &c_allowed_types,
+            &c_validators,
+        );
 
         let class_description = MinifiProcessorClassDescription {
             module_name: self.module_name.as_minifi_c_type(),
@@ -126,9 +137,7 @@ impl<T> ProcessorBridge<T> where T: Processor<CffiLogger> {
         0
     }
 
-    unsafe extern "C" fn on_unschedule_processor(
-        processor_ptr: *mut c_void
-    ) {
+    unsafe extern "C" fn on_unschedule_processor(processor_ptr: *mut c_void) {
         let processor = &mut *(processor_ptr as *mut T);
         processor.on_unschedule();
     }

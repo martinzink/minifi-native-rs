@@ -1,2 +1,1 @@
-pub trait FlowFile {
-}
+pub trait FlowFile {}

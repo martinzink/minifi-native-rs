@@ -8,7 +8,7 @@ pub enum ProcessorInputRequirement {
 
 /// A safe, idiomatic Rust trait for implementing a MiNiFi Processor.
 pub trait Processor<L: Logger>: Sized {
-    fn new(logger: L)-> Self;
+    fn new(logger: L) -> Self;
 
     fn restore(&self) -> bool {
         false
@@ -23,6 +23,10 @@ pub trait Processor<L: Logger>: Sized {
     }
 
     fn on_trigger<P: ProcessContext, S: ProcessSession>(&mut self, context: &P, session: &mut S);
-    fn on_schedule<P: ProcessContext, F: ProcessSessionFactory>(&mut self, context: &P, session_factory: &mut F);
+    fn on_schedule<P: ProcessContext, F: ProcessSessionFactory>(
+        &mut self,
+        context: &P,
+        session_factory: &mut F,
+    );
     fn on_unschedule(&mut self) {}
 }

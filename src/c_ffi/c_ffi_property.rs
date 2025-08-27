@@ -1,7 +1,17 @@
-use std::ptr;
-use minifi_native_sys::{MinifiGetStandardValidator, MinifiProperty, MinifiPropertyValidator, MinifiStandardPropertyValidator, MinifiStandardPropertyValidator_MINIFI_ALWAYS_VALID_VALIDATOR, MinifiStandardPropertyValidator_MINIFI_BOOLEAN_VALIDATOR, MinifiStandardPropertyValidator_MINIFI_DATA_SIZE_VALIDATOR, MinifiStandardPropertyValidator_MINIFI_INTEGER_VALIDATOR, MinifiStandardPropertyValidator_MINIFI_NON_BLANK_VALIDATOR, MinifiStandardPropertyValidator_MINIFI_PORT_VALIDATOR, MinifiStandardPropertyValidator_MINIFI_TIME_PERIOD_VALIDATOR, MinifiStandardPropertyValidator_MINIFI_UNSIGNED_INTEGER_VALIDATOR, MinifiStringView};
 use super::c_ffi_primitives::{BoolAsMinifiCBool, StaticStrAsMinifiCStr};
 use crate::{Property, StandardPropertyValidator};
+use minifi_native_sys::{
+    MinifiGetStandardValidator, MinifiProperty, MinifiPropertyValidator,
+    MinifiStandardPropertyValidator, MinifiStandardPropertyValidator_MINIFI_ALWAYS_VALID_VALIDATOR,
+    MinifiStandardPropertyValidator_MINIFI_BOOLEAN_VALIDATOR,
+    MinifiStandardPropertyValidator_MINIFI_DATA_SIZE_VALIDATOR,
+    MinifiStandardPropertyValidator_MINIFI_INTEGER_VALIDATOR,
+    MinifiStandardPropertyValidator_MINIFI_NON_BLANK_VALIDATOR,
+    MinifiStandardPropertyValidator_MINIFI_PORT_VALIDATOR,
+    MinifiStandardPropertyValidator_MINIFI_TIME_PERIOD_VALIDATOR,
+    MinifiStandardPropertyValidator_MINIFI_UNSIGNED_INTEGER_VALIDATOR, MinifiStringView,
+};
+use std::ptr;
 
 pub struct PropertiesWithLifespan<'a> {
     pub(crate) properties: Vec<MinifiProperty>,
@@ -34,13 +44,13 @@ impl Property {
     pub(crate) fn create_c_validators_vec(properties: &[Self]) -> Vec<MinifiPropertyValidator> {
         properties
             .iter()
-            .map(|p| unsafe {
-                MinifiGetStandardValidator(p.validator.as_minifi_c_type())
-            })
+            .map(|p| unsafe { MinifiGetStandardValidator(p.validator.as_minifi_c_type()) })
             .collect()
     }
 
-    pub(crate) fn create_c_allowed_values_vec_vec(properties: &[Self]) -> Vec<Vec<MinifiStringView>> {
+    pub(crate) fn create_c_allowed_values_vec_vec(
+        properties: &[Self],
+    ) -> Vec<Vec<MinifiStringView>> {
         properties
             .iter()
             .map(|p| {
@@ -52,7 +62,9 @@ impl Property {
             .collect()
     }
 
-    pub(crate) fn create_c_allowed_types_vec_vec(properties: &[Self]) -> Vec<Vec<MinifiStringView>> {
+    pub(crate) fn create_c_allowed_types_vec_vec(
+        properties: &[Self],
+    ) -> Vec<Vec<MinifiStringView>> {
         properties
             .iter()
             .map(|p| {
