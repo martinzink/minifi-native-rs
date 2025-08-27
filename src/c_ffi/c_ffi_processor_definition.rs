@@ -11,7 +11,7 @@ use crate::Property;
 use crate::Relationship;
 use minifi_native_sys::*;
 
-pub struct ProcessorBridge<T>
+pub struct ProcessorDefinition<T>
 where
     T: Processor<CffiLogger>,
 {
@@ -27,7 +27,7 @@ where
     _phantom: std::marker::PhantomData<T>,
 }
 
-impl<T> ProcessorBridge<T>
+impl<T> ProcessorDefinition<T>
 where
     T: Processor<CffiLogger>,
 {

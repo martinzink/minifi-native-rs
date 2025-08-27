@@ -6,7 +6,7 @@ pub use api::{
     FlowFile, LogLevel, Logger, ProcessContext, ProcessSession, ProcessSessionFactory, Processor,
     ProcessorInputRequirement, Property, Relationship, StandardPropertyValidator,
 };
-pub use c_ffi::{CffiLogger, ProcessorBridge};
+pub use c_ffi::{CffiLogger, ProcessorDefinition};
 pub use mock::{
     MockFlowFile, MockLogger, MockProcessContext, MockProcessSession, MockProcessSessionFactory,
 };
