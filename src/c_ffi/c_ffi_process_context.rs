@@ -23,19 +23,21 @@ unsafe extern "C" fn property_callback(
     output_option: *mut c_void,
     property_c_value: MinifiStringView,
 ) {
-    let result_target = &mut *(output_option as *mut Option<String>);
+    unsafe {
+        let result_target = &mut *(output_option as *mut Option<String>);
 
-    if property_c_value.data.is_null() {
-        *result_target = None;
-        return;
-    }
+        if property_c_value.data.is_null() {
+            *result_target = None;
+            return;
+        }
 
-    let value_slice = std::slice::from_raw_parts(
-        property_c_value.data as *const u8,
-        property_c_value.length as usize,
-    );
-    if let Ok(string_value) = String::from_utf8(value_slice.to_vec()) {
-        *result_target = Some(string_value);
+        let value_slice = std::slice::from_raw_parts(
+            property_c_value.data as *const u8,
+            property_c_value.length as usize,
+        );
+        if let Ok(string_value) = String::from_utf8(value_slice.to_vec()) {
+            *result_target = Some(string_value);
+        }
     }
 }
 

@@ -19,45 +19,49 @@ unsafe extern "C" fn write_callback(
     user_ctx: *mut c_void,
     output_stream: MinifiOutputStream,
 ) -> i64 {
-    let result_target = &mut *(user_ctx as *mut Option<&str>);
-    if result_target.is_none() {
-        return -1;
-    }
+    unsafe {
+        let result_target = &mut *(user_ctx as *mut Option<&str>);
+        if result_target.is_none() {
+            return -1;
+        }
 
-    MinifiOutputStreamWrite(
-        output_stream,
-        result_target.unwrap().as_ptr() as *const i8,
-        result_target.unwrap().len() as u64,
-    )
+        MinifiOutputStreamWrite(
+            output_stream,
+            result_target.unwrap().as_ptr() as *const i8,
+            result_target.unwrap().len() as u64,
+        )
+    }
 }
 
 unsafe extern "C" fn read_callback(
     output_option: *mut c_void,
     input_stream: MinifiInputStream,
 ) -> i64 {
-    let result_target = &mut *(output_option as *mut Option<String>);
+    unsafe {
+        let result_target = &mut *(output_option as *mut Option<String>);
 
-    let stream_size = MinifiInputStreamSize(input_stream);
-    let mut buffer: Vec<u8> = Vec::with_capacity(stream_size as usize);
+        let stream_size = MinifiInputStreamSize(input_stream);
+        let mut buffer: Vec<u8> = Vec::with_capacity(stream_size as usize);
 
-    let bytes_read =
-        MinifiInputStreamRead(input_stream, buffer.as_mut_ptr() as *mut i8, stream_size);
+        let bytes_read =
+            MinifiInputStreamRead(input_stream, buffer.as_mut_ptr() as *mut i8, stream_size);
 
-    if bytes_read < 0 {
-        *result_target = None;
-        return bytes_read;
-    }
-
-    buffer.set_len(bytes_read as usize);
-
-    match String::from_utf8(buffer) {
-        Ok(s) => {
-            *result_target = Some(s);
-            bytes_read as i64
-        }
-        Err(_) => {
+        if bytes_read < 0 {
             *result_target = None;
-            -1
+            return bytes_read;
+        }
+
+        buffer.set_len(bytes_read as usize);
+
+        match String::from_utf8(buffer) {
+            Ok(s) => {
+                *result_target = Some(s);
+                bytes_read as i64
+            }
+            Err(_) => {
+                *result_target = None;
+                -1
+            }
         }
     }
 }

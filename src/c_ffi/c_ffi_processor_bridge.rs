@@ -108,8 +108,10 @@ where
     }
 
     unsafe extern "C" fn destroy_processor(processor_ptr: *mut c_void) {
-        if !processor_ptr.is_null() {
-            let _ = Box::from_raw(processor_ptr as *mut T);
+        unsafe {
+            if !processor_ptr.is_null() {
+                let _ = Box::from_raw(processor_ptr as *mut T);
+            }
         }
     }
 
@@ -118,11 +120,13 @@ where
         context_ptr: MinifiProcessContext,
         session_ptr: MinifiProcessSession,
     ) -> MinifiStatus {
-        let processor = &mut *(processor_ptr as *mut T);
-        let context = CffiProcessContext::new(context_ptr);
-        let mut session = CffiProcessSession::new(session_ptr);
-        processor.on_trigger(&context, &mut session);
-        0
+        unsafe {
+            let processor = &mut *(processor_ptr as *mut T);
+            let context = CffiProcessContext::new(context_ptr);
+            let mut session = CffiProcessSession::new(session_ptr);
+            processor.on_trigger(&context, &mut session);
+            0
+        }
     }
 
     unsafe extern "C" fn on_schedule_processor(
@@ -130,21 +134,27 @@ where
         context_ptr: MinifiProcessContext,
         session_factory_ptr: MinifiProcessSessionFactory,
     ) -> MinifiStatus {
-        let processor = &mut *(processor_ptr as *mut T);
-        let context = CffiProcessContext::new(context_ptr);
-        let mut session_factory = CffiProcessSessionFactory::new(session_factory_ptr);
-        processor.on_schedule(&context, &mut session_factory);
-        0
+        unsafe {
+            let processor = &mut *(processor_ptr as *mut T);
+            let context = CffiProcessContext::new(context_ptr);
+            let mut session_factory = CffiProcessSessionFactory::new(session_factory_ptr);
+            processor.on_schedule(&context, &mut session_factory);
+            0
+        }
     }
 
     unsafe extern "C" fn on_unschedule_processor(processor_ptr: *mut c_void) {
-        let processor = &mut *(processor_ptr as *mut T);
-        processor.on_unschedule();
+        unsafe {
+            let processor = &mut *(processor_ptr as *mut T);
+            processor.on_unschedule();
+        }
     }
 
     unsafe extern "C" fn is_work_available(processor_ptr: *mut c_void) -> MinifiBool {
-        let processor = &mut *(processor_ptr as *mut T);
-        processor.is_work_available().as_minifi_c_type()
+        unsafe {
+            let processor = &mut *(processor_ptr as *mut T);
+            processor.is_work_available().as_minifi_c_type()
+        }
     }
 
     unsafe extern "C" fn restore(_processor_ptr: *mut c_void, _flow_file: *mut MinifiFlowFile_T) {
@@ -152,7 +162,9 @@ where
     }
 
     unsafe extern "C" fn get_trigger_when_empty(processor_ptr: *mut c_void) -> MinifiBool {
-        let processor = &mut *(processor_ptr as *mut T);
-        processor.get_trigger_when_empty().as_minifi_c_type()
+        unsafe {
+            let processor = &mut *(processor_ptr as *mut T);
+            processor.get_trigger_when_empty().as_minifi_c_type()
+        }
     }
 }
