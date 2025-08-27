@@ -1,28 +1,19 @@
-// minifi/src/lib.rs
-
-//! A safe, idiomatic Rust wrapper for the Apache NiFi MiNiFi C API.
-//!
-//! This crate provides a high-level API for creating custom MiNiFi processors
-//! in Rust without writing `unsafe` code.
-
-// Declare the internal modules.
 mod processor;
-mod wrapper;
-mod relationship_wrapper;
-mod property_wrapper;
+mod c_ffi_process_context;
+mod relationship;
+mod property;
 mod primitives;
-mod logger_wrapper;
+mod c_ffi_logger;
 mod session_wrapper;
-mod flowfile_wrapper;
+mod c_ffi_flowfile_wrapper;
+mod session_factory_wrapper;
+mod api;
 
 // Re-export the public-facing types that a processor developer will need.
-pub use processor::{ProcessContext, Processor, ProcessorBridge, ProcessorInputRequirement};
-pub use wrapper::{SessionFactory};
-pub use flowfile_wrapper::FlowFile;
-pub use session_wrapper::Session;
-pub use logger_wrapper::LogLevel;
-pub use logger_wrapper::Logger;
-pub use relationship_wrapper::Relationship;
-pub use property_wrapper::{Property, StandardPropertyValidator};
+pub use api::{FlowFile, ProcessSession, ProcessSessionFactory, ProcessContext, Logger, LogLevel};
+pub use c_ffi_logger::CffiLogger;
+pub use relationship::Relationship;
+pub use processor::{Processor, ProcessorBridge, ProcessorInputRequirement};
+pub use property::{Property, StandardPropertyValidator};
 
 pub use minifi_native_sys as sys;

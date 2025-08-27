@@ -5,19 +5,8 @@ use minifi_native_sys::{
     MinifiLoggerLogString, MinifiStringView,
 };
 use std::ffi::CString;
-use strum_macros::{Display, EnumString, VariantNames};
-
-#[derive(Debug, Clone, Copy, PartialEq, Display, EnumString, VariantNames)]
-#[strum(serialize_all = "PascalCase")]
-pub enum LogLevel {
-    Trace,
-    Debug,
-    Info,
-    Warn,
-    Error,
-    Critical,
-    Off,
-}
+use crate::api::LogLevel;
+use crate::api::Logger;
 
 impl From<LogLevel> for MinifiLogLevel {
     fn from(level: LogLevel) -> Self {
@@ -34,18 +23,22 @@ impl From<LogLevel> for MinifiLogLevel {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub struct Logger(MinifiLogger);
+pub struct CffiLogger {
+    ptr: MinifiLogger,
+}
 
-impl Logger {
+impl CffiLogger {
     pub fn new(logger: MinifiLogger) -> Self {
-        Self(logger)
+        Self{ptr: logger}
     }
+}
 
-    pub fn log(&self, level: LogLevel, message: &str) {
+impl Logger for CffiLogger {
+    fn log(&self, level: LogLevel, message: &str) {
         if let Ok(c_message) = CString::new(message) {
             unsafe {
                 MinifiLoggerLogString(
-                    self.0,
+                    self.ptr,
                     level.into(),
                     MinifiStringView {
                         data: c_message.as_ptr(),
@@ -56,22 +49,22 @@ impl Logger {
         }
     }
 
-    pub fn trace(&self, message: &str) {
+    fn trace(&self, message: &str) {
         self.log(LogLevel::Trace, message);
     }
-    pub fn debug(&self, message: &str) {
+    fn debug(&self, message: &str) {
         self.log(LogLevel::Debug, message);
     }
-    pub fn info(&self, message: &str) {
+    fn info(&self, message: &str) {
         self.log(LogLevel::Info, message);
     }
-    pub fn warn(&self, message: &str) {
+    fn warn(&self, message: &str) {
         self.log(LogLevel::Warn, message);
     }
-    pub fn error(&self, message: &str) {
+    fn error(&self, message: &str) {
         self.log(LogLevel::Error, message);
     }
-    pub fn critical(&self, message: &str) {
+    fn critical(&self, message: &str) {
         self.log(LogLevel::Critical, message);
     }
 }

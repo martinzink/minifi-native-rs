@@ -1,26 +1,22 @@
 use minifi_native_sys::*;
 use std::ffi::{c_void};
 use crate::primitives::{StringView};
-use crate::flowfile_wrapper::FlowFile;
+use crate::api::{ProcessContext};
+use crate::c_ffi_flowfile_wrapper::CffiFlowFile;
 
-pub struct SessionFactory<'a> {
-    _ptr: MinifiProcessSessionFactory,
+/// A safe wrapper around a `MinifiProcessContext` pointer.
+pub struct CffiProcessContext<'a> {
+    ptr: MinifiProcessContext,
     _lifetime: std::marker::PhantomData<&'a ()>,
 }
 
-impl<'a> SessionFactory<'a> {
-    pub fn new(ptr: MinifiProcessSessionFactory) -> Self {
+impl<'a> CffiProcessContext<'a> {
+    pub fn new(ptr: MinifiProcessContext) -> Self {
         Self {
-            _ptr: ptr,
+            ptr,
             _lifetime: std::marker::PhantomData,
         }
     }
-}
-
-/// A safe wrapper around a `MinifiProcessContext` pointer.
-pub struct ProcessContext<'a> {
-    ptr: MinifiProcessContext,
-    _lifetime: std::marker::PhantomData<&'a ()>,
 }
 
 unsafe extern "C" fn property_callback(output_option: *mut c_void, property_c_value: MinifiStringView) {
@@ -37,23 +33,17 @@ unsafe extern "C" fn property_callback(output_option: *mut c_void, property_c_va
     }
 }
 
-impl<'a> ProcessContext<'a> {
-    pub fn new(ptr: MinifiProcessContext) -> Self {
-        Self {
-            ptr,
-            _lifetime: std::marker::PhantomData,
-        }
-    }
-
-    pub fn get_property(
+impl<'a> ProcessContext for CffiProcessContext<'a> {
+    type FlowFile = CffiFlowFile;
+    fn get_property(
         &self,
-        property_name: &'a str,
-        flow_file: Option<&FlowFile>,
+        property_name: &str,
+        flow_file: Option<&Self::FlowFile>,
     ) -> Option<String> {
         let ff_ptr = flow_file.map_or(std::ptr::null_mut(), |ff| ff.ptr);
 
         let mut result: Option<String> = None;
-        let property_name: StringView<'a> = StringView::new(property_name);
+        let property_name: StringView = StringView::new(property_name);
 
         let status = unsafe {
             MinifiProcessContextGetProperty(

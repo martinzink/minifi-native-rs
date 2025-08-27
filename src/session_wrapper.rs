@@ -1,10 +1,10 @@
 use minifi_native_sys::{MinifiInputStreamSize, MinifiInputStream, MinifiOutputStream, MinifiInputStreamRead, MinifiOutputStreamWrite, MinifiProcessSession, MinifiProcessSessionCreate, MinifiProcessSessionGet, MinifiProcessSessionTransfer, MinifiProcessSessionWrite, MinifiProcessSessionRead, MinifiStringView};
 use std::ffi::{c_void, CString};
 
-use crate::flowfile_wrapper::FlowFile;
+use crate::api::ProcessSession;
+use crate::c_ffi_flowfile_wrapper::{CffiFlowFile};
 
-/// A safe wrapper around a `MinifiProcessSession` pointer.
-pub struct Session<'a> {
+pub struct CffiSession<'a> {
     ptr: MinifiProcessSession,
     // The lifetime ensures the session cannot outlive the `on_trigger` call.
     _lifetime: std::marker::PhantomData<&'a ()>,
@@ -50,37 +50,38 @@ unsafe extern "C" fn read_callback(output_option: *mut c_void, input_stream: Min
     }
 }
 
-impl<'a> Session<'a> {
+impl<'a> CffiSession<'a> {
     pub fn new(ptr: MinifiProcessSession) -> Self {
         Self {
             ptr,
             _lifetime: std::marker::PhantomData,
         }
     }
+}
 
-    /// Gets the next FlowFile from the input queue. Returns `None` if the queue is empty.
-    pub fn get(&mut self) -> Option<FlowFile> {
-        let ff_ptr = unsafe { MinifiProcessSessionGet(self.ptr) };
-        if ff_ptr.is_null() {
-            None
-        } else {
-            Some(FlowFile { ptr: ff_ptr })
-        }
-    }
+impl<'a> ProcessSession for CffiSession<'a> {
+    type FlowFile = CffiFlowFile;
 
-    /// Creates a new FlowFile. Returns 'None' if there is some problem creating the FlowFile.
-    pub fn create(&mut self) -> Option<FlowFile> {
+    fn create(&mut self) -> Option<Self::FlowFile> {
         let ff_ptr = unsafe { MinifiProcessSessionCreate(self.ptr, std::ptr::null_mut()) };
         if ff_ptr.is_null() {
             None
         } else {
-            Some(FlowFile { ptr: ff_ptr })
+            Some(Self::FlowFile { ptr: ff_ptr })
         }
     }
 
-    /// Transfers a FlowFile to the specified relationship.
-    pub fn transfer(&mut self, flow_file: FlowFile, relationship: &str) {
-        if let Ok(c_relationship) = CString::new(relationship) {  // TODO(mzink) &Cstr should be enough
+    fn get(&mut self) -> Option<Self::FlowFile> {
+        let ff_ptr = unsafe { MinifiProcessSessionGet(self.ptr) };
+        if ff_ptr.is_null() {
+            None
+        } else {
+            Some(Self::FlowFile{ ptr: ff_ptr })
+        }
+    }
+
+    fn transfer(&mut self, flow_file: Self::FlowFile, relationship: &str) {
+        if let Ok(c_relationship) = CString::new(relationship) {
             unsafe {
                 MinifiProcessSessionTransfer(
                     self.ptr,
@@ -94,7 +95,7 @@ impl<'a> Session<'a> {
         }
     }
 
-    pub fn write(&mut self, flow_file: &FlowFile, data: &str) {  // TODO(mzink) This should be Result<(), Error>
+    fn write(&mut self, flow_file: &Self::FlowFile, data: &str) {
         let mut dt: Option<&str> = Some(data);
         unsafe {
             MinifiProcessSessionWrite(
@@ -106,7 +107,7 @@ impl<'a> Session<'a> {
         }
     }
 
-    pub fn read(&mut self, flow_file: &FlowFile) -> Option<String> {  // TODO(mzink) This should be Result<String, Error>
+    fn read(&mut self, flow_file: &Self::FlowFile) -> Option<String> {
         let mut output: Option::<String> = None;
         unsafe {
             MinifiProcessSessionRead(

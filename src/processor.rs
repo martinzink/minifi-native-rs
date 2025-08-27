@@ -1,17 +1,22 @@
 pub(crate) use crate::primitives::{BoolAsMinifiCBool, StaticStrAsMinifiCStr};
-pub use crate::wrapper::{ProcessContext, SessionFactory};
-pub use crate::session_wrapper::Session;
-pub use crate::Logger;
-use crate::{Property, Relationship};
+pub use crate::session_wrapper::CffiSession;
+use crate::{Property};
 use minifi_native_sys::*;
 use std::ffi::c_void;
 use std::ptr;
+
+use crate::api;
+use crate::c_ffi_logger::CffiLogger;
+use crate::c_ffi_process_context::CffiProcessContext;
+use crate::relationship::Relationship;
+use crate::session_factory_wrapper::CffiProcessSessionFactory;
 
 pub enum ProcessorInputRequirement {
     Required,
     Allowed,
     Forbidden,
 }
+
 
 impl ProcessorInputRequirement {
     pub fn as_minifi_c_type(&self) -> MinifiInputRequirement {
@@ -25,8 +30,8 @@ impl ProcessorInputRequirement {
 
 
 /// A safe, idiomatic Rust trait for implementing a MiNiFi Processor.
-pub trait Processor: Sized + 'static {
-    fn new(logger: Logger) -> Self;
+pub trait Processor<L: api::Logger>: Sized {
+    fn new(logger: L)-> Self;
 
     fn restore(&self) -> bool {
         false
@@ -40,15 +45,15 @@ pub trait Processor: Sized + 'static {
         false
     }
 
-    fn on_trigger(&mut self, context: &ProcessContext, session: &mut Session);
-    fn on_schedule(&mut self, context: &ProcessContext, session_factory: &mut SessionFactory);
+    fn on_trigger<P: api::ProcessContext, S: api::ProcessSession>(&mut self, context: &P, session: &mut S);
+    fn on_schedule<P: api::ProcessContext, F: api::ProcessSessionFactory>(&mut self, context: &P, session_factory: &mut F);
     fn on_unschedule(&mut self) {}
 }
 
 /// A generic FFI bridge that wraps any struct implementing the `Processor` trait.
 /// This struct is public, so it can be used in the final processor binary but
 /// is not intended for direct use by most developers.
-pub struct ProcessorBridge<T: Processor> {
+pub struct ProcessorBridge<T> where T: Processor<CffiLogger> {
     module_name: &'static str,
     name: &'static str,
     description_text: &'static str,
@@ -61,7 +66,7 @@ pub struct ProcessorBridge<T: Processor> {
     _phantom: std::marker::PhantomData<T>,
 }
 
-impl<T: Processor> ProcessorBridge<T> {
+impl<T> ProcessorBridge<T> where T: Processor<CffiLogger> {
     pub fn new(
         module_name: &'static str,
         name: &'static str,
@@ -128,7 +133,7 @@ impl<T: Processor> ProcessorBridge<T> {
     // --- Unsafe FFI callback implementations ---
 
     unsafe extern "C" fn create_processor(metadata: MinifiProcessorMetadata) -> *mut c_void {
-        let logger = Logger::new(metadata.logger);
+        let logger = CffiLogger::new(metadata.logger);
         let processor = Box::new(T::new(logger));
         Box::into_raw(processor) as *mut c_void
     }
@@ -145,8 +150,8 @@ impl<T: Processor> ProcessorBridge<T> {
         session_ptr: MinifiProcessSession,
     ) -> MinifiStatus {
         let processor = &mut *(processor_ptr as *mut T);
-        let context = ProcessContext::new(context_ptr);
-        let mut session = Session::new(session_ptr);
+        let context = CffiProcessContext::new(context_ptr);
+        let mut session = CffiSession::new(session_ptr);
         processor.on_trigger(&context, &mut session);
         0
     }
@@ -157,8 +162,8 @@ impl<T: Processor> ProcessorBridge<T> {
         session_factory_ptr: MinifiProcessSessionFactory,
     ) -> MinifiStatus {
         let processor = &mut *(processor_ptr as *mut T);
-        let context = ProcessContext::new(context_ptr);
-        let mut session_factory = SessionFactory::new(session_factory_ptr);
+        let context = CffiProcessContext::new(context_ptr);
+        let mut session_factory = CffiProcessSessionFactory::new(session_factory_ptr);
         processor.on_schedule(&context, &mut session_factory);
         0
     }
