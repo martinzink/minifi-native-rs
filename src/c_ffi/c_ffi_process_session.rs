@@ -111,7 +111,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
         }
     }
 
-    fn write(&mut self, flow_file: &Self::FlowFile, data: &str) {
+    fn write(&mut self, flow_file: &mut Self::FlowFile, data: &str) {
         let mut dt: Option<&str> = Some(data);
         unsafe {
             MinifiProcessSessionWrite(

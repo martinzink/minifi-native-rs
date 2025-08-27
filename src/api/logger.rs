@@ -15,24 +15,24 @@ pub enum LogLevel {
 }
 
 pub trait Logger: Debug {
-    fn log(&self, level: LogLevel, message: &str);
+    fn log(&mut self, level: LogLevel, message: &str);
 
-    fn trace(&self, message: &str) {
+    fn trace(&mut self, message: &str) {
         self.log(LogLevel::Trace, message);
     }
-    fn debug(&self, message: &str) {
+    fn debug(&mut self, message: &str) {
         self.log(LogLevel::Debug, message);
     }
-    fn info(&self, message: &str) {
+    fn info(&mut self, message: &str) {
         self.log(LogLevel::Info, message);
     }
-    fn warn(&self, message: &str) {
+    fn warn(&mut self, message: &str) {
         self.log(LogLevel::Warn, message);
     }
-    fn error(&self, message: &str) {
+    fn error(&mut self, message: &str) {
         self.log(LogLevel::Error, message);
     }
-    fn critical(&self, message: &str) {
+    fn critical(&mut self, message: &str) {
         self.log(LogLevel::Critical, message);
     }
 }

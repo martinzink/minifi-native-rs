@@ -34,7 +34,7 @@ impl CffiLogger {
 }
 
 impl Logger for CffiLogger {
-    fn log(&self, level: LogLevel, message: &str) {
+    fn log(&mut self, level: LogLevel, message: &str) {
         if let Ok(c_message) = CString::new(message) {
             unsafe {
                 MinifiLoggerLogString(
@@ -47,24 +47,5 @@ impl Logger for CffiLogger {
                 );
             }
         }
-    }
-
-    fn trace(&self, message: &str) {
-        self.log(LogLevel::Trace, message);
-    }
-    fn debug(&self, message: &str) {
-        self.log(LogLevel::Debug, message);
-    }
-    fn info(&self, message: &str) {
-        self.log(LogLevel::Info, message);
-    }
-    fn warn(&self, message: &str) {
-        self.log(LogLevel::Warn, message);
-    }
-    fn error(&self, message: &str) {
-        self.log(LogLevel::Error, message);
-    }
-    fn critical(&self, message: &str) {
-        self.log(LogLevel::Critical, message);
     }
 }
