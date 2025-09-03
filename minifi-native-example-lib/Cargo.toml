@@ -1,0 +1,19 @@
+[package]
+name = "minifi-native-example-lib"
+version = "0.1.0"
+edition = "2024"
+
+[profile.release]
+panic = "abort"
+
+[profile.dev]
+panic = "abort"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+minifi-native = { path = "../minifi-native" }
+ctor = "0.5.0"
+strum = "0.27.2"
+const_format = "0.2.34"
