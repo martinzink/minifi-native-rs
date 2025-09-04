@@ -20,7 +20,7 @@ const CONTENT_PROPERTY: Property = Property {
     description: "What to write to the flowfile.",
     is_required: false,
     is_sensitive: false,
-    supports_expr_lang: false,
+    supports_expr_lang: true,
     default_value: Some("Something default to write"),
     validator: StandardPropertyValidator::AlwaysValidValidator,
     allowed_values: &[],
