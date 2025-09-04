@@ -1,4 +1,5 @@
 from behave import step
+import os
 
 from minifi_test_framework.steps import checking_steps
 from minifi_test_framework.steps import configuration_steps
@@ -10,5 +11,6 @@ from minifi_test_framework.containers.host_file import HostFile
 
 @step("the built rust extension library is inside minifi's extension folder")
 def step_impl(context: MinifiTestContext):
-    context.minifi_container.host_files.append(HostFile("/Users/mzink/Downloads/test_c_api/libminifi_native_example_lib.so", "/opt/minifi/minifi-current/extensions/libminifi-rust.so"))
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    context.minifi_container.host_files.append(HostFile(f"{dir_path}/../../so_to_test/libminifi_native_example_lib.so", "/opt/minifi/minifi-current/extensions/libminifi-rust.so"))
 
