@@ -41,6 +41,10 @@ unsafe extern "C" fn read_callback(
         let result_target = &mut *(output_option as *mut Option<String>);
 
         let stream_size = MinifiInputStreamSize(input_stream);
+        if stream_size == 0 {
+            *result_target = None;
+            return 0;
+        }
         let mut buffer: Vec<u8> = Vec::with_capacity(stream_size as usize);
 
         let bytes_read =
