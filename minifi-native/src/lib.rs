@@ -3,12 +3,12 @@ mod c_ffi;
 mod mock;
 
 pub use api::{
-    FlowFile, LogLevel, Logger, ProcessContext, ProcessSession, ProcessSessionFactory, Processor,
+    FlowFile, LogLevel, Logger, ProcessContext, ProcessSession, Processor,
     ProcessorInputRequirement, Property, Relationship, StandardPropertyValidator,
 };
 pub use c_ffi::{CffiLogger, ProcessorDefinition};
 pub use mock::{
-    MockFlowFile, MockLogger, MockProcessContext, MockProcessSession, MockProcessSessionFactory,
+    MockFlowFile, MockLogger, MockProcessContext, MockProcessSession,
 };
 
 pub use minifi_native_sys as sys;

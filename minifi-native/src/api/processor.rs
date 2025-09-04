@@ -1,4 +1,4 @@
-use crate::{Logger, ProcessContext, ProcessSession, ProcessSessionFactory};
+use crate::{Logger, ProcessContext, ProcessSession};
 
 pub enum ProcessorInputRequirement {
     Required,
@@ -23,10 +23,9 @@ pub trait Processor<L: Logger>: Sized {
     }
 
     fn on_trigger<P: ProcessContext, S: ProcessSession>(&mut self, context: &P, session: &mut S);
-    fn on_schedule<P: ProcessContext, F: ProcessSessionFactory>(
+    fn on_schedule<P: ProcessContext>(
         &mut self,
         context: &P,
-        session_factory: &mut F,
     );
     fn on_unschedule(&mut self) {}
 }

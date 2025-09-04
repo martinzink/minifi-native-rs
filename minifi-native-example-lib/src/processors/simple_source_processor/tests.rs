@@ -1,6 +1,6 @@
 use super::*;
 use minifi_native::{
-    MockLogger, MockProcessContext, MockProcessSession, MockProcessSessionFactory,
+    MockLogger, MockProcessContext, MockProcessSession,
 };
 
 #[test]
@@ -10,9 +10,7 @@ fn simple_test() {
     context
         .properties
         .insert("Content".to_string(), "Hello, World!".to_string());
-    let mut session_factory = MockProcessSessionFactory {};
-
-    processor.on_schedule(&context, &mut session_factory);
+    processor.on_schedule(&context);
 
     {
         let mut session = MockProcessSession::new();

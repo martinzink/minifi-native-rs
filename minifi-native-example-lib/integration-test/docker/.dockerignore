@@ -1,0 +1,6 @@
+.git
+.vscode
+.gitmodules
+.idea
+output
+docker

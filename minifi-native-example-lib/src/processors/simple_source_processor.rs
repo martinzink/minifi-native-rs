@@ -1,6 +1,6 @@
 use minifi_native::ProcessorInputRequirement::Forbidden;
 use minifi_native::{
-    CffiLogger, Logger, ProcessContext, ProcessSession, ProcessSessionFactory, Processor,
+    CffiLogger, Logger, ProcessContext, ProcessSession, Processor,
     ProcessorDefinition, Property, Relationship, StandardPropertyValidator,
 };
 
@@ -65,10 +65,9 @@ impl<L: Logger> Processor<L> for SimpleSourceProcessor<L> {
             .trace(format!("on_trigger exit {:?}", self).as_str());
     }
 
-    fn on_schedule<P, F>(&mut self, context: &P, _session_factory: &mut F)
+    fn on_schedule<P>(&mut self, context: &P)
     where
         P: ProcessContext,
-        F: ProcessSessionFactory,
     {
         self.logger
             .trace(format!("on_schedule entry {:?}", self).as_str());

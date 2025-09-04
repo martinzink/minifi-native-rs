@@ -5,7 +5,6 @@ use super::c_ffi_logger::CffiLogger;
 use super::c_ffi_primitives::{BoolAsMinifiCBool, StaticStrAsMinifiCStr};
 use super::c_ffi_process_context::CffiProcessContext;
 use super::c_ffi_process_session::CffiProcessSession;
-use super::c_ffi_process_session_factory::CffiProcessSessionFactory;
 use crate::api::{Processor, ProcessorInputRequirement};
 use crate::Property;
 use crate::Relationship;
@@ -91,6 +90,7 @@ where
                 onTrigger: Some(Self::on_trigger_processor),
                 onSchedule: Some(Self::on_schedule_processor),
                 onUnSchedule: Some(Self::on_unschedule_processor),
+                calculateMetrics: None,
             },
         };
 
@@ -131,14 +131,12 @@ where
 
     unsafe extern "C" fn on_schedule_processor(
         processor_ptr: *mut c_void,
-        context_ptr: MinifiProcessContext,
-        session_factory_ptr: MinifiProcessSessionFactory,
+        context_ptr: MinifiProcessContext
     ) -> MinifiStatus {
         unsafe {
             let processor = &mut *(processor_ptr as *mut T);
             let context = CffiProcessContext::new(context_ptr);
-            let mut session_factory = CffiProcessSessionFactory::new(session_factory_ptr);
-            processor.on_schedule(&context, &mut session_factory);
+            processor.on_schedule(&context);
             0
         }
     }

@@ -1,15 +1,14 @@
 use super::*;
 use minifi_native::{
-    MockFlowFile, MockLogger, MockProcessContext, MockProcessSession, MockProcessSessionFactory,
+    MockFlowFile, MockLogger, MockProcessContext, MockProcessSession,
 };
 
 #[test]
 fn simple_test() {
     let mut processor = SimpleLogProcessor::new(MockLogger::new());
     let context = MockProcessContext::new();
-    let mut session_factory = MockProcessSessionFactory {};
 
-    processor.on_schedule(&context, &mut session_factory);
+    processor.on_schedule(&context);
 
     {
         let mut session = MockProcessSession::new();
