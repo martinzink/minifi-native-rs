@@ -5,7 +5,6 @@ use minifi_native::{
 };
 use strum::VariantNames;
 
-
 #[derive(Debug)]
 struct SimpleLogProcessor<L: Logger> {
     logger: L,
@@ -77,11 +76,12 @@ impl<L: Logger> Processor<L> for SimpleLogProcessor<L> {
 
 #[cfg_attr(test, allow(dead_code))]
 fn simple_log_processor_definition() -> ProcessorDefinition<SimpleLogProcessor<CffiLogger>> {
-    let mut simple_log_processor_definition = ProcessorDefinition::<SimpleLogProcessor<CffiLogger>>::new(
-        "rust_extension",
-        "mzink.processors.rust.SimpleLogProcessor",
-        "A rust processor that tests the upcoming C API, trying out most of the features",
-    );
+    let mut simple_log_processor_definition =
+        ProcessorDefinition::<SimpleLogProcessor<CffiLogger>>::new(
+            "rust_extension",
+            "mzink.processors.rust.SimpleLogProcessor",
+            "A rust processor that tests the upcoming C API, trying out most of the features",
+        );
 
     simple_log_processor_definition.is_single_threaded = true;
     simple_log_processor_definition.input_requirement = Allowed;

@@ -1,4 +1,4 @@
-use minifi_native::ProcessorInputRequirement::{Forbidden};
+use minifi_native::ProcessorInputRequirement::Forbidden;
 use minifi_native::{
     CffiLogger, Logger, ProcessContext, ProcessSession, ProcessSessionFactory, Processor,
     ProcessorDefinition, Property, Relationship, StandardPropertyValidator,
@@ -41,7 +41,10 @@ const SHOUT_PROPERTY: Property = Property {
 
 impl<L: Logger> Processor<L> for SimpleSourceProcessor<L> {
     fn new(logger: L) -> Self {
-        Self { logger, content: String::new() }
+        Self {
+            logger,
+            content: String::new(),
+        }
     }
 
     fn on_trigger<P, S>(&mut self, _context: &P, session: &mut S)
@@ -70,9 +73,14 @@ impl<L: Logger> Processor<L> for SimpleSourceProcessor<L> {
         self.logger
             .trace(format!("on_schedule entry {:?}", self).as_str());
 
-        let shouting = context.get_property(SHOUT_PROPERTY.name, None).and_then(|s| s.parse::<bool>().ok()).unwrap_or(false);
+        let shouting = context
+            .get_property(SHOUT_PROPERTY.name, None)
+            .and_then(|s| s.parse::<bool>().ok())
+            .unwrap_or(false);
 
-        self.content = context.get_property(CONTENT_PROPERTY.name, None).unwrap_or("Default content".to_string());
+        self.content = context
+            .get_property(CONTENT_PROPERTY.name, None)
+            .unwrap_or("Default content".to_string());
         if shouting {
             self.content = self.content.to_uppercase();
         }
@@ -82,12 +90,14 @@ impl<L: Logger> Processor<L> for SimpleSourceProcessor<L> {
 }
 
 #[cfg_attr(test, allow(dead_code))]
-fn create_simple_source_processor_definition() -> ProcessorDefinition<SimpleSourceProcessor<CffiLogger>> {
-    let mut simple_source_processor_definition = ProcessorDefinition::<SimpleSourceProcessor<CffiLogger>>::new(
-        "rust_extension",
-        "mzink.processors.rust.SimpleSourceProcessor",
-        "A rust processor that acts as a source.",
-    );
+fn create_simple_source_processor_definition()
+-> ProcessorDefinition<SimpleSourceProcessor<CffiLogger>> {
+    let mut simple_source_processor_definition =
+        ProcessorDefinition::<SimpleSourceProcessor<CffiLogger>>::new(
+            "rust_extension",
+            "mzink.processors.rust.SimpleSourceProcessor",
+            "A rust processor that acts as a source.",
+        );
 
     simple_source_processor_definition.is_single_threaded = true;
     simple_source_processor_definition.input_requirement = Forbidden;
@@ -105,7 +115,6 @@ fn create_simple_source_processor_definition() -> ProcessorDefinition<SimpleSour
 fn register_simple_source_processor() {
     create_simple_source_processor_definition().register_class();
 }
-
 
 #[cfg(test)]
 mod tests;

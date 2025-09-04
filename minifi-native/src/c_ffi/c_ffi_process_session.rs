@@ -5,7 +5,7 @@ use minifi_native_sys::{
     MinifiProcessSessionWrite, MinifiStringView,
 };
 use std::ffi::{c_void, CString};
-
+use std::os::raw::c_char;
 use super::c_ffi_flow_file::CffiFlowFile;
 use crate::api::ProcessSession;
 
@@ -27,7 +27,7 @@ unsafe extern "C" fn write_callback(
 
         MinifiOutputStreamWrite(
             output_stream,
-            result_target.unwrap().as_ptr() as *const i8,
+            result_target.unwrap().as_ptr() as *const c_char,
             result_target.unwrap().len() as u64,
         )
     }
@@ -44,7 +44,7 @@ unsafe extern "C" fn read_callback(
         let mut buffer: Vec<u8> = Vec::with_capacity(stream_size as usize);
 
         let bytes_read =
-            MinifiInputStreamRead(input_stream, buffer.as_mut_ptr() as *mut i8, stream_size);
+            MinifiInputStreamRead(input_stream, buffer.as_mut_ptr() as *mut c_char, stream_size);
 
         if bytes_read < 0 {
             *result_target = None;

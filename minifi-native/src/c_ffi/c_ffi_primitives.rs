@@ -4,6 +4,7 @@ use minifi_native_sys::{
     MinifiInputRequirement_MINIFI_INPUT_FORBIDDEN, MinifiInputRequirement_MINIFI_INPUT_REQUIRED,
     MinifiStringView, MINIFI_FALSE, MINIFI_TRUE,
 };
+use std::os::raw::c_char;
 
 #[derive(Debug)]
 pub(crate) struct StringView<'a> {
@@ -15,7 +16,7 @@ impl<'a> StringView<'a> {
     pub(crate) fn new(str: &'a str) -> Self {
         Self {
             inner: MinifiStringView {
-                data: str.as_ptr() as *const i8,
+                data: str.as_ptr() as *const c_char,
                 length: str.len() as u32,
             },
             _marker: std::marker::PhantomData,
@@ -34,7 +35,7 @@ pub trait StaticStrAsMinifiCStr {
 impl StaticStrAsMinifiCStr for &'static str {
     fn as_minifi_c_type(&self) -> MinifiStringView {
         MinifiStringView {
-            data: self.as_ptr() as *const i8,
+            data: self.as_ptr() as *const c_char,
             length: self.len() as u32,
         }
     }
