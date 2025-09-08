@@ -26,8 +26,16 @@ impl ProcessSession for MockProcessSession {
         flow_file.content = data.to_string();
     }
 
-    fn read(&mut self, flow_file: &Self::FlowFile) -> Option<String> {
+    fn read_as_string(&mut self, flow_file: &Self::FlowFile) -> Option<String> {
         Some(flow_file.content.clone())
+    }
+
+    fn read_in_batches<F: FnMut(&[u8])>(&mut self, flow_file: &Self::FlowFile, batch_size: usize, mut process_batch: F) -> bool {
+        let bytes = flow_file.content.as_bytes();
+        for chunk in bytes.chunks(batch_size) {
+            process_batch(chunk);
+        }
+        true
     }
 }
 
@@ -37,5 +45,26 @@ impl MockProcessSession {
             transferred_flow_files: HashMap::new(),
             input_flow_files: Vec::new(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_read_in_batches() {
+        let mut session = MockProcessSession::new();
+        let mut flow_file = MockFlowFile::new();
+        flow_file.content = "Hello, World!".to_string();
+        let mut vec : Vec<u8> = Vec::new();
+
+        session.read_in_batches(&mut flow_file, 1, |batch| {
+            assert_eq!(batch.len(), 1);
+            vec.push(batch[0]);
+        });
+
+        assert_eq!(vec.len(), 13);
+        assert_eq!(vec, b"Hello, World!");
     }
 }

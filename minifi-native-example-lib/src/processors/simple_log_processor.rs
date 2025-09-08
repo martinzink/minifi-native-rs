@@ -1,7 +1,7 @@
 use minifi_native::ProcessorInputRequirement::Allowed;
 use minifi_native::{
-    CffiLogger, LogLevel, Logger, ProcessContext, ProcessSession, Processor,
-    ProcessorDefinition, Property, Relationship, StandardPropertyValidator,
+    CffiLogger, LogLevel, Logger, ProcessContext, ProcessSession, Processor, ProcessorDefinition,
+    Property, Relationship, StandardPropertyValidator,
 };
 use strum::VariantNames;
 
@@ -45,10 +45,13 @@ impl<L: Logger> Processor<L> for SimpleLogProcessor<L> {
             .trace(format!("on_trigger entry {:?}", self).as_str());
 
         if let Some(input_ff) = session.get() {
-            self.logger.trace(format!("Got flowfile").as_str());
-            if let Some(content) = session.read(&input_ff) {
+            self.logger.trace("Got flowfile".to_string().as_str());
+            if let Some(content) = session.read_as_string(&input_ff) {
                 self.logger.log(self.log_level, content.as_str());
             }
+            session.read_in_batches(&input_ff, 3, |batch| {
+                self.logger.info(format!("batch {:?}", batch).as_str());
+            });
             session.transfer(input_ff, SUCCESS_RELATIONSHIP.name);
         }
 

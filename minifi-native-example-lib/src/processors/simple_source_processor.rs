@@ -1,8 +1,5 @@
 use minifi_native::ProcessorInputRequirement::Forbidden;
-use minifi_native::{
-    CffiLogger, Logger, ProcessContext, ProcessSession, Processor,
-    ProcessorDefinition, Property, Relationship, StandardPropertyValidator,
-};
+use minifi_native::{CffiLogger, FlowFile, Logger, ProcessContext, ProcessSession, Processor, ProcessorDefinition, Property, Relationship, StandardPropertyValidator};
 
 #[derive(Debug)]
 struct SimpleSourceProcessor<L: Logger> {
@@ -56,7 +53,8 @@ impl<L: Logger> Processor<L> for SimpleSourceProcessor<L> {
             .trace(format!("on_trigger exit {:?}", self).as_str());
 
         if let Some(mut new_ff) = session.create() {
-            self.logger.info(format!("Created new flowfile").as_str());
+            self.logger.info("Created new flowfile".to_string().as_str());
+            new_ff.set_attribute("source", "SimpleSourceProcessor");
             session.write(&mut new_ff, self.content.as_str());
             session.transfer(new_ff, SUCCESS_RELATIONSHIP.name);
         }

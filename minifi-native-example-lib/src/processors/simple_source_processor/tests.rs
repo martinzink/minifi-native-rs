@@ -1,7 +1,5 @@
 use super::*;
-use minifi_native::{
-    MockLogger, MockProcessContext, MockProcessSession,
-};
+use minifi_native::{MockLogger, MockProcessContext, MockProcessSession};
 
 #[test]
 fn simple_test() {
@@ -15,13 +13,11 @@ fn simple_test() {
     {
         let mut session = MockProcessSession::new();
         processor.on_trigger(&context, &mut session);
-        assert_eq!(
-            session
-                .transferred_flow_files
-                .get(SUCCESS_RELATIONSHIP.name)
-                .unwrap()
-                .content,
-            "Hello, World!"
-        )
+        let created_flow_file = session
+            .transferred_flow_files
+            .get(SUCCESS_RELATIONSHIP.name)
+            .unwrap();
+        assert_eq!(created_flow_file.content, "Hello, World!");
+        assert_eq!(created_flow_file.attributes.get("source").unwrap(), "SimpleSourceProcessor");
     }
 }

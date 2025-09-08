@@ -23,6 +23,9 @@ fn simple_test() {
                 .unwrap()
                 .content,
             "Input ff"
-        )
+        );
+        assert!(processor.logger.logs.contains(&(LogLevel::Info, "batch [73, 110, 112]".to_string())));
+        assert!(processor.logger.logs.contains(&(LogLevel::Info, "batch [117, 116, 32]".to_string())));
+        assert!(processor.logger.logs.contains(&(LogLevel::Info, "batch [102, 102]".to_string())));
     }
 }
