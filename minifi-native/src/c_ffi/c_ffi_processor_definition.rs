@@ -5,9 +5,9 @@ use super::c_ffi_logger::CffiLogger;
 use super::c_ffi_primitives::{BoolAsMinifiCBool, StaticStrAsMinifiCStr};
 use super::c_ffi_process_context::CffiProcessContext;
 use super::c_ffi_process_session::CffiProcessSession;
-use crate::api::{Processor, ProcessorInputRequirement};
-use crate::Property;
+use crate::{LogLevel, Property};
 use crate::Relationship;
+use crate::api::{Processor, ProcessorInputRequirement};
 use minifi_native_sys::*;
 
 pub struct ProcessorDefinition<T>
@@ -21,8 +21,8 @@ where
     pub supports_dynamic_properties: bool,
     pub supports_dynamic_relationships: bool,
     pub is_single_threaded: bool,
-    pub relationships: Vec<Relationship>,
-    pub properties: Vec<Property>,
+    pub relationships: &'static [Relationship],
+    pub properties: &'static [Property],
     _phantom: std::marker::PhantomData<T>,
 }
 
@@ -43,8 +43,8 @@ where
             supports_dynamic_properties: false,
             supports_dynamic_relationships: false,
             is_single_threaded: false,
-            relationships: vec![],
-            properties: vec![],
+            relationships: &[],
+            properties: &[],
             _phantom: std::marker::PhantomData,
         }
     }
@@ -124,20 +124,30 @@ where
             let processor = &mut *(processor_ptr as *mut T);
             let context = CffiProcessContext::new(context_ptr);
             let mut session = CffiProcessSession::new(session_ptr);
-            processor.on_trigger(&context, &mut session);
-            0
+            match processor.on_trigger(&context, &mut session) {
+                Ok(_) => { 0 }
+                Err(error_code) => {
+                    error_code.to_status()
+                }
+            }
+
         }
     }
 
     unsafe extern "C" fn on_schedule_processor(
         processor_ptr: *mut c_void,
-        context_ptr: MinifiProcessContext
+        context_ptr: MinifiProcessContext,
     ) -> MinifiStatus {
         unsafe {
             let processor = &mut *(processor_ptr as *mut T);
             let context = CffiProcessContext::new(context_ptr);
-            processor.on_schedule(&context);
-            0
+            match processor.on_schedule(&context) {
+                Ok(_) => { 0 }
+                Err(error_code) => {
+                    processor.log(LogLevel::Error, format!("{:?}", error_code).as_str());
+                    error_code.to_status()
+                }
+            }
         }
     }
 

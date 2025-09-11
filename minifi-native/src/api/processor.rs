@@ -1,5 +1,5 @@
-use crate::{Logger, ProcessContext, ProcessSession};
-
+use crate::{LogLevel, Logger, ProcessContext, ProcessSession};
+use crate::api::error_code::MinifiError;
 pub enum ProcessorInputRequirement {
     Required,
     Allowed,
@@ -22,10 +22,8 @@ pub trait Processor<L: Logger>: Sized {
         false
     }
 
-    fn on_trigger<P: ProcessContext, S: ProcessSession>(&mut self, context: &P, session: &mut S);
-    fn on_schedule<P: ProcessContext>(
-        &mut self,
-        context: &P,
-    );
+    fn on_trigger<P: ProcessContext, S: ProcessSession>(&mut self, context: &P, session: &mut S) -> Result<(), MinifiError>;
+    fn on_schedule<P: ProcessContext>(&mut self, context: &P) -> Result<(), MinifiError>;
     fn on_unschedule(&mut self) {}
+    fn log(&mut self, log_level: LogLevel, message: &str);
 }

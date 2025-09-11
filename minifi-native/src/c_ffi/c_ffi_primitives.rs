@@ -1,10 +1,16 @@
 use crate::ProcessorInputRequirement;
 use minifi_native_sys::{
-    MinifiBool, MinifiInputRequirement, MinifiInputRequirement_MINIFI_INPUT_ALLOWED,
-    MinifiInputRequirement_MINIFI_INPUT_FORBIDDEN, MinifiInputRequirement_MINIFI_INPUT_REQUIRED,
-    MinifiStringView, MINIFI_FALSE, MINIFI_TRUE,
+    MINIFI_FALSE, MINIFI_TRUE, MinifiBool, MinifiInputRequirement,
+    MinifiInputRequirement_MINIFI_INPUT_ALLOWED, MinifiInputRequirement_MINIFI_INPUT_FORBIDDEN,
+    MinifiInputRequirement_MINIFI_INPUT_REQUIRED, MinifiStringView,
 };
 use std::os::raw::c_char;
+
+#[derive(Debug)]
+pub enum FfiConversionError {
+    NullPointer,
+    InvalidUtf8,
+}
 
 #[derive(Debug)]
 pub(crate) struct StringView<'a> {
@@ -22,7 +28,7 @@ impl<'a> StringView<'a> {
             _marker: std::marker::PhantomData,
         }
     }
-
+    
     pub unsafe fn as_raw(&self) -> MinifiStringView {
         self.inner
     }
@@ -41,17 +47,40 @@ impl StaticStrAsMinifiCStr for &'static str {
     }
 }
 
+pub trait ConvertMinifiStringView {
+    unsafe fn as_string(&self) -> Result<String, FfiConversionError>;
+    unsafe fn as_str(&self) -> Result<&str, FfiConversionError>;
+}
+
+impl ConvertMinifiStringView for MinifiStringView {
+    unsafe fn as_string(&self) -> Result<String, FfiConversionError> {
+        if self.data.is_null() {
+            return Err(FfiConversionError::NullPointer);
+        }
+        unsafe {
+            let slice = std::slice::from_raw_parts(self.data as *const u8, self.length as usize);
+            String::from_utf8(slice.to_vec()).map_err(|_| FfiConversionError::InvalidUtf8)
+        }
+    }
+
+    unsafe fn as_str(&self) -> Result<&str, FfiConversionError> {
+        if self.data.is_null() {
+            return Err(FfiConversionError::NullPointer);
+        }
+        unsafe {
+            let slice = std::slice::from_raw_parts(self.data as *const u8, self.length as usize);
+            str::from_utf8(slice).map_err(|_| FfiConversionError::InvalidUtf8)
+        }
+    }
+}
+
 pub trait BoolAsMinifiCBool {
     fn as_minifi_c_type(&self) -> MinifiBool;
 }
 
 impl BoolAsMinifiCBool for bool {
     fn as_minifi_c_type(&self) -> MinifiBool {
-        if *self {
-            MINIFI_TRUE
-        } else {
-            MINIFI_FALSE
-        }
+        if *self { MINIFI_TRUE } else { MINIFI_FALSE }
     }
 }
 

@@ -3,6 +3,7 @@ use super::c_ffi_primitives::StringView;
 use crate::api::ProcessContext;
 use minifi_native_sys::*;
 use std::ffi::c_void;
+use crate::Property;
 
 /// A safe wrapper around a `MinifiProcessContext` pointer.
 pub struct CffiProcessContext<'a> {
@@ -45,13 +46,13 @@ impl<'a> ProcessContext for CffiProcessContext<'a> {
     type FlowFile = CffiFlowFile;
     fn get_property(
         &self,
-        property_name: &str,
+        property: &Property,
         flow_file: Option<&Self::FlowFile>,
     ) -> Option<String> {
         let ff_ptr = flow_file.map_or(std::ptr::null_mut(), |ff| ff.ptr);
 
         let mut result: Option<String> = None;
-        let property_name: StringView = StringView::new(property_name);
+        let property_name: StringView = StringView::new(property.name);
 
         let status = unsafe {
             MinifiProcessContextGetProperty(

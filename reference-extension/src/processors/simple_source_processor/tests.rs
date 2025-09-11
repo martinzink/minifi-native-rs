@@ -8,16 +8,19 @@ fn simple_test() {
     context
         .properties
         .insert("Content".to_string(), "Hello, World!".to_string());
-    processor.on_schedule(&context);
+    processor.on_schedule(&context).expect("The on_schedule should succeed");
 
     {
         let mut session = MockProcessSession::new();
-        processor.on_trigger(&context, &mut session);
+        processor.on_trigger(&context, &mut session).expect("The on_trigger should succeed");
         let created_flow_file = session
             .transferred_flow_files
-            .get(SUCCESS_RELATIONSHIP.name)
+            .get(relationships::SUCCESS.name)
             .unwrap();
         assert_eq!(created_flow_file.content, "Hello, World!");
-        assert_eq!(created_flow_file.attributes.get("source").unwrap(), "SimpleSourceProcessor");
+        assert_eq!(
+            created_flow_file.attributes.get("source").unwrap(),
+            "SimpleSourceProcessor"
+        );
     }
 }

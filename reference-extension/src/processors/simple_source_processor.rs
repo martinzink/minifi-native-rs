@@ -1,40 +1,14 @@
 use minifi_native::ProcessorInputRequirement::Forbidden;
-use minifi_native::{CffiLogger, FlowFile, Logger, ProcessContext, ProcessSession, Processor, ProcessorDefinition, Property, Relationship, StandardPropertyValidator};
+use minifi_native::{CffiLogger, MinifiError, Logger, ProcessContext, ProcessSession, Processor, ProcessorDefinition, LogLevel};
+
+mod relationships;
+mod properties;
 
 #[derive(Debug)]
 struct SimpleSourceProcessor<L: Logger> {
     logger: L,
     content: String,
 }
-
-const SUCCESS_RELATIONSHIP: Relationship = Relationship {
-    name: "success",
-    description: "FlowFiles are transferred here after logging",
-};
-
-const CONTENT_PROPERTY: Property = Property {
-    name: "Content",
-    description: "What to write to the flowfile.",
-    is_required: false,
-    is_sensitive: false,
-    supports_expr_lang: true,
-    default_value: Some("Something default to write"),
-    validator: StandardPropertyValidator::AlwaysValidValidator,
-    allowed_values: &[],
-    allowed_types: &[],
-};
-
-const SHOUT_PROPERTY: Property = Property {
-    name: "Shouting",
-    description: "do you want to shout?",
-    is_required: true,
-    is_sensitive: false,
-    supports_expr_lang: false,
-    default_value: Some("false"),
-    validator: StandardPropertyValidator::BoolValidator,
-    allowed_values: &[],
-    allowed_types: &[],
-};
 
 impl<L: Logger> Processor<L> for SimpleSourceProcessor<L> {
     fn new(logger: L) -> Self {
@@ -44,7 +18,7 @@ impl<L: Logger> Processor<L> for SimpleSourceProcessor<L> {
         }
     }
 
-    fn on_trigger<P, S>(&mut self, _context: &P, session: &mut S)
+    fn on_trigger<P, S>(&mut self, _context: &P, session: &mut S) -> Result<(), MinifiError>
     where
         P: ProcessContext,
         S: ProcessSession,
@@ -53,17 +27,19 @@ impl<L: Logger> Processor<L> for SimpleSourceProcessor<L> {
             .trace(format!("on_trigger exit {:?}", self).as_str());
 
         if let Some(mut new_ff) = session.create() {
-            self.logger.info("Created new flowfile".to_string().as_str());
-            new_ff.set_attribute("source", "SimpleSourceProcessor");
+            self.logger
+                .info("Created new flowfile".to_string().as_str());
+            session.set_attribute(&mut new_ff, "source", "SimpleSourceProcessor");
             session.write(&mut new_ff, self.content.as_str());
-            session.transfer(new_ff, SUCCESS_RELATIONSHIP.name);
+            session.transfer(new_ff, relationships::SUCCESS.name);
         }
 
         self.logger
             .trace(format!("on_trigger exit {:?}", self).as_str());
+        Ok(())
     }
 
-    fn on_schedule<P>(&mut self, context: &P)
+    fn on_schedule<P>(&mut self, context: &P) -> Result<(), MinifiError>
     where
         P: ProcessContext,
     {
@@ -71,18 +47,23 @@ impl<L: Logger> Processor<L> for SimpleSourceProcessor<L> {
             .trace(format!("on_schedule entry {:?}", self).as_str());
 
         let shouting = context
-            .get_property(SHOUT_PROPERTY.name, None)
+            .get_property(&properties::SHOUT, None)
             .and_then(|s| s.parse::<bool>().ok())
             .unwrap_or(false);
 
         self.content = context
-            .get_property(CONTENT_PROPERTY.name, None)
+            .get_property(&properties::CONTENT, None)
             .unwrap_or("Default content".to_string());
         if shouting {
             self.content = self.content.to_uppercase();
         }
         self.logger
             .trace(format!("on_schedule exit {:?}", self).as_str());
+        Ok(())
+    }
+
+    fn log(&mut self, log_level: LogLevel, message: &str) {
+        self.logger.log(log_level, message);
     }
 }
 
@@ -91,8 +72,8 @@ fn create_simple_source_processor_definition()
 -> ProcessorDefinition<SimpleSourceProcessor<CffiLogger>> {
     let mut simple_source_processor_definition =
         ProcessorDefinition::<SimpleSourceProcessor<CffiLogger>>::new(
-            "rust_extension",
-            "mzink.processors.rust.SimpleSourceProcessor",
+            "rust_reference_extension",
+            "mzink::processors::rust::SimpleSourceProcessor",
             "A rust processor that acts as a source.",
         );
 
@@ -100,8 +81,8 @@ fn create_simple_source_processor_definition()
     simple_source_processor_definition.input_requirement = Forbidden;
     simple_source_processor_definition.supports_dynamic_properties = false;
     simple_source_processor_definition.supports_dynamic_relationships = false;
-    simple_source_processor_definition.relationships = vec![SUCCESS_RELATIONSHIP];
-    simple_source_processor_definition.properties = vec![CONTENT_PROPERTY, SHOUT_PROPERTY];
+    simple_source_processor_definition.relationships = &[relationships::SUCCESS];
+    simple_source_processor_definition.properties = &[properties::CONTENT, properties::SHOUT];
 
     simple_source_processor_definition
 }

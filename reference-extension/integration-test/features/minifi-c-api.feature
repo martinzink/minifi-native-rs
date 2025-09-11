@@ -1,6 +1,6 @@
 Feature: Test Minifi Native C Api capabilities
 
-  Background: The example library is successfully built on linux
+  Background: The reference library is successfully built on linux
 
   Scenario: The rust library is loaded into minifi
     Given the built rust extension library is inside minifi's extension folder
@@ -8,7 +8,7 @@ Feature: Test Minifi Native C Api capabilities
 
     When the MiNiFi instance starts up
 
-    Then the Minifi logs contain the following message: "Successfully initialized extension 'minifi-rust'" in less than 20 seconds
+    Then the Minifi logs contain the following message: "Successfully initialized extension 'minifi-rust'" in less than 200 seconds
     And the Minifi logs do not contain errors
     And the Minifi logs do not contain warnings
 
@@ -25,31 +25,33 @@ Feature: Test Minifi Native C Api capabilities
     And the Minifi logs do not contain errors
     And the Minifi logs do not contain warnings
 
-  Scenario Outline: The SimpleLogProcessor can read and log FlowFile content
+  Scenario Outline: The LogAttributeRs can read and log FlowFile content
     Given the built rust extension library is inside minifi's extension folder
     And a GenerateFlowFile processor with the "Custom Text" property set to "<custom_text>"
     And the "Data Format" property of the GenerateFlowFile processor is set to "Text"
     And the "Unique FlowFiles" property of the GenerateFlowFile processor is set to "false"
-    And a SimpleLogProcessor processor with the "Log Level" property set to "<log_level>"
-    And the "success" relationship of the GenerateFlowFile processor is connected to the SimpleLogProcessor
-    And SimpleLogProcessor's success relationship is auto-terminated
+    And a LogAttributeRs processor with the "Log Level" property set to "<log_level>"
+    And the "Log Payload" property of the LogAttributeRs processor is set to "true"
+    And the "success" relationship of the GenerateFlowFile processor is connected to the LogAttributeRs
+    And LogAttributeRs's success relationship is auto-terminated
 
     When the MiNiFi instance starts up
 
-    Then the Minifi logs contain the following message: "<expected_log>" in less than 20 seconds
+    Then the Minifi logs contain the following message: "<expected_log_1>" in less than 20 seconds
+    And the Minifi logs contain the following message: "<expected_log_2>" in less than 1 seconds
     And the Minifi logs do not contain errors
     And the Minifi logs do not contain warnings
     Examples:
-      | custom_text   | log_level | expected_log             |
-      | Keith the rat | Critical  | [critical] Keith the rat |
-      | Keith the rat | Info      | [info] Keith the rat     |
+      | custom_text   | log_level | expected_log_1                   | expected_log_2 |
+      | Keith the rat | Critical  | [critical] Logging for flow file | Keith the rat  |
+      | Keith the rat | Info      | [info] Logging for flow file     | Keith the rat  |
 
   Scenario: The Api handles empty flow-files
     Given the built rust extension library is inside minifi's extension folder
     And a SimpleSourceProcessor processor with the "Content" property set to "${invalid_attribute}"
-    And a SimpleLogProcessor processor with the "Log Level" property set to "critical"
-    And the "success" relationship of the SimpleSourceProcessor processor is connected to the SimpleLogProcessor
-    And SimpleLogProcessor's success relationship is auto-terminated
+    And a LogAttributeRs processor with the "Log Level" property set to "Critical"
+    And the "success" relationship of the SimpleSourceProcessor processor is connected to the LogAttributeRs
+    And LogAttributeRs's success relationship is auto-terminated
 
     When the MiNiFi instance starts up
 

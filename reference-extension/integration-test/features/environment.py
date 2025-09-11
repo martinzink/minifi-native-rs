@@ -13,9 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+import logging
 
 from minifi_test_framework.core.hooks import common_before_scenario
 from minifi_test_framework.core.hooks import common_after_scenario
+
+def before_feature(context, feature):
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    build_cmd = f"{dir_path}/../docker/rockybuild.sh"
+    output = os.system(build_cmd)
+    logging.info(output)
 
 
 def before_scenario(context, scenario):

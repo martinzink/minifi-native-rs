@@ -1,11 +1,12 @@
 use crate::api::flow_file::FlowFile;
+use crate::Property;
 
 pub trait ProcessContext {
     type FlowFile: FlowFile;
 
     fn get_property(
         &self,
-        property_name: &str,
+        property: &Property,
         flow_file: Option<&Self::FlowFile>,
     ) -> Option<String>;
 }

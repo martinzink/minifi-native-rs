@@ -23,6 +23,6 @@ LABEL maintainer="Martin Zink <martinzink@apache.org>"
 RUN dnf install -y clang
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 
-ENV BUILD_DIR /opt/minifi-native-rs
+ENV BUILD_DIR=/opt/minifi-native-rs
 COPY .. ${BUILD_DIR}
-RUN cd ${BUILD_DIR}/minifi-native-example-lib && /root/.cargo/bin/cargo build --release
+RUN cd ${BUILD_DIR}/reference-extension && /root/.cargo/bin/cargo build --release
