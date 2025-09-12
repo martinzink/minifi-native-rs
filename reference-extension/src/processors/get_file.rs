@@ -82,24 +82,22 @@ impl<L: Logger> GetFile<L> {
         if !metadata.is_file() {
             return Ok(false);
         }
-        if self.min_age.is_some() || self.max_age.is_some() {
-            let age = SystemTime::now().duration_since(metadata.created()?)?;
-            if self.min_age.is_some() && age < self.min_age.unwrap() {
-                return Ok(false);
-            }
-            if self.max_age.is_some() && age > self.max_age.unwrap() {
-                return Ok(false);
-            }
+        let age = SystemTime::now().duration_since(metadata.created()?)?;
+        let size = metadata.size();
+
+        if self.min_age.is_some() && age < self.min_age.unwrap() {
+            return Ok(false);
         }
-        if self.min_size.is_some() || self.max_size.is_some() {
-            let size = metadata.size();
-            if self.min_size.is_some() && size < self.min_size.unwrap() {
-                return Ok(false);
-            }
-            if self.max_size.is_some() && size > self.max_size.unwrap() {
-                return Ok(false);
-            }
+        if self.max_age.is_some() && age > self.max_age.unwrap() {
+            return Ok(false);
         }
+        if self.min_size.is_some() && size < self.min_size.unwrap() {
+            return Ok(false);
+        }
+        if self.max_size.is_some() && size > self.max_size.unwrap() {
+            return Ok(false);
+        }
+
         // TODO(hidden files)
 
         Ok(true)

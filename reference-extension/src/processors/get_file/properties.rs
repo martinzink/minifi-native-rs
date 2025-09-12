@@ -6,7 +6,7 @@ pub(crate) const DIRECTORY: Property = Property {
     is_required: true,
     is_sensitive: false,
     supports_expr_lang: true,
-    default_value: Some("info"),
+    default_value: None,
     validator: StandardPropertyValidator::NonBlankValidator,
     allowed_values: &[],
     allowed_types: &[],
@@ -67,7 +67,7 @@ pub(crate) const MIN_SIZE: Property = Property {
     is_sensitive: false,
     supports_expr_lang: false,
     default_value: None,
-    validator: StandardPropertyValidator::TimePeriodValidator,
+    validator: StandardPropertyValidator::DataSizeValidator,
     allowed_values: &[],
     allowed_types: &[],
 };
@@ -79,7 +79,7 @@ pub(crate) const MAX_SIZE: Property = Property {
     is_sensitive: false,
     supports_expr_lang: false,
     default_value: None,
-    validator: StandardPropertyValidator::TimePeriodValidator,
+    validator: StandardPropertyValidator::DataSizeValidator,
     allowed_values: &[],
     allowed_types: &[],
 };

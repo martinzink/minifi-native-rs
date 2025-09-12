@@ -3,16 +3,30 @@ use std::str::ParseBoolError;
 use minifi_native_sys::{MinifiStatus, MinifiStatus_MINIFI_UNKNOWN_ERROR};
 
 #[derive(Debug, Clone)]
+pub struct SizeParseError(pub byte_unit::ParseError);
+
+impl PartialEq for SizeParseError {
+    fn eq(&self, _other: &Self) -> bool {
+        true
+    }
+}
+
+impl Eq for SizeParseError {}
+
+
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum ParseError {
     Strum(strum::ParseError),
     Bool(ParseBoolError),
     Int(ParseIntError),
     Duration(humantime::DurationError),
-    Size(byte_unit::ParseError),
+    Size(SizeParseError),
     Other
 }
 
-#[derive(Debug, Clone)]
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum MinifiError {
     UnknownError,
     MissingRequiredProperty(&'static str),
@@ -44,7 +58,7 @@ impl From<humantime::DurationError> for MinifiError {
 }
 
 impl From<byte_unit::ParseError> for MinifiError {
-    fn from(err: byte_unit::ParseError) -> Self { MinifiError::Parse(ParseError::Size(err)) }
+    fn from(err: byte_unit::ParseError) -> Self { MinifiError::Parse(ParseError::Size(SizeParseError(err))) }
 }
 
 impl MinifiError {

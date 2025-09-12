@@ -17,5 +17,9 @@ minifi-native = { path = "../minifi-native" }
 ctor = "0.5.0"
 strum = "0.27.2"
 const_format = "0.2.34"
-humantime = "2.3.0"
 walkdir = "2.5.0"
+
+[dev-dependencies]
+tempfile = "3.22.0"
+filetime = "0.2.26"
+humantime = "2.3.0"
