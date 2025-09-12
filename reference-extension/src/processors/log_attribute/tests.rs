@@ -11,9 +11,6 @@ fn simple_test() {
     context
         .properties
         .insert(String::from("Log Payload"), String::from("true"));
-    context
-        .properties
-        .insert(String::from("FlowFiles To Log"), String::from("1"));
 
     processor
         .on_schedule(&context)
@@ -27,7 +24,7 @@ fn simple_test() {
         input_ff.attributes.insert(String::from("Date"), String::from("today"));
         session.input_flow_files.push(input_ff);
         processor
-            .on_trigger(&context, &mut session)
+            .on_trigger(&mut context, &mut session)
             .expect("The on_trigger should succeed");
         let expected =
 "Logging for flow file
@@ -36,7 +33,8 @@ FlowFile Attributes Map Content
 key:Date value:today
 key:Source value:test
 Payload:
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer facilisis diam sit amet nisl interdum, vitae interdum arcu viverra. Nam placerat mi in erat pellentesque, at ultrices orci faucibus. Cras sollicitudin iaculis posuere. Sed tempus, dolor nec lacinia suscipit, tellus odio venenatis odio, nec sollicitudin dolor augue non urna. Aliquam tincidunt viverra ipsum eget hendrerit. Suspendisse varius, augue vel fermentum varius, velit elit euismod lacus, a placerat purus est a lacus. Aenean nibh neque, consectetur hendrerit egestas vitae, commodo non quam. Nullam luctus tempor ante, sed tempus quam imperdiet in. Maecenas gravida erat orci, in consequat urna pretium nec. In sodales iaculis magna at vehicula. --------------------------------------------------".to_string();
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer facilisis diam sit amet nisl interdum, vitae interdum arcu viverra. Nam placerat mi in erat pellentesque, at ultrices orci faucibus. Cras sollicitudin iaculis posuere. Sed tempus, dolor nec lacinia suscipit, tellus odio venenatis odio, nec sollicitudin dolor augue non urna. Aliquam tincidunt viverra ipsum eget hendrerit. Suspendisse varius, augue vel fermentum varius, velit elit euismod lacus, a placerat purus est a lacus. Aenean nibh neque, consectetur hendrerit egestas vitae, commodo non quam. Nullam luctus tempor ante, sed tempus quam imperdiet in. Maecenas gravida erat orci, in consequat urna pretium nec. In sodales iaculis magna at vehicula. 
+--------------------------------------------------".to_string();
         assert!(
             processor
                 .logger

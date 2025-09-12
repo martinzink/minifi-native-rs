@@ -122,9 +122,9 @@ where
     ) -> MinifiStatus {
         unsafe {
             let processor = &mut *(processor_ptr as *mut T);
-            let context = CffiProcessContext::new(context_ptr);
+            let mut context = CffiProcessContext::new(context_ptr);
             let mut session = CffiProcessSession::new(session_ptr);
-            match processor.on_trigger(&context, &mut session) {
+            match processor.on_trigger(&mut context, &mut session) {
                 Ok(_) => { 0 }
                 Err(error_code) => {
                     error_code.to_status()

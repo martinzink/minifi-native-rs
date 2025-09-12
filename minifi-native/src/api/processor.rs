@@ -22,7 +22,7 @@ pub trait Processor<L: Logger>: Sized {
         false
     }
 
-    fn on_trigger<P: ProcessContext, S: ProcessSession>(&mut self, context: &P, session: &mut S) -> Result<(), MinifiError>;
+    fn on_trigger<P: ProcessContext, S: ProcessSession>(&mut self, context: &mut P, session: &mut S) -> Result<(), MinifiError>;
     fn on_schedule<P: ProcessContext>(&mut self, context: &P) -> Result<(), MinifiError>;
     fn on_unschedule(&mut self) {}
     fn log(&mut self, log_level: LogLevel, message: &str);

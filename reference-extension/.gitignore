@@ -1,4 +1,5 @@
 target
+output
 features/.venv
 features/output
 integration-test/features/.venv

@@ -1,5 +1,6 @@
 use minifi_native::{CffiLogger, ProcessorDefinition, ProcessorInputRequirement};
-use crate::processors::get_file::{properties, relationships, GetFile};
+use crate::processors::get_file::{relationships, GetFile};
+use crate::processors::get_file::properties::*;
 
 #[cfg_attr(test, allow(dead_code))]
 fn get_file_definition() -> ProcessorDefinition<GetFile<CffiLogger>> {
@@ -7,15 +8,15 @@ fn get_file_definition() -> ProcessorDefinition<GetFile<CffiLogger>> {
         ProcessorDefinition::<GetFile<CffiLogger>>::new(
             "rust_reference_extension",
             "rs::GetFileRs",
-            "Logs attributes of flow files in the MiNiFi application log.",
+            "Creates FlowFiles from files in a directory. MiNiFi will ignore files for which it doesn't have read permissions.",
         );
 
-    simple_log_processor_definition.is_single_threaded = false;
-    simple_log_processor_definition.input_requirement = ProcessorInputRequirement::Required;
+    simple_log_processor_definition.is_single_threaded = true;  // TODO(multithreading)
+    simple_log_processor_definition.input_requirement = ProcessorInputRequirement::Forbidden;
     simple_log_processor_definition.supports_dynamic_properties = false;
     simple_log_processor_definition.supports_dynamic_relationships = false;
     simple_log_processor_definition.relationships = &[relationships::SUCCESS];
-    simple_log_processor_definition.properties = &properties::PROPERTIES;
+    simple_log_processor_definition.properties = &[DIRECTORY, RECURSE, KEEP_SOURCE_FILE, MIN_AGE, MAX_AGE, MIN_SIZE, MAX_SIZE, IGNORE_HIDDEN_FILES, BATCH_SIZE];
     simple_log_processor_definition
 }
 

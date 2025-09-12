@@ -1,9 +1,10 @@
-use crate::{MockFlowFile, Property};
 use crate::api::ProcessContext;
+use crate::{MinifiError, MockFlowFile, Property};
 use std::collections::HashMap;
 
 pub struct MockProcessContext {
     pub properties: HashMap<String, String>,
+    pub yielded: bool,
 }
 
 impl ProcessContext for MockProcessContext {
@@ -13,8 +14,19 @@ impl ProcessContext for MockProcessContext {
         &self,
         property: &Property,
         _flow_file: Option<&Self::FlowFile>,
-    ) -> Option<String> {
-        self.properties.get(property.name).cloned()
+    ) -> Result<Option<String>, MinifiError> {
+        if let Some(property) = self.properties.get(property.name) {
+            Ok(Some(property.clone()))
+        } else {
+            match property.is_required {
+                true => Err(MinifiError::MissingRequiredProperty(property.name)),
+                false => Ok(None),
+            }
+        }
+    }
+
+    fn yield_context(&mut self) {
+        self.yielded = true;
     }
 }
 
@@ -22,6 +34,7 @@ impl MockProcessContext {
     pub fn new() -> Self {
         Self {
             properties: HashMap::new(),
+            yielded: false,
         }
     }
 }

@@ -72,5 +72,3 @@ pub(crate) const FLOW_FILES_TO_LOG: Property = Property {
     allowed_values: &[],
     allowed_types: &[],
 };
-
-pub(crate) const PROPERTIES: &'static [Property] = &[LOG_LEVEL, ATTRIBUTES_TO_LOG, ATTRIBUTES_TO_IGNORE, LOG_PAYLOAD, LOG_PREFIX, FLOW_FILES_TO_LOG];

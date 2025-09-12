@@ -1,5 +1,6 @@
 use minifi_native::{CffiLogger, ProcessorDefinition, ProcessorInputRequirement};
-use crate::processors::log_attribute::{properties, relationships, LogAttribute};
+use crate::processors::log_attribute::{relationships, LogAttribute};
+use crate::processors::log_attribute::properties::*;
 
 #[cfg_attr(test, allow(dead_code))]
 fn log_attribute_definition() -> ProcessorDefinition<LogAttribute<CffiLogger>> {
@@ -15,7 +16,7 @@ fn log_attribute_definition() -> ProcessorDefinition<LogAttribute<CffiLogger>> {
     simple_log_processor_definition.supports_dynamic_properties = false;
     simple_log_processor_definition.supports_dynamic_relationships = false;
     simple_log_processor_definition.relationships = &[relationships::SUCCESS];
-    simple_log_processor_definition.properties = &properties::PROPERTIES;
+    simple_log_processor_definition.properties = &[LOG_LEVEL, ATTRIBUTES_TO_LOG, ATTRIBUTES_TO_IGNORE, LOG_PAYLOAD, LOG_PREFIX, FLOW_FILES_TO_LOG];
     simple_log_processor_definition
 }
 

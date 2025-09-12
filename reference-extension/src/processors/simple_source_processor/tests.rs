@@ -12,7 +12,7 @@ fn simple_test() {
 
     {
         let mut session = MockProcessSession::new();
-        processor.on_trigger(&context, &mut session).expect("The on_trigger should succeed");
+        processor.on_trigger(&mut context, &mut session).expect("The on_trigger should succeed");
         let created_flow_file = session
             .transferred_flow_files
             .get(relationships::SUCCESS.name)

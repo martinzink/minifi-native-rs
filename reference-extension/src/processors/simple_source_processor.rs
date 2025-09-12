@@ -18,7 +18,7 @@ impl<L: Logger> Processor<L> for SimpleSourceProcessor<L> {
         }
     }
 
-    fn on_trigger<P, S>(&mut self, _context: &P, session: &mut S) -> Result<(), MinifiError>
+    fn on_trigger<P, S>(&mut self, _context: &mut P, session: &mut S) -> Result<(), MinifiError>
     where
         P: ProcessContext,
         S: ProcessSession,
@@ -47,12 +47,12 @@ impl<L: Logger> Processor<L> for SimpleSourceProcessor<L> {
             .trace(format!("on_schedule entry {:?}", self).as_str());
 
         let shouting = context
-            .get_property(&properties::SHOUT, None)
+            .get_property(&properties::SHOUT, None)?
             .and_then(|s| s.parse::<bool>().ok())
             .unwrap_or(false);
 
         self.content = context
-            .get_property(&properties::CONTENT, None)
+            .get_property(&properties::CONTENT, None)?
             .unwrap_or("Default content".to_string());
         if shouting {
             self.content = self.content.to_uppercase();

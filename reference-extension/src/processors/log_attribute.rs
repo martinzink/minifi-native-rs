@@ -1,9 +1,10 @@
-use minifi_native::{MinifiError, LogLevel, Logger, ProcessContext, ProcessSession, Processor, Property};
 use crate::processors::log_attribute::properties::{FLOW_FILES_TO_LOG, LOG_LEVEL, LOG_PAYLOAD};
+use minifi_native::{
+    LogLevel, Logger, MinifiError, ProcessContext, ProcessSession, Processor, Property,
+};
 
-mod relationships;
 mod properties;
-
+mod relationships;
 
 #[derive(Debug)]
 struct LogAttribute<L: Logger> {
@@ -12,17 +13,18 @@ struct LogAttribute<L: Logger> {
     attributes_to_log: Option<Vec<String>>,
     attributes_to_ignore: Option<Vec<String>>,
     log_payload: bool,
-    flow_files_to_log_: usize,
-    dash_line_: String,
+    flow_files_to_log: usize,
+    dash_line: String,
 }
 
 impl<L: Logger> LogAttribute<L> {
     fn generate_log_message<PS>(&self, session: &mut PS, flow_file: &mut PS::FlowFile) -> String
-    where PS: ProcessSession,
+    where
+        PS: ProcessSession,
     {
         let mut log_msg = String::with_capacity(1024);
         log_msg.push_str("Logging for flow file\n");
-        log_msg.push_str(self.dash_line_.as_str());
+        log_msg.push_str(self.dash_line.as_str());
 
         log_msg.push_str("\nFlowFile Attributes Map Content");
         session.on_attributes(flow_file, |key, value| {
@@ -40,10 +42,15 @@ impl<L: Logger> LogAttribute<L> {
         });
         if self.log_payload {
             log_msg.push_str("\nPayload:\n");
-            log_msg.push_str(session.read_as_string(flow_file).unwrap_or(String::new()).as_str());
+            log_msg.push_str(
+                session
+                    .read_as_string(flow_file)
+                    .unwrap_or(String::new())
+                    .as_str(),
+            );
         }
         log_msg.push_str("\n");
-        log_msg.push_str(self.dash_line_.as_str());
+        log_msg.push_str(self.dash_line.as_str());
         log_msg
     }
 }
@@ -56,18 +63,28 @@ impl<L: Logger> Processor<L> for LogAttribute<L> {
             attributes_to_log: None,
             attributes_to_ignore: None,
             log_payload: false,
-            flow_files_to_log_: 1,
-            dash_line_: String::new()
+            flow_files_to_log: 1,
+            dash_line: String::new(),
         }
     }
 
-    fn on_trigger<P, S>(&mut self, _context: &P, session: &mut S) -> Result<(), MinifiError>
+    fn on_trigger<P, S>(&mut self, _context: &mut P, session: &mut S) -> Result<(), MinifiError>
     where
         P: ProcessContext,
         S: ProcessSession,
     {
-        self.logger.trace(format!("enter log attribute, attempting to retrieve {} flow files", self.flow_files_to_log_).as_str());
-        let max_flow_files_to_process = if self.flow_files_to_log_ == 0 { usize::MAX } else { self.flow_files_to_log_ };
+        self.logger.trace(
+            format!(
+                "enter log attribute, attempting to retrieve {} flow files",
+                self.flow_files_to_log
+            )
+            .as_str(),
+        );
+        let max_flow_files_to_process = if self.flow_files_to_log == 0 {
+            usize::MAX
+        } else {
+            self.flow_files_to_log
+        };
         let mut flow_files_processed = 0usize;
         for _ in 0..max_flow_files_to_process {
             if let Some(mut flow_file) = session.get() {
@@ -79,41 +96,48 @@ impl<L: Logger> Processor<L> for LogAttribute<L> {
                 break;
             }
         }
-        self.logger.debug(format!("Logged {} flow files", flow_files_processed).as_str());
+        self.logger
+            .debug(format!("Logged {} flow files", flow_files_processed).as_str());
 
         Ok(())
     }
-
 
     fn on_schedule<P>(&mut self, context: &P) -> Result<(), MinifiError>
     where
         P: ProcessContext,
     {
         self.log_level = context
-            .get_property(&LOG_LEVEL, None)
-            .ok_or(MinifiError::MissingRequiredProperty(LOG_LEVEL.name))?
+            .get_property(&LOG_LEVEL, None)?
+            .expect("required property")
             .parse::<LogLevel>()?;
 
         self.log_payload = context
-            .get_property(&LOG_PAYLOAD, None)
-            .ok_or(MinifiError::MissingRequiredProperty(LOG_PAYLOAD.name))?
-            .parse::<bool>()?;
+            .get_bool_property(&LOG_PAYLOAD, None)?
+            .expect("required property");
 
-        self.flow_files_to_log_ = context
-            .get_property(&FLOW_FILES_TO_LOG, None)
-            .ok_or(MinifiError::MissingRequiredProperty(FLOW_FILES_TO_LOG.name))?
+        self.flow_files_to_log = context
+            .get_property(&FLOW_FILES_TO_LOG, None)?
+            .expect("required property")
             .parse::<usize>()?;
 
-        fn parse_comma_separated<P: ProcessContext>(context: &P, property: &Property) -> Option<Vec<String>> {
-            context
-                .get_property(property, None)
-                .and_then(|s| Some(s.split(",").map(|s| s.to_string()).collect::<Vec<String>>()))
+        fn get_csv_property<P: ProcessContext>(
+            context: &P,
+            property: &Property,
+        ) -> Result<Option<Vec<String>>, MinifiError> {
+            Ok(context
+                .get_property(property, None)?
+                .and_then(|s| Some(s.split(",").map(|s| s.to_string()).collect::<Vec<String>>())))
         }
 
-        self.attributes_to_log = parse_comma_separated(context, &properties::ATTRIBUTES_TO_LOG);
-        self.attributes_to_ignore = parse_comma_separated(context, &properties::ATTRIBUTES_TO_IGNORE);
+        self.attributes_to_log = get_csv_property(context, &properties::ATTRIBUTES_TO_LOG)?;
+        self.attributes_to_ignore = get_csv_property(context, &properties::ATTRIBUTES_TO_IGNORE)?;
 
-        self.dash_line_ = format!("{:-^50}", context.get_property(&properties::LOG_PREFIX, None).unwrap_or(String::new()));
+        self.dash_line = format!(
+            "{:-^50}",
+            context
+                .get_property(&properties::LOG_PREFIX, None)?
+                .unwrap_or(String::new())
+        );
 
         Ok(())
     }
