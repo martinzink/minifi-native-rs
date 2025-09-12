@@ -44,10 +44,11 @@ impl<L: Logger> LogAttribute<L> {
             log_msg.push_str("\nPayload:\n");
             log_msg.push_str(
                 session
-                    .read_as_string(flow_file)
+                    .read(flow_file)
+                    .and_then(|v| String::from_utf8(v).ok())
                     .unwrap_or(String::new())
                     .as_str(),
-            );
+            );  // TODO(mzink) Handle binary data
         }
         log_msg.push_str("\n");
         log_msg.push_str(self.dash_line.as_str());
@@ -142,7 +143,7 @@ impl<L: Logger> Processor<L> for LogAttribute<L> {
         Ok(())
     }
 
-    fn log(&mut self, log_level: LogLevel, message: &str) {
+    fn log(&self, log_level: LogLevel, message: &str) {
         self.logger.log(log_level, message);
     }
 }

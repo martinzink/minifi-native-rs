@@ -1,19 +1,21 @@
+use std::sync::Mutex;
 use crate::api::LogLevel;
 use crate::api::Logger;
 
 #[derive(Debug)]
 pub struct MockLogger {
-    pub logs: Vec<(LogLevel, String)>,
+    pub logs: Mutex<Vec<(LogLevel, String)>>,
 }
 
 impl Logger for MockLogger {
-    fn log(&mut self, level: LogLevel, message: &str) {
-        self.logs.push((level, message.to_string()));
+    fn log(&self, level: LogLevel, message: &str) {
+        let mut logs_guard = self.logs.lock().unwrap();
+        logs_guard.push((level, message.to_string()));
     }
 }
 
 impl MockLogger {
     pub fn new() -> Self {
-        MockLogger { logs: Vec::new() }
+        MockLogger { logs: Mutex::new(Vec::new()) }
     }
 }

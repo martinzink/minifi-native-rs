@@ -105,7 +105,7 @@ impl<L: Logger> GetFile<L> {
         Ok(true)
     }
 
-    fn get_single_file<PS>(&mut self, session: &mut PS, path: PathBuf)
+    fn get_single_file<PS>(&self, session: &mut PS, path: PathBuf)
     where
         PS: ProcessSession,
     {
@@ -230,7 +230,7 @@ impl<L: Logger> Processor<L> for GetFile<L> {
         Ok(())
     }
 
-    fn log(&mut self, log_level: LogLevel, message: &str) {
+    fn log(&self, log_level: LogLevel, message: &str) {
         self.logger.log(log_level, message);
     }
 }

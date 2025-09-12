@@ -59,8 +59,8 @@ impl ProcessSession for MockProcessSession {
         true
     }
 
-    fn read_as_string(&mut self, flow_file: &Self::FlowFile) -> Option<String> {
-        Some(flow_file.content.clone())
+    fn read(&mut self, flow_file: &Self::FlowFile) -> Option<Vec<u8>> {
+        Some(flow_file.content.as_bytes().to_vec())
     }
 
     fn read_in_batches<F: FnMut(&[u8])>(

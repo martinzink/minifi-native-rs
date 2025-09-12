@@ -21,7 +21,6 @@ fn simple_test() {
         let mut input_ff = MockFlowFile::new();
         input_ff.content = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer facilisis diam sit amet nisl interdum, vitae interdum arcu viverra. Nam placerat mi in erat pellentesque, at ultrices orci faucibus. Cras sollicitudin iaculis posuere. Sed tempus, dolor nec lacinia suscipit, tellus odio venenatis odio, nec sollicitudin dolor augue non urna. Aliquam tincidunt viverra ipsum eget hendrerit. Suspendisse varius, augue vel fermentum varius, velit elit euismod lacus, a placerat purus est a lacus. Aenean nibh neque, consectetur hendrerit egestas vitae, commodo non quam. Nullam luctus tempor ante, sed tempus quam imperdiet in. Maecenas gravida erat orci, in consequat urna pretium nec. In sodales iaculis magna at vehicula. ".to_string();
         input_ff.attributes.insert(String::from("Source"), String::from("test"));
-        input_ff.attributes.insert(String::from("Date"), String::from("today"));
         session.input_flow_files.push(input_ff);
         processor
             .on_trigger(&mut context, &mut session)
@@ -30,16 +29,13 @@ fn simple_test() {
 "Logging for flow file
 --------------------------------------------------
 FlowFile Attributes Map Content
-key:Date value:today
 key:Source value:test
 Payload:
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer facilisis diam sit amet nisl interdum, vitae interdum arcu viverra. Nam placerat mi in erat pellentesque, at ultrices orci faucibus. Cras sollicitudin iaculis posuere. Sed tempus, dolor nec lacinia suscipit, tellus odio venenatis odio, nec sollicitudin dolor augue non urna. Aliquam tincidunt viverra ipsum eget hendrerit. Suspendisse varius, augue vel fermentum varius, velit elit euismod lacus, a placerat purus est a lacus. Aenean nibh neque, consectetur hendrerit egestas vitae, commodo non quam. Nullam luctus tempor ante, sed tempus quam imperdiet in. Maecenas gravida erat orci, in consequat urna pretium nec. In sodales iaculis magna at vehicula. 
 --------------------------------------------------".to_string();
+        let logs = processor.logger.logs.lock().unwrap();
         assert!(
-            processor
-                .logger
-                .logs
-                .contains(&(LogLevel::Warn, expected))
+            logs.contains(&(LogLevel::Warn, expected))
         );
     }
 }

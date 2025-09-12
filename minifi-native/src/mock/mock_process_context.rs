@@ -18,6 +18,9 @@ impl ProcessContext for MockProcessContext {
         if let Some(property) = self.properties.get(property.name) {
             Ok(Some(property.clone()))
         } else {
+            if let Some(default_val) = property.default_value {
+                return Ok(Some(default_val.to_string()));
+            }
             match property.is_required {
                 true => Err(MinifiError::MissingRequiredProperty(property.name)),
                 false => Ok(None),

@@ -201,15 +201,15 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
         }
     }
 
-    fn read_as_string(&mut self, flow_file: &Self::FlowFile) -> Option<String> {
-        let mut output: Option<String> = None;
+    fn read(&mut self, flow_file: &Self::FlowFile) -> Option<Vec<u8>> {
+        let mut output: Option<Vec<u8>> = None;
         unsafe {
             unsafe extern "C" fn cb(
                 output_option: *mut c_void,
                 input_stream: MinifiInputStream,
             ) -> i64 {
                 unsafe {
-                    let result_target = &mut *(output_option as *mut Option<String>);
+                    let result_target = &mut *(output_option as *mut Option<Vec<u8>>);
 
                     let stream_size = MinifiInputStreamSize(input_stream);
                     if stream_size == 0 {
@@ -231,16 +231,8 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
 
                     buffer.set_len(bytes_read as usize);
 
-                    match String::from_utf8(buffer) {
-                        Ok(s) => {
-                            *result_target = Some(s);
-                            bytes_read
-                        }
-                        Err(_) => {
-                            *result_target = None;
-                            0
-                        }
-                    }
+                    *result_target = Some(buffer);
+                    bytes_read
                 }
             }
 

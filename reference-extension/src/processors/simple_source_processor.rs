@@ -62,7 +62,7 @@ impl<L: Logger> Processor<L> for SimpleSourceProcessor<L> {
         Ok(())
     }
 
-    fn log(&mut self, log_level: LogLevel, message: &str) {
+    fn log(&self, log_level: LogLevel, message: &str) {
         self.logger.log(log_level, message);
     }
 }

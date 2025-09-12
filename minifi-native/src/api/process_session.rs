@@ -17,8 +17,7 @@ pub trait ProcessSession {
         flow_file: &mut Self::FlowFile,
         produce_batch: F,
     ) -> bool;
-    fn read(&mut self, flow_file: &mut Self::FlowFile) -> Option<Vec<u8>>;
-    fn read_as_string(&mut self, flow_file: &Self::FlowFile) -> Option<String>;
+    fn read(&mut self, flow_file: &Self::FlowFile) -> Option<Vec<u8>>;
     fn read_in_batches<F: FnMut(&[u8])>(
         &mut self,
         flow_file: &Self::FlowFile,
