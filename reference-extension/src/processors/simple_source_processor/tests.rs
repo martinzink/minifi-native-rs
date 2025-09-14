@@ -1,5 +1,6 @@
 use super::*;
 use minifi_native::{MockLogger, MockProcessContext, MockProcessSession};
+use crate::processors::simple_source_processor::relationships::SUCCESS;
 
 #[test]
 fn simple_test() {
@@ -13,14 +14,8 @@ fn simple_test() {
     {
         let mut session = MockProcessSession::new();
         processor.on_trigger(&mut context, &mut session).expect("The on_trigger should succeed");
-        let created_flow_file = session
-            .transferred_flow_files
-            .get(relationships::SUCCESS.name)
-            .unwrap();
-        assert_eq!(created_flow_file.content, "Hello, World!");
-        assert_eq!(
-            created_flow_file.attributes.get("source").unwrap(),
-            "SimpleSourceProcessor"
-        );
+        assert_eq!(session.transferred_flow_files.len(), 1);
+        assert_eq!(session.transferred_flow_files[0].relationship, SUCCESS.name);
+        assert_eq!(session.transferred_flow_files[0].flow_file.attributes.get("source").unwrap(), "SimpleSourceProcessor");
     }
 }

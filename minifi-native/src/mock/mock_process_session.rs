@@ -2,9 +2,14 @@ use crate::MockFlowFile;
 use crate::api::ProcessSession;
 use std::collections::HashMap;
 
+pub struct TransferredFlowFile {
+    pub relationship: String,
+    pub flow_file: MockFlowFile
+}
+
 pub struct MockProcessSession {
     pub input_flow_files: Vec<MockFlowFile>,
-    pub transferred_flow_files: HashMap<String, MockFlowFile>,
+    pub transferred_flow_files: Vec<TransferredFlowFile>,
 }
 
 impl ProcessSession for MockProcessSession {
@@ -17,8 +22,7 @@ impl ProcessSession for MockProcessSession {
         self.input_flow_files.pop()
     }
     fn transfer(&mut self, flow_file: Self::FlowFile, relationship: &str) {
-        self.transferred_flow_files
-            .insert(relationship.to_string(), flow_file);
+        self.transferred_flow_files.push(TransferredFlowFile{relationship: relationship.to_string(), flow_file});
     }
 
 
@@ -80,7 +84,7 @@ impl ProcessSession for MockProcessSession {
 impl MockProcessSession {
     pub fn new() -> Self {
         Self {
-            transferred_flow_files: HashMap::new(),
+            transferred_flow_files: Vec::new(),
             input_flow_files: Vec::new(),
         }
     }
