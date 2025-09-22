@@ -1,5 +1,6 @@
 use crate::processors::get_file::properties::{
-    BATCH_SIZE, DIRECTORY, KEEP_SOURCE_FILE, MAX_AGE, MAX_SIZE, MIN_AGE, MIN_SIZE, RECURSE,
+    BATCH_SIZE, DIRECTORY, IGNORE_HIDDEN_FILES, KEEP_SOURCE_FILE, MAX_AGE, MAX_SIZE, MIN_AGE,
+    MIN_SIZE, RECURSE,
 };
 use minifi_native::{LogLevel, Logger, MinifiError, ProcessContext, ProcessSession, Processor};
 use std::collections::VecDeque;
@@ -98,7 +99,14 @@ impl<L: Logger> GetFile<L> {
             return Ok(false);
         }
 
-        // TODO(hidden files)
+        fn is_hidden(path: PathBuf) -> bool {
+            path.starts_with(".")
+            // TODO(mzink) check for other platforms
+        }
+
+        if self.ignore_hidden_files && is_hidden(dir_entry.path().to_path_buf()) {
+            return Ok(false);
+        }
 
         Ok(true)
     }
@@ -223,6 +231,9 @@ impl<L: Logger> Processor<L> for GetFile<L> {
         self.max_age = context.get_duration_property(&MAX_AGE, None)?;
         self.batch_size = context
             .get_u64_property(&BATCH_SIZE, None)?
+            .expect("required property");
+        self.ignore_hidden_files = context
+            .get_bool_property(&IGNORE_HIDDEN_FILES, None)?
             .expect("required property");
 
         Ok(())
