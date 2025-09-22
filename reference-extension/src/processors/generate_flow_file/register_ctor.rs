@@ -1,6 +1,6 @@
-use minifi_native::{CffiLogger, ProcessorDefinition, ProcessorInputRequirement};
-use super::{relationships, GenerateFlowFile};
 use super::properties::*;
+use super::{GenerateFlowFile, relationships};
+use minifi_native::{CffiLogger, ProcessorDefinition, ProcessorInputRequirement};
 
 #[cfg_attr(test, allow(dead_code))]
 fn get_file_definition() -> ProcessorDefinition<GenerateFlowFile<CffiLogger>> {
@@ -16,7 +16,13 @@ fn get_file_definition() -> ProcessorDefinition<GenerateFlowFile<CffiLogger>> {
     simple_log_processor_definition.supports_dynamic_properties = false;
     simple_log_processor_definition.supports_dynamic_relationships = false;
     simple_log_processor_definition.relationships = &[relationships::SUCCESS];
-    simple_log_processor_definition.properties = &[FILE_SIZE, BATCH_SIZE, DATA_FORMAT, UNIQUE_FLOW_FILES, CUSTOM_TEXT];
+    simple_log_processor_definition.properties = &[
+        FILE_SIZE,
+        BATCH_SIZE,
+        DATA_FORMAT,
+        UNIQUE_FLOW_FILES,
+        CUSTOM_TEXT,
+    ];
     simple_log_processor_definition
 }
 

@@ -96,7 +96,6 @@ pub(crate) const IGNORE_HIDDEN_FILES: Property = Property {
     allowed_types: &[],
 };
 
-
 pub(crate) const POLLING_INTERVAL: Property = Property {
     name: "Polling Interval",
     description: "Indicates how long to wait before performing a directory listing",
@@ -120,4 +119,3 @@ pub(crate) const BATCH_SIZE: Property = Property {
     allowed_values: &[],
     allowed_types: &[],
 };
-

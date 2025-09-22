@@ -1,6 +1,6 @@
-use std::sync::Mutex;
 use crate::api::LogLevel;
 use crate::api::Logger;
+use std::sync::Mutex;
 
 #[derive(Debug)]
 pub struct MockLogger {
@@ -16,6 +16,8 @@ impl Logger for MockLogger {
 
 impl MockLogger {
     pub fn new() -> Self {
-        MockLogger { logs: Mutex::new(Vec::new()) }
+        MockLogger {
+            logs: Mutex::new(Vec::new()),
+        }
     }
 }

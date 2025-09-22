@@ -1,10 +1,10 @@
-use std::cmp::PartialEq;
 use minifi_native::{
     Concurrent, ConcurrentOnTrigger, LogLevel, Logger, MinifiError, ProcessContext, ProcessSession,
     Processor,
 };
-use rand::distributions::Alphanumeric;
 use rand::Rng;
+use rand::distr::Alphanumeric;
+use std::cmp::PartialEq;
 
 mod properties;
 mod relationships;
@@ -69,7 +69,7 @@ impl<L: Logger> GenerateFlowFile<L> {
     }
 
     fn generate_data(data: &mut [u8], text_data: bool) {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
 
         if text_data {
             for byte in data.iter_mut() {
@@ -138,7 +138,9 @@ impl<L: Logger> ConcurrentOnTrigger<L> for GenerateFlowFile<L> {
         let non_unique_data_buffer: &[u8];
         let custom_text_for_batch: Option<String>;
 
-        if self.mode == Mode::CustomText && let Some(custom_text) = context.get_property(&properties::CUSTOM_TEXT, None)? {
+        if self.mode == Mode::CustomText
+            && let Some(custom_text) = context.get_property(&properties::CUSTOM_TEXT, None)?
+        {
             custom_text_for_batch = Some(custom_text);
             non_unique_data_buffer = custom_text_for_batch.as_ref().unwrap().as_bytes();
         } else {
@@ -167,4 +169,3 @@ mod register_ctor;
 
 #[cfg(test)]
 mod tests;
-

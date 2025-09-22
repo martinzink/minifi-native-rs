@@ -1,6 +1,6 @@
+use minifi_native_sys::{MinifiStatus, MinifiStatus_MINIFI_UNKNOWN_ERROR};
 use std::num::ParseIntError;
 use std::str::ParseBoolError;
-use minifi_native_sys::{MinifiStatus, MinifiStatus_MINIFI_UNKNOWN_ERROR};
 
 #[derive(Debug, Clone)]
 pub struct SizeParseError(pub byte_unit::ParseError);
@@ -13,8 +13,6 @@ impl PartialEq for SizeParseError {
 
 impl Eq for SizeParseError {}
 
-
-
 #[derive(Debug, Clone, PartialEq)]
 pub enum ParseError {
     Strum(strum::ParseError),
@@ -22,9 +20,8 @@ pub enum ParseError {
     Int(ParseIntError),
     Duration(humantime::DurationError),
     Size(SizeParseError),
-    Other
+    Other,
 }
-
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum MinifiError {
@@ -54,15 +51,19 @@ impl From<ParseIntError> for MinifiError {
 }
 
 impl From<humantime::DurationError> for MinifiError {
-    fn from(err: humantime::DurationError) -> Self { MinifiError::Parse(ParseError::Duration(err)) }
+    fn from(err: humantime::DurationError) -> Self {
+        MinifiError::Parse(ParseError::Duration(err))
+    }
 }
 
 impl From<byte_unit::ParseError> for MinifiError {
-    fn from(err: byte_unit::ParseError) -> Self { MinifiError::Parse(ParseError::Size(SizeParseError(err))) }
+    fn from(err: byte_unit::ParseError) -> Self {
+        MinifiError::Parse(ParseError::Size(SizeParseError(err)))
+    }
 }
 
 impl MinifiError {
-    pub(crate) fn to_status(&self) -> MinifiStatus{
+    pub(crate) fn to_status(&self) -> MinifiStatus {
         MinifiStatus_MINIFI_UNKNOWN_ERROR
     }
 }

@@ -6,9 +6,7 @@ pub struct MockFlowFile {
     pub attributes: HashMap<String, String>,
 }
 
-impl FlowFile for MockFlowFile {
-
-}
+impl FlowFile for MockFlowFile {}
 
 impl MockFlowFile {
     pub fn new() -> MockFlowFile {

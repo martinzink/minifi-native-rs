@@ -1,10 +1,16 @@
 use super::c_ffi_flow_file::CffiFlowFile;
+use crate::MinifiError;
 use crate::api::ProcessSession;
-use minifi_native_sys::{MinifiDestroyFlowFile, MinifiFlowFileSetAttribute, MinifiFlowFileGetAttribute, MinifiInputStream, MinifiInputStreamRead, MinifiInputStreamSize, MinifiOutputStream, MinifiOutputStreamWrite, MinifiProcessSession, MinifiProcessSessionCreate, MinifiProcessSessionGet, MinifiProcessSessionRead, MinifiProcessSessionTransfer, MinifiProcessSessionWrite, MinifiStringView, MinifiFlowFileGetAttributes};
+use crate::c_ffi::c_ffi_primitives::{ConvertMinifiStringView, StringView};
+use minifi_native_sys::{
+    MinifiDestroyFlowFile, MinifiFlowFileGetAttribute, MinifiFlowFileGetAttributes,
+    MinifiFlowFileSetAttribute, MinifiInputStream, MinifiInputStreamRead, MinifiInputStreamSize,
+    MinifiOutputStream, MinifiOutputStreamWrite, MinifiProcessSession, MinifiProcessSessionCreate,
+    MinifiProcessSessionGet, MinifiProcessSessionRead, MinifiProcessSessionTransfer,
+    MinifiProcessSessionWrite, MinifiStringView,
+};
 use std::ffi::{CString, c_void};
 use std::os::raw::c_char;
-use crate::c_ffi::c_ffi_primitives::{ConvertMinifiStringView, StringView};
-use crate::MinifiError;
 
 pub struct CffiProcessSession<'a> {
     ptr: MinifiProcessSession,
@@ -66,7 +72,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                 self.ptr,
                 flow_file.ptr,
                 attr_key_string_view.as_raw(),
-                &attr_value_string_view.as_raw()
+                &attr_value_string_view.as_raw(),
             )
         }
     }
@@ -76,7 +82,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
         unsafe {
             unsafe extern "C" fn cb(
                 rs_attr_value: *mut c_void,
-                minifi_attr_value: MinifiStringView
+                minifi_attr_value: MinifiStringView,
             ) {
                 unsafe {
                     let result_target = &mut *(rs_attr_value as *mut Option<String>);
@@ -96,15 +102,19 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
         attr_value
     }
 
-    fn on_attributes<F: FnMut(&str, &str)>(&mut self, flow_file: &Self::FlowFile, process_attr: F) -> bool {
+    fn on_attributes<F: FnMut(&str, &str)>(
+        &mut self,
+        flow_file: &Self::FlowFile,
+        process_attr: F,
+    ) -> bool {
         struct OnAttrHelper<F: FnMut(&str, &str)> {
             result: bool,
-            process_attr: F
+            process_attr: F,
         }
 
-        let mut on_attr_helper = OnAttrHelper{
+        let mut on_attr_helper = OnAttrHelper {
             result: false,
-            process_attr
+            process_attr,
         };
 
         unsafe extern "C" fn cb<'b, F: FnMut(&str, &str)>(
@@ -118,17 +128,19 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                 let attr_value = minifi_attr_val.as_str();
                 if attr_key.is_err() || attr_value.is_err() {
                     helper.result = false;
-                    return;  // TODO(mzink) better err handling
+                    return; // TODO(mzink) better err handling
                 }
                 (helper.process_attr)(attr_key.unwrap(), attr_value.unwrap());
             }
         }
 
         unsafe {
-            MinifiFlowFileGetAttributes(self.ptr,
-                                        flow_file.ptr,
-                                        Some(cb::<F>),
-                                        &mut on_attr_helper as *mut _ as *mut c_void)
+            MinifiFlowFileGetAttributes(
+                self.ptr,
+                flow_file.ptr,
+                Some(cb::<F>),
+                &mut on_attr_helper as *mut _ as *mut c_void,
+            )
         }
         on_attr_helper.result
     }
@@ -160,7 +172,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                 Some(cb),
                 &mut dt as *mut _ as *mut c_void,
             ) {
-                0 => {}  // TODO(replace with const)
+                0 => {} // TODO(replace with const)
                 _ => {}
             }
         }
@@ -196,8 +208,8 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                 Some(cb::<F>),
                 &mut produce_batch as *mut _ as *mut c_void,
             ) {
-                0 => { true }  // TODO(replace with const)
-                _ => { false }
+                0 => true, // TODO(replace with const)
+                _ => false,
             }
         }
     }

@@ -82,7 +82,11 @@ fn complex_dir_without_filters() {
     assert_eq!(session.transferred_flow_files.len(), 4);
 }
 
-fn test_complex_dir_with_filter(property_name: &str, property_vale: &str, expected_filename_part: &str) {
+fn test_complex_dir_with_filter(
+    property_name: &str,
+    property_vale: &str,
+    expected_filename_part: &str,
+) {
     let test_directory = create_test_directory();
 
     let mut processor = GetFile::new(MockLogger::new());
@@ -106,11 +110,11 @@ fn test_complex_dir_with_filter(property_name: &str, property_vale: &str, expect
     assert!(session.transferred_flow_files.iter().all(|transfer| {
         transfer.relationship == SUCCESS.name
             && transfer
-            .flow_file
-            .attributes
-            .get("filename")
-            .and_then(|filename| Some(filename.contains(expected_filename_part)))
-            .unwrap_or(false)
+                .flow_file
+                .attributes
+                .get("filename")
+                .and_then(|filename| Some(filename.contains(expected_filename_part)))
+                .unwrap_or(false)
     }))
 }
 

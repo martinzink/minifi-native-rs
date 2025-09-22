@@ -28,7 +28,7 @@ impl<'a> StringView<'a> {
             _marker: std::marker::PhantomData,
         }
     }
-    
+
     pub unsafe fn as_raw(&self) -> MinifiStringView {
         self.inner
     }

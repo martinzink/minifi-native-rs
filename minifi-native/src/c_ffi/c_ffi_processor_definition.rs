@@ -5,9 +5,9 @@ use super::c_ffi_logger::CffiLogger;
 use super::c_ffi_primitives::{BoolAsMinifiCBool, StaticStrAsMinifiCStr};
 use super::c_ffi_process_context::CffiProcessContext;
 use super::c_ffi_process_session::CffiProcessSession;
-use crate::{Concurrent, ConcurrentOnTrigger, Exclusive, ExclusiveOnTrigger, LogLevel, Property};
 use crate::Relationship;
 use crate::api::{Processor, ProcessorInputRequirement, ThreadingModel};
+use crate::{Concurrent, ConcurrentOnTrigger, Exclusive, ExclusiveOnTrigger, LogLevel, Property};
 use minifi_native_sys::*;
 
 pub trait DispatchOnTrigger<M: ThreadingModel> {
@@ -18,38 +18,47 @@ pub trait DispatchOnTrigger<M: ThreadingModel> {
     ) -> MinifiStatus;
 }
 
-impl<T> DispatchOnTrigger<Concurrent> for T where T: ConcurrentOnTrigger<CffiLogger> {
-    unsafe fn dispatch_on_trigger(processor_ptr: *mut c_void, context_ptr: MinifiProcessContext, session_ptr: MinifiProcessSession) -> MinifiStatus {
+impl<T> DispatchOnTrigger<Concurrent> for T
+where
+    T: ConcurrentOnTrigger<CffiLogger>,
+{
+    unsafe fn dispatch_on_trigger(
+        processor_ptr: *mut c_void,
+        context_ptr: MinifiProcessContext,
+        session_ptr: MinifiProcessSession,
+    ) -> MinifiStatus {
         unsafe {
             let processor = &*(processor_ptr as *const T);
             let mut context = CffiProcessContext::new(context_ptr);
             let mut session = CffiProcessSession::new(session_ptr);
             match processor.on_trigger(&mut context, &mut session) {
-                Ok(_) => { 0 }
-                Err(error_code) => {
-                    error_code.to_status()
-                }
+                Ok(_) => 0,
+                Err(error_code) => error_code.to_status(),
             }
         }
     }
 }
 
-impl<T> DispatchOnTrigger<Exclusive> for T where T: ExclusiveOnTrigger<CffiLogger> {
-    unsafe fn dispatch_on_trigger(processor_ptr: *mut c_void, context_ptr: MinifiProcessContext, session_ptr: MinifiProcessSession) -> MinifiStatus {
+impl<T> DispatchOnTrigger<Exclusive> for T
+where
+    T: ExclusiveOnTrigger<CffiLogger>,
+{
+    unsafe fn dispatch_on_trigger(
+        processor_ptr: *mut c_void,
+        context_ptr: MinifiProcessContext,
+        session_ptr: MinifiProcessSession,
+    ) -> MinifiStatus {
         unsafe {
             let processor = &mut *(processor_ptr as *mut T);
             let mut context = CffiProcessContext::new(context_ptr);
             let mut session = CffiProcessSession::new(session_ptr);
             match processor.on_trigger(&mut context, &mut session) {
-                Ok(_) => { 0 }
-                Err(error_code) => {
-                    error_code.to_status()
-                }
+                Ok(_) => 0,
+                Err(error_code) => error_code.to_status(),
             }
         }
     }
 }
-
 
 pub struct ProcessorDefinition<T>
 where
@@ -186,7 +195,7 @@ where
             let processor = &mut *(processor_ptr as *mut T);
             let context = CffiProcessContext::new(context_ptr);
             match processor.on_schedule(&context) {
-                Ok(_) => { 0 }
+                Ok(_) => 0,
                 Err(error_code) => {
                     processor.log(LogLevel::Error, format!("{:?}", error_code).as_str());
                     error_code.to_status()

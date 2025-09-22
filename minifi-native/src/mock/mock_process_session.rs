@@ -1,9 +1,9 @@
-use crate::{MinifiError, MockFlowFile};
 use crate::api::ProcessSession;
+use crate::{MinifiError, MockFlowFile};
 
 pub struct TransferredFlowFile {
     pub relationship: String,
-    pub flow_file: MockFlowFile
+    pub flow_file: MockFlowFile,
 }
 
 pub struct MockProcessSession {
@@ -21,18 +21,26 @@ impl ProcessSession for MockProcessSession {
         self.input_flow_files.pop()
     }
     fn transfer(&mut self, flow_file: Self::FlowFile, relationship: &str) {
-        self.transferred_flow_files.push(TransferredFlowFile{relationship: relationship.to_string(), flow_file});
+        self.transferred_flow_files.push(TransferredFlowFile {
+            relationship: relationship.to_string(),
+            flow_file,
+        });
     }
 
-
     fn set_attribute(&mut self, flow_file: &mut Self::FlowFile, attr_key: &str, attr_value: &str) {
-        flow_file.attributes.insert(attr_key.to_string(), attr_value.to_string());
+        flow_file
+            .attributes
+            .insert(attr_key.to_string(), attr_value.to_string());
     }
     fn get_attribute(&mut self, flow_file: &mut Self::FlowFile, attr_key: &str) -> Option<String> {
         flow_file.attributes.get(attr_key).cloned()
     }
 
-    fn on_attributes<F: FnMut(&str, &str)>(&mut self, flow_file: &Self::FlowFile, mut process_attr: F) -> bool {
+    fn on_attributes<F: FnMut(&str, &str)>(
+        &mut self,
+        flow_file: &Self::FlowFile,
+        mut process_attr: F,
+    ) -> bool {
         for (attr_key, attr_value) in flow_file.attributes.iter() {
             process_attr(attr_key, attr_value);
         }

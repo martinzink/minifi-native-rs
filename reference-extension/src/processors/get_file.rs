@@ -2,7 +2,10 @@ use crate::processors::get_file::properties::{
     BATCH_SIZE, DIRECTORY, IGNORE_HIDDEN_FILES, KEEP_SOURCE_FILE, MAX_AGE, MAX_SIZE, MIN_AGE,
     MIN_SIZE, RECURSE,
 };
-use minifi_native::{LogLevel, Logger, MinifiError, ProcessContext, ProcessSession, Processor, ConcurrentOnTrigger, Concurrent};
+use minifi_native::{
+    Concurrent, ConcurrentOnTrigger, LogLevel, Logger, MinifiError, ProcessContext, ProcessSession,
+    Processor,
+};
 use std::collections::VecDeque;
 use std::error;
 use std::os::unix::fs::MetadataExt;
@@ -90,10 +93,7 @@ impl<L: Logger> GetFile<L> {
         directory_listings.last_polling_time = Some(Instant::now());
     }
 
-    fn entry_matches_criteria(
-        &self,
-        dir_entry: &DirEntry,
-    ) -> Result<bool, Box<dyn error::Error>> {
+    fn entry_matches_criteria(&self, dir_entry: &DirEntry) -> Result<bool, Box<dyn error::Error>> {
         let metadata = dir_entry.metadata()?;
         if !metadata.is_file() {
             return Ok(false);
@@ -116,7 +116,9 @@ impl<L: Logger> GetFile<L> {
 
         fn is_hidden(path: PathBuf) -> bool {
             // TODO(windows)
-            path.file_name().and_then(|f| f.to_str()).map_or(false, |f| f.starts_with('.'))
+            path.file_name()
+                .and_then(|f| f.to_str())
+                .map_or(false, |f| f.starts_with('.'))
         }
 
         if self.ignore_hidden_files && is_hidden(dir_entry.path().to_path_buf()) {
@@ -230,7 +232,7 @@ impl<L: Logger> ConcurrentOnTrigger<L> for GetFile<L> {
                     "Listing is {} before polling directory",
                     is_dir_empty_before_poll
                 )
-                    .as_str(),
+                .as_str(),
             );
             if is_dir_empty_before_poll {
                 if self.should_poll() {
@@ -245,7 +247,7 @@ impl<L: Logger> ConcurrentOnTrigger<L> for GetFile<L> {
                     "Listing is {} after polling directory",
                     is_dir_empty_after_poll
                 )
-                    .as_str(),
+                .as_str(),
             );
             if is_dir_empty_after_poll {
                 context.yield_context();

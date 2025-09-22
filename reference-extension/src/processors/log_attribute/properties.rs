@@ -1,5 +1,5 @@
-use strum::VariantNames;
 use minifi_native::{LogLevel, Property, StandardPropertyValidator};
+use strum::VariantNames;
 
 pub(crate) const LOG_LEVEL: Property = Property {
     name: "Log Level",

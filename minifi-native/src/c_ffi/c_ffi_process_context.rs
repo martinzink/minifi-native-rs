@@ -1,9 +1,9 @@
 use super::c_ffi_flow_file::CffiFlowFile;
 use super::c_ffi_primitives::StringView;
 use crate::api::ProcessContext;
+use crate::{MinifiError, Property};
 use minifi_native_sys::*;
 use std::ffi::c_void;
-use crate::{MinifiError, Property};
 
 /// A safe wrapper around a `MinifiProcessContext` pointer.
 pub struct CffiProcessContext<'a> {
@@ -67,18 +67,14 @@ impl<'a> ProcessContext for CffiProcessContext<'a> {
         #[allow(non_upper_case_globals)]
         match status {
             MinifiStatus_MINIFI_SUCCESS => Ok(result),
-            _ => {
-                match property.is_required {
-                    true => { Err(MinifiError::MissingRequiredProperty(property.name)) }
-                    false => { Ok(None) }
-                }
-            }
+            _ => match property.is_required {
+                true => Err(MinifiError::MissingRequiredProperty(property.name)),
+                false => Ok(None),
+            },
         }
     }
 
     fn yield_context(&mut self) {
-        unsafe {
-            MinifiProcessContextYield(self.ptr)
-        }
+        unsafe { MinifiProcessContextYield(self.ptr) }
     }
 }

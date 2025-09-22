@@ -3,8 +3,9 @@ mod c_ffi;
 mod mock;
 
 pub use api::{
-    FlowFile, LogLevel, Logger, ProcessContext, ProcessSession, Processor, ExclusiveOnTrigger, ConcurrentOnTrigger,
-    ProcessorInputRequirement, Property, Relationship, StandardPropertyValidator, MinifiError, Concurrent, Exclusive,
+    Concurrent, ConcurrentOnTrigger, Exclusive, ExclusiveOnTrigger, FlowFile, LogLevel, Logger,
+    MinifiError, ProcessContext, ProcessSession, Processor, ProcessorInputRequirement, Property,
+    Relationship, StandardPropertyValidator,
 };
 pub use c_ffi::{CffiLogger, ProcessorDefinition};
 pub use mock::{MockFlowFile, MockLogger, MockProcessContext, MockProcessSession};

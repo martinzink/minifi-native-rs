@@ -1,5 +1,8 @@
 use crate::processors::log_attribute::properties::{FLOW_FILES_TO_LOG, LOG_LEVEL, LOG_PAYLOAD};
-use minifi_native::{LogLevel, Logger, MinifiError, ConcurrentOnTrigger, ProcessContext, ProcessSession, Processor, Property};
+use minifi_native::{
+    ConcurrentOnTrigger, LogLevel, Logger, MinifiError, ProcessContext, ProcessSession, Processor,
+    Property,
+};
 
 mod properties;
 mod relationships;
@@ -46,7 +49,7 @@ impl<L: Logger> LogAttribute<L> {
                     .and_then(|v| String::from_utf8(v).ok())
                     .unwrap_or(String::new())
                     .as_str(),
-            );  // TODO(mzink) Handle binary data
+            ); // TODO(mzink) Handle binary data
         }
         log_msg.push_str("\n");
         log_msg.push_str(self.dash_line.as_str());
@@ -65,7 +68,7 @@ impl<L: Logger> ConcurrentOnTrigger<L> for LogAttribute<L> {
                 "enter log attribute, attempting to retrieve {} flow files",
                 self.flow_files_to_log
             )
-                .as_str(),
+            .as_str(),
         );
         let max_flow_files_to_process = if self.flow_files_to_log == 0 {
             usize::MAX
