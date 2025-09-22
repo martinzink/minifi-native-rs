@@ -12,18 +12,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-import os
 import logging
+import os
 
 from minifi_test_framework.core.hooks import common_before_scenario
 from minifi_test_framework.core.hooks import common_after_scenario
 
-def before_feature(context, feature):
+def before_all(context):
+    logging.info("Building extension in rockylinux:8")
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    build_cmd = f"{dir_path}/../docker/rockybuild.sh"
-    output = os.system(build_cmd)
-    logging.info(output)
+    exit_code = os.system(dir_path + "/../docker/rockybuild.sh")
+    assert exit_code == 0
 
 
 def before_scenario(context, scenario):

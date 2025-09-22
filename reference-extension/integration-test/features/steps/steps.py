@@ -1,6 +1,5 @@
-from behave import step
+from behave import step, then
 import os
-import logging
 import time
 import humanfriendly
 
@@ -9,7 +8,6 @@ from minifi_test_framework.steps import configuration_steps
 from minifi_test_framework.steps import core_steps
 from minifi_test_framework.steps import flow_building_steps
 from minifi_test_framework.core.minifi_test_context import MinifiTestContext
-from minifi_test_framework.minifi.processor import Processor
 from minifi_test_framework.containers.host_file import HostFile
 
 

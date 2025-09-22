@@ -55,6 +55,6 @@ Feature: Test Minifi Native C Api capabilities
 
     When the MiNiFi instance starts up
 
-    Then Waits for 5 seconds
+    Then Waits for 3 seconds
     And the Minifi logs do not contain errors
     And the Minifi logs do not contain warnings
