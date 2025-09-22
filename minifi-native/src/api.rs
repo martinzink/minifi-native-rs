@@ -6,12 +6,14 @@ mod processor;
 mod property;
 mod relationship;
 mod error_code;
+mod threading_model;
 
+pub use threading_model::{Concurrent, Exclusive, ThreadingModel};
 pub use flow_file::FlowFile;
 pub use logger::{LogLevel, Logger};
 pub use process_context::ProcessContext;
 pub use process_session::ProcessSession;
-pub use processor::{Processor, ProcessorInputRequirement};
+pub use processor::{Processor, ConcurrentOnTrigger, ExclusiveOnTrigger, ProcessorInputRequirement};
 pub use property::{Property, StandardPropertyValidator};
 pub use relationship::Relationship;
 pub use error_code::MinifiError;

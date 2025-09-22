@@ -1,7 +1,5 @@
 use crate::processors::log_attribute::properties::{FLOW_FILES_TO_LOG, LOG_LEVEL, LOG_PAYLOAD};
-use minifi_native::{
-    LogLevel, Logger, MinifiError, ProcessContext, ProcessSession, Processor, Property,
-};
+use minifi_native::{LogLevel, Logger, MinifiError, ConcurrentOnTrigger, ProcessContext, ProcessSession, Processor, Property};
 
 mod properties;
 mod relationships;
@@ -56,20 +54,8 @@ impl<L: Logger> LogAttribute<L> {
     }
 }
 
-impl<L: Logger> Processor<L> for LogAttribute<L> {
-    fn new(logger: L) -> Self {
-        Self {
-            logger,
-            log_level: LogLevel::Info,
-            attributes_to_log: None,
-            attributes_to_ignore: None,
-            log_payload: false,
-            flow_files_to_log: 1,
-            dash_line: String::new(),
-        }
-    }
-
-    fn on_trigger<P, S>(&mut self, _context: &mut P, session: &mut S) -> Result<(), MinifiError>
+impl<L: Logger> ConcurrentOnTrigger<L> for LogAttribute<L> {
+    fn on_trigger<P, S>(&self, _context: &mut P, session: &mut S) -> Result<(), MinifiError>
     where
         P: ProcessContext,
         S: ProcessSession,
@@ -79,7 +65,7 @@ impl<L: Logger> Processor<L> for LogAttribute<L> {
                 "enter log attribute, attempting to retrieve {} flow files",
                 self.flow_files_to_log
             )
-            .as_str(),
+                .as_str(),
         );
         let max_flow_files_to_process = if self.flow_files_to_log == 0 {
             usize::MAX
@@ -101,6 +87,25 @@ impl<L: Logger> Processor<L> for LogAttribute<L> {
             .debug(format!("Logged {} flow files", flow_files_processed).as_str());
 
         Ok(())
+    }
+}
+
+impl<L: Logger> Processor<L> for LogAttribute<L> {
+    type Threading = minifi_native::Concurrent;
+    fn new(logger: L) -> Self {
+        Self {
+            logger,
+            log_level: LogLevel::Info,
+            attributes_to_log: None,
+            attributes_to_ignore: None,
+            log_payload: false,
+            flow_files_to_log: 1,
+            dash_line: String::new(),
+        }
+    }
+
+    fn log(&self, log_level: LogLevel, message: &str) {
+        self.logger.log(log_level, message);
     }
 
     fn on_schedule<P>(&mut self, context: &P) -> Result<(), MinifiError>
@@ -141,10 +146,6 @@ impl<L: Logger> Processor<L> for LogAttribute<L> {
         );
 
         Ok(())
-    }
-
-    fn log(&self, log_level: LogLevel, message: &str) {
-        self.logger.log(log_level, message);
     }
 }
 

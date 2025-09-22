@@ -1,14 +1,14 @@
 use minifi_native::{CffiLogger, ProcessorDefinition, ProcessorInputRequirement};
-use crate::processors::get_file::{relationships, GetFile};
-use crate::processors::get_file::properties::*;
+use super::{relationships, GenerateFlowFile};
+use super::properties::*;
 
 #[cfg_attr(test, allow(dead_code))]
-fn get_file_definition() -> ProcessorDefinition<GetFile<CffiLogger>> {
+fn get_file_definition() -> ProcessorDefinition<GenerateFlowFile<CffiLogger>> {
     let mut simple_log_processor_definition =
-        ProcessorDefinition::<GetFile<CffiLogger>>::new(
+        ProcessorDefinition::<GenerateFlowFile<CffiLogger>>::new(
             "rust_reference_extension",
-            "rs::GetFileRs",
-            "Creates FlowFiles from files in a directory. MiNiFi will ignore files for which it doesn't have read permissions.",
+            "rs::GenerateFlowFileRs",
+            "This processor creates FlowFiles with random data or custom content. GenerateFlowFile is useful for load testing, configuration, and simulation.",
         );
 
     simple_log_processor_definition.is_single_threaded = false;
@@ -16,7 +16,7 @@ fn get_file_definition() -> ProcessorDefinition<GetFile<CffiLogger>> {
     simple_log_processor_definition.supports_dynamic_properties = false;
     simple_log_processor_definition.supports_dynamic_relationships = false;
     simple_log_processor_definition.relationships = &[relationships::SUCCESS];
-    simple_log_processor_definition.properties = &[DIRECTORY, RECURSE, KEEP_SOURCE_FILE, MIN_AGE, MAX_AGE, MIN_SIZE, MAX_SIZE, IGNORE_HIDDEN_FILES, BATCH_SIZE];
+    simple_log_processor_definition.properties = &[FILE_SIZE, BATCH_SIZE, DATA_FORMAT, UNIQUE_FLOW_FILES, CUSTOM_TEXT];
     simple_log_processor_definition
 }
 

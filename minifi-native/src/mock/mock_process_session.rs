@@ -1,4 +1,4 @@
-use crate::MockFlowFile;
+use crate::{MinifiError, MockFlowFile};
 use crate::api::ProcessSession;
 
 pub struct TransferredFlowFile {
@@ -14,8 +14,8 @@ pub struct MockProcessSession {
 impl ProcessSession for MockProcessSession {
     type FlowFile = MockFlowFile;
 
-    fn create(&mut self) -> Option<Self::FlowFile> {
-        Some(Self::FlowFile::new())
+    fn create(&mut self) -> Result<Self::FlowFile, MinifiError> {
+        Ok(Self::FlowFile::new())
     }
     fn get(&mut self) -> Option<Self::FlowFile> {
         self.input_flow_files.pop()
@@ -39,8 +39,8 @@ impl ProcessSession for MockProcessSession {
         true
     }
 
-    fn write(&mut self, flow_file: &mut Self::FlowFile, data: &str) {
-        flow_file.content = data.to_string();
+    fn write(&mut self, flow_file: &mut Self::FlowFile, data: &[u8]) {
+        flow_file.content = data.to_vec();
     }
 
     fn write_in_batches<'b, F: FnMut() -> Option<&'b [u8]>>(
@@ -50,20 +50,13 @@ impl ProcessSession for MockProcessSession {
     ) -> bool {
         flow_file.content.clear();
         while let Some(batch) = produce_batch() {
-            match String::from_utf8(batch.to_vec()) {
-                Ok(s) => {
-                    flow_file.content += s.as_str();
-                }
-                Err(_) => {
-                    return false;
-                }
-            }
+            flow_file.content.append(&mut batch.to_vec());
         }
         true
     }
 
     fn read(&mut self, flow_file: &Self::FlowFile) -> Option<Vec<u8>> {
-        Some(flow_file.content.as_bytes().to_vec())
+        Some(flow_file.content.to_vec())
     }
 
     fn read_in_batches<F: FnMut(&[u8])>(
@@ -72,8 +65,7 @@ impl ProcessSession for MockProcessSession {
         batch_size: usize,
         mut process_batch: F,
     ) -> bool {
-        let bytes = flow_file.content.as_bytes();
-        for chunk in bytes.chunks(batch_size) {
+        for chunk in flow_file.content.chunks(batch_size) {
             process_batch(chunk);
         }
         true

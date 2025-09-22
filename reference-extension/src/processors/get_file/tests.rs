@@ -44,20 +44,21 @@ fn simple_get_file_test() {
     assert_eq!(session.transferred_flow_files.len(), 1);
 }
 
-fn create_test_directory() -> TempDir {
-    fn make_file(temp_dir: &TempDir, file_name: &str, size: usize, age: Duration) {
-        let path = temp_dir.path().join(file_name);
-        std::fs::write(&path, "a".repeat(size)).unwrap();
-        let file_time = FileTime::from_system_time(SystemTime::now() - age);
-        filetime::set_file_mtime(path, file_time).expect("Cannot set file time");
-    }
+fn make_file(temp_dir: &TempDir, file_name: &str, size: usize, age: Duration) {
+    let path = temp_dir.path().join(file_name);
+    std::fs::write(&path, "a".repeat(size)).unwrap();
+    let file_time = FileTime::from_system_time(SystemTime::now() - age);
+    filetime::set_file_mtime(path, file_time).expect("Cannot set file time");
+}
 
+fn create_test_directory() -> TempDir {
     let temp_dir = tempfile::tempdir().expect("temp dir is required for testing GetFile");
     make_file(&temp_dir, "small_new", 10, Duration::from_secs(10));
     make_file(&temp_dir, "small_old", 11, Duration::from_secs(3600));
 
     make_file(&temp_dir, "large_new", 1000, Duration::from_secs(0));
     make_file(&temp_dir, "large_old", 2000, Duration::from_secs(3600));
+    make_file(&temp_dir, ".small_hidden", 10, Duration::from_secs(0));
     temp_dir
 }
 
@@ -119,4 +120,31 @@ fn complex_dir_with_filters() {
     test_complex_dir_with_filter(MAX_AGE.name, "5 min", "new");
     test_complex_dir_with_filter(MIN_SIZE.name, "50 B", "large");
     test_complex_dir_with_filter(MAX_SIZE.name, "50 B", "small");
+}
+
+#[test]
+fn test_hidden_files_and_batch_size() {
+    let temp_dir = tempfile::tempdir().expect("temp dir is required for testing GetFile");
+    make_file(&temp_dir, ".one", 10, Duration::from_secs(0));
+    make_file(&temp_dir, ".two", 10, Duration::from_secs(0));
+    make_file(&temp_dir, ".three", 10, Duration::from_secs(0));
+
+    let mut processor = GetFile::new(MockLogger::new());
+    let mut context = MockProcessContext::new();
+    context.properties.insert(
+        DIRECTORY.name.to_string(),
+        temp_dir.path().to_str().unwrap().to_string(),
+    );
+    context
+        .properties
+        .insert(BATCH_SIZE.name.to_string(), "2".to_string());
+
+    context
+        .properties
+        .insert(IGNORE_HIDDEN_FILES.name.to_string(), "false".to_string());
+
+    let mut session = MockProcessSession::new();
+    assert!(processor.on_schedule(&context).is_ok());
+    assert!(processor.on_trigger(&mut context, &mut session).is_ok());
+    assert_eq!(session.transferred_flow_files.len(), 2);
 }

@@ -4,6 +4,7 @@ use minifi_native_sys::{MinifiDestroyFlowFile, MinifiFlowFileSetAttribute, Minif
 use std::ffi::{CString, c_void};
 use std::os::raw::c_char;
 use crate::c_ffi::c_ffi_primitives::{ConvertMinifiStringView, StringView};
+use crate::MinifiError;
 
 pub struct CffiProcessSession<'a> {
     ptr: MinifiProcessSession,
@@ -23,12 +24,12 @@ impl<'a> CffiProcessSession<'a> {
 impl<'a> ProcessSession for CffiProcessSession<'a> {
     type FlowFile = CffiFlowFile;
 
-    fn create(&mut self) -> Option<Self::FlowFile> {
+    fn create(&mut self) -> Result<Self::FlowFile, MinifiError> {
         let ff_ptr = unsafe { MinifiProcessSessionCreate(self.ptr, std::ptr::null_mut()) };
         if ff_ptr.is_null() {
-            None
+            Err(MinifiError::UnknownError)
         } else {
-            Some(Self::FlowFile { ptr: ff_ptr })
+            Ok(Self::FlowFile { ptr: ff_ptr })
         }
     }
 
@@ -132,8 +133,8 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
         on_attr_helper.result
     }
 
-    fn write(&mut self, flow_file: &mut Self::FlowFile, data: &str) {
-        let mut dt: Option<&str> = Some(data);
+    fn write(&mut self, flow_file: &mut Self::FlowFile, data: &[u8]) {
+        let mut dt: Option<&[u8]> = Some(data);
         unsafe {
             unsafe extern "C" fn cb(
                 user_ctx: *mut c_void,

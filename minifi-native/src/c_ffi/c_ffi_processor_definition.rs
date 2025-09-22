@@ -5,14 +5,55 @@ use super::c_ffi_logger::CffiLogger;
 use super::c_ffi_primitives::{BoolAsMinifiCBool, StaticStrAsMinifiCStr};
 use super::c_ffi_process_context::CffiProcessContext;
 use super::c_ffi_process_session::CffiProcessSession;
-use crate::{LogLevel, Property};
+use crate::{Concurrent, ConcurrentOnTrigger, Exclusive, ExclusiveOnTrigger, LogLevel, Property};
 use crate::Relationship;
-use crate::api::{Processor, ProcessorInputRequirement};
+use crate::api::{Processor, ProcessorInputRequirement, ThreadingModel};
 use minifi_native_sys::*;
+
+pub trait DispatchOnTrigger<M: ThreadingModel> {
+    unsafe fn dispatch_on_trigger(
+        processor: *mut c_void,
+        context: MinifiProcessContext,
+        session: MinifiProcessSession,
+    ) -> MinifiStatus;
+}
+
+impl<T> DispatchOnTrigger<Concurrent> for T where T: ConcurrentOnTrigger<CffiLogger> {
+    unsafe fn dispatch_on_trigger(processor_ptr: *mut c_void, context_ptr: MinifiProcessContext, session_ptr: MinifiProcessSession) -> MinifiStatus {
+        unsafe {
+            let processor = &*(processor_ptr as *const T);
+            let mut context = CffiProcessContext::new(context_ptr);
+            let mut session = CffiProcessSession::new(session_ptr);
+            match processor.on_trigger(&mut context, &mut session) {
+                Ok(_) => { 0 }
+                Err(error_code) => {
+                    error_code.to_status()
+                }
+            }
+        }
+    }
+}
+
+impl<T> DispatchOnTrigger<Exclusive> for T where T: ExclusiveOnTrigger<CffiLogger> {
+    unsafe fn dispatch_on_trigger(processor_ptr: *mut c_void, context_ptr: MinifiProcessContext, session_ptr: MinifiProcessSession) -> MinifiStatus {
+        unsafe {
+            let processor = &mut *(processor_ptr as *mut T);
+            let mut context = CffiProcessContext::new(context_ptr);
+            let mut session = CffiProcessSession::new(session_ptr);
+            match processor.on_trigger(&mut context, &mut session) {
+                Ok(_) => { 0 }
+                Err(error_code) => {
+                    error_code.to_status()
+                }
+            }
+        }
+    }
+}
+
 
 pub struct ProcessorDefinition<T>
 where
-    T: Processor<CffiLogger>,
+    T: Processor<CffiLogger> + DispatchOnTrigger<T::Threading>,
 {
     module_name: &'static str,
     name: &'static str,
@@ -28,7 +69,7 @@ where
 
 impl<T> ProcessorDefinition<T>
 where
-    T: Processor<CffiLogger>,
+    T: Processor<CffiLogger> + DispatchOnTrigger<T::Threading>,
 {
     pub fn new(
         module_name: &'static str,
@@ -121,16 +162,19 @@ where
         session_ptr: MinifiProcessSession,
     ) -> MinifiStatus {
         unsafe {
-            let processor = &mut *(processor_ptr as *mut T);
-            let mut context = CffiProcessContext::new(context_ptr);
-            let mut session = CffiProcessSession::new(session_ptr);
-            match processor.on_trigger(&mut context, &mut session) {
-                Ok(_) => { 0 }
-                Err(error_code) => {
-                    error_code.to_status()
-                }
-            }
+            let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                <T as DispatchOnTrigger<T::Threading>>::dispatch_on_trigger(
+                    processor_ptr,
+                    context_ptr,
+                    session_ptr,
+                )
+            }));
 
+            result.unwrap_or_else(|_| {
+                // A panic occurred.
+                eprintln!("A panic occurred inside on_trigger_processor!");
+                MinifiStatus_MINIFI_UNKNOWN_ERROR
+            })
         }
     }
 
@@ -160,18 +204,18 @@ where
 
     unsafe extern "C" fn is_work_available(processor_ptr: *mut c_void) -> MinifiBool {
         unsafe {
-            let processor = &mut *(processor_ptr as *mut T);
+            let processor = &*(processor_ptr as *const T);
             processor.is_work_available().as_minifi_c_type()
         }
     }
 
     unsafe extern "C" fn restore(_processor_ptr: *mut c_void, _flow_file: *mut MinifiFlowFile_T) {
-        panic!("restore not implemented");
+        eprintln!("Restore is not implemented for this processor.");
     }
 
     unsafe extern "C" fn get_trigger_when_empty(processor_ptr: *mut c_void) -> MinifiBool {
         unsafe {
-            let processor = &mut *(processor_ptr as *mut T);
+            let processor = &*(processor_ptr as *const T);
             processor.get_trigger_when_empty().as_minifi_c_type()
         }
     }

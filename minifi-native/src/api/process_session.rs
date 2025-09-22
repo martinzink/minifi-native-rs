@@ -1,9 +1,10 @@
 use crate::api::flow_file::FlowFile;
+use crate::MinifiError;
 
 pub trait ProcessSession {
     type FlowFile: FlowFile;
 
-    fn create(&mut self) -> Option<Self::FlowFile>;
+    fn create(&mut self) -> Result<Self::FlowFile, MinifiError>;
     fn get(&mut self) -> Option<Self::FlowFile>;
     fn transfer(&mut self, flow_file: Self::FlowFile, relationship: &str);
 
@@ -11,7 +12,7 @@ pub trait ProcessSession {
     fn get_attribute(&mut self, flow_file: &mut Self::FlowFile, attr_key: &str) -> Option<String>;  // TODO(mzink) Result
     fn on_attributes<F: FnMut(&str, &str)>(&mut self, flow_file: &Self::FlowFile, process_attr: F) -> bool; // TODO(mzink) Result
 
-    fn write(&mut self, flow_file: &mut Self::FlowFile, data: &str);
+    fn write(&mut self, flow_file: &mut Self::FlowFile, data: &[u8]);
     fn write_in_batches<'b, F: FnMut() -> Option<&'b [u8]>>(
         &mut self,
         flow_file: &mut Self::FlowFile,

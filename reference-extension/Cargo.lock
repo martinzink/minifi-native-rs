@@ -580,6 +580,7 @@ dependencies = [
  "filetime",
  "humantime",
  "minifi-native",
+ "rand",
  "strum",
  "tempfile",
  "walkdir",

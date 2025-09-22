@@ -1,29 +1,36 @@
 use crate::{LogLevel, Logger, ProcessContext, ProcessSession};
 use crate::api::error_code::MinifiError;
+use crate::api::threading_model::{Concurrent, Exclusive, ThreadingModel};
+
 pub enum ProcessorInputRequirement {
     Required,
     Allowed,
     Forbidden,
 }
 
-/// A safe, idiomatic Rust trait for implementing a MiNiFi Processor.
 pub trait Processor<L: Logger>: Sized {
-    fn new(logger: L) -> Self;
+    type Threading: ThreadingModel;
 
+    fn new(logger: L) -> Self;
     fn restore(&self) -> bool {
         false
     }
-
     fn get_trigger_when_empty(&self) -> bool {
         false
     }
-
     fn is_work_available(&self) -> bool {
         false
     }
-
-    fn on_trigger<P: ProcessContext, S: ProcessSession>(&mut self, context: &mut P, session: &mut S) -> Result<(), MinifiError>;
+    fn log(&self, log_level: LogLevel, message: &str);
     fn on_schedule<P: ProcessContext>(&mut self, context: &P) -> Result<(), MinifiError>;
     fn on_unschedule(&mut self) {}
-    fn log(&self, log_level: LogLevel, message: &str);
 }
+
+pub trait ExclusiveOnTrigger<L: Logger>: Processor<L, Threading = Exclusive> {
+    fn on_trigger<P: ProcessContext, S: ProcessSession>(&mut self, context: &mut P, session: &mut S) -> Result<(), MinifiError>;
+}
+
+pub trait ConcurrentOnTrigger<L: Logger>: Processor<L, Threading = Concurrent> {
+    fn on_trigger<P: ProcessContext, S: ProcessSession>(&self, context: &mut P, session: &mut S) -> Result<(), MinifiError>;
+}
+

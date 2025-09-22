@@ -2,16 +2,32 @@ use crate::processors::get_file::properties::{
     BATCH_SIZE, DIRECTORY, IGNORE_HIDDEN_FILES, KEEP_SOURCE_FILE, MAX_AGE, MAX_SIZE, MIN_AGE,
     MIN_SIZE, RECURSE,
 };
-use minifi_native::{LogLevel, Logger, MinifiError, ProcessContext, ProcessSession, Processor};
+use minifi_native::{LogLevel, Logger, MinifiError, ProcessContext, ProcessSession, Processor, ConcurrentOnTrigger, Concurrent};
 use std::collections::VecDeque;
 use std::error;
 use std::os::unix::fs::MetadataExt;
 use std::path::PathBuf;
+use std::sync::Mutex;
 use std::time::{Duration, Instant, SystemTime};
 use walkdir::{DirEntry, WalkDir};
 
 mod properties;
 mod relationships;
+
+#[derive(Debug)]
+struct DirectoryListing {
+    paths: VecDeque<PathBuf>,
+    last_polling_time: Option<Instant>,
+}
+
+impl DirectoryListing {
+    fn new() -> Self {
+        Self {
+            paths: VecDeque::new(),
+            last_polling_time: None,
+        }
+    }
+}
 
 #[derive(Debug)]
 struct GetFile<L: Logger> {
@@ -20,8 +36,7 @@ struct GetFile<L: Logger> {
     keep_source_file: bool,
     input_directory: PathBuf,
     poll_interval: Option<Duration>,
-    directory_listing: VecDeque<PathBuf>,
-    last_polling_time: Option<Instant>, // TODO(multithreading mutex)
+    directory_listing: Mutex<DirectoryListing>,
     batch_size: u64,
     min_size: Option<u64>,
     max_size: Option<u64>,
@@ -32,20 +47,16 @@ struct GetFile<L: Logger> {
 
 impl<L: Logger> GetFile<L> {
     fn is_listing_empty(&self) -> bool {
-        // TODO(multithreading) mutex
-        self.directory_listing.is_empty()
+        let directory_listing = self.directory_listing.lock().unwrap();
+        directory_listing.paths.is_empty()
     }
 
-    fn put_listing(&mut self, path: PathBuf) {
-        // TODO(multithreading) mutex
-        self.directory_listing.push_front(path);
-    }
+    fn poll_listing(&self, batch_size: u64) -> VecDeque<PathBuf> {
+        let mut directory_listings = self.directory_listing.lock().unwrap();
 
-    fn poll_listing(&mut self, batch_size: u64) -> VecDeque<PathBuf> {
-        // TODO(multithreading) mutex
         let mut res = VecDeque::new();
         for _ in 0..batch_size {
-            if let Some(path) = self.directory_listing.pop_back() {
+            if let Some(path) = directory_listings.paths.pop_back() {
                 res.push_back(path);
             } else {
                 break;
@@ -59,24 +70,28 @@ impl<L: Logger> GetFile<L> {
         if self.poll_interval.is_none() {
             return true;
         }
-        if self.last_polling_time.is_none() {
+        let directory_listings = self.directory_listing.lock().unwrap();
+
+        if directory_listings.last_polling_time.is_none() {
             return true;
         }
-        Instant::now() - self.last_polling_time.unwrap() > self.poll_interval.unwrap()
+        Instant::now() - directory_listings.last_polling_time.unwrap() > self.poll_interval.unwrap()
     }
 
-    fn perform_listing(&mut self) {
+    fn perform_listing(&self) {
+        let mut directory_listings = self.directory_listing.lock().unwrap();
         let walker = WalkDir::new(&self.input_directory);
 
         for entry in walker.into_iter().filter_map(Result::ok) {
             if self.entry_matches_criteria(&entry).unwrap_or(false) {
-                self.put_listing(entry.into_path());
+                directory_listings.paths.push_back(entry.into_path());
             }
         }
+        directory_listings.last_polling_time = Some(Instant::now());
     }
 
     fn entry_matches_criteria(
-        &mut self,
+        &self,
         dir_entry: &DirEntry,
     ) -> Result<bool, Box<dyn error::Error>> {
         let metadata = dir_entry.metadata()?;
@@ -100,8 +115,8 @@ impl<L: Logger> GetFile<L> {
         }
 
         fn is_hidden(path: PathBuf) -> bool {
-            path.starts_with(".")
-            // TODO(mzink) check for other platforms
+            // TODO(windows)
+            path.file_name().and_then(|f| f.to_str()).map_or(false, |f| f.starts_with('.'))
         }
 
         if self.ignore_hidden_files && is_hidden(dir_entry.path().to_path_buf()) {
@@ -131,7 +146,7 @@ impl<L: Logger> GetFile<L> {
         // TODO(relative path)
 
         let contents = std::fs::read_to_string(&path).expect("Failed to read file");
-        session.write(&mut ff, contents.as_str()); // TODO(return value)
+        session.write(&mut ff, contents.as_bytes()); // TODO(return value)
         if !self.keep_source_file {
             let _ = std::fs::remove_file(&path); // TODO(error handling)
         }
@@ -140,6 +155,8 @@ impl<L: Logger> GetFile<L> {
 }
 
 impl<L: Logger> Processor<L> for GetFile<L> {
+    type Threading = Concurrent;
+
     fn new(logger: L) -> Self {
         Self {
             logger,
@@ -147,8 +164,7 @@ impl<L: Logger> Processor<L> for GetFile<L> {
             keep_source_file: false,
             input_directory: PathBuf::new(),
             poll_interval: None,
-            directory_listing: VecDeque::new(),
-            last_polling_time: None, // TODO(multithreading mutex)
+            directory_listing: Mutex::new(DirectoryListing::new()),
             batch_size: 1,
             max_age: None,
             min_age: None,
@@ -158,47 +174,8 @@ impl<L: Logger> Processor<L> for GetFile<L> {
         }
     }
 
-    fn on_trigger<P, S>(&mut self, context: &mut P, session: &mut S) -> Result<(), MinifiError>
-    where
-        P: ProcessContext,
-        S: ProcessSession,
-    {
-        {
-            let is_dir_empty_before_poll = self.is_listing_empty();
-            self.logger.debug(
-                format!(
-                    "Listing is {} before polling directory",
-                    is_dir_empty_before_poll
-                )
-                .as_str(),
-            );
-            if is_dir_empty_before_poll {
-                if self.should_poll() {
-                    self.perform_listing();
-                    self.last_polling_time = Some(Instant::now());
-                }
-            }
-        }
-        {
-            let is_dir_empty_after_poll = self.is_listing_empty();
-            self.logger.debug(
-                format!(
-                    "Listing is {} after polling directory",
-                    is_dir_empty_after_poll
-                )
-                .as_str(),
-            );
-            if is_dir_empty_after_poll {
-                context.yield_context();
-                return Ok(());
-            }
-        }
-
-        let files = self.poll_listing(self.batch_size);
-        for file in files {
-            self.get_single_file(session, file);
-        }
-        Ok(())
+    fn log(&self, log_level: LogLevel, message: &str) {
+        self.logger.log(log_level, message);
     }
 
     fn on_schedule<P>(&mut self, context: &P) -> Result<(), MinifiError>
@@ -238,9 +215,49 @@ impl<L: Logger> Processor<L> for GetFile<L> {
 
         Ok(())
     }
+}
 
-    fn log(&self, log_level: LogLevel, message: &str) {
-        self.logger.log(log_level, message);
+impl<L: Logger> ConcurrentOnTrigger<L> for GetFile<L> {
+    fn on_trigger<P, S>(&self, context: &mut P, session: &mut S) -> Result<(), MinifiError>
+    where
+        P: ProcessContext,
+        S: ProcessSession,
+    {
+        {
+            let is_dir_empty_before_poll = self.is_listing_empty();
+            self.logger.debug(
+                format!(
+                    "Listing is {} before polling directory",
+                    is_dir_empty_before_poll
+                )
+                    .as_str(),
+            );
+            if is_dir_empty_before_poll {
+                if self.should_poll() {
+                    self.perform_listing();
+                }
+            }
+        }
+        {
+            let is_dir_empty_after_poll = self.is_listing_empty();
+            self.logger.debug(
+                format!(
+                    "Listing is {} after polling directory",
+                    is_dir_empty_after_poll
+                )
+                    .as_str(),
+            );
+            if is_dir_empty_after_poll {
+                context.yield_context();
+                return Ok(());
+            }
+        }
+
+        let files = self.poll_listing(self.batch_size);
+        for file in files {
+            self.get_single_file(session, file);
+        }
+        Ok(())
     }
 }
 
