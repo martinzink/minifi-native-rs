@@ -180,7 +180,6 @@ where
             }));
 
             result.unwrap_or_else(|_| {
-                // A panic occurred.
                 eprintln!("A panic occurred inside on_trigger_processor!");
                 MinifiStatus_MINIFI_UNKNOWN_ERROR
             })

@@ -44,11 +44,16 @@ impl<L: Logger> LogAttribute<L> {
         });
         if self.log_payload {
             log_msg.push_str("\nPayload:\n");
-            let flow_file_payload = session.read(flow_file).unwrap();
-            if self.hex_encode_payload {
-                log_msg.push_str(&hex::encode(flow_file_payload));
-            } else {
-                log_msg.push_str(String::from_utf8(flow_file_payload).unwrap_or(String::new()).as_str());  // TODO(error handling)
+            if let Some(flow_file_payload) = session.read(flow_file) {
+                if self.hex_encode_payload {
+                    log_msg.push_str(&hex::encode(flow_file_payload));
+                } else {
+                    log_msg.push_str(
+                        String::from_utf8(flow_file_payload)
+                            .unwrap_or(String::new())
+                            .as_str(),
+                    ); // TODO(error handling)
+                }
             }
         }
         log_msg.push_str("\n");

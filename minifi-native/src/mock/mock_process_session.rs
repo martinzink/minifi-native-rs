@@ -33,12 +33,12 @@ impl ProcessSession for MockProcessSession {
             .attributes
             .insert(attr_key.to_string(), attr_value.to_string());
     }
-    fn get_attribute(&mut self, flow_file: &mut Self::FlowFile, attr_key: &str) -> Option<String> {
+    fn get_attribute(&self, flow_file: &mut Self::FlowFile, attr_key: &str) -> Option<String> {
         flow_file.attributes.get(attr_key).cloned()
     }
 
     fn on_attributes<F: FnMut(&str, &str)>(
-        &mut self,
+        &self,
         flow_file: &Self::FlowFile,
         mut process_attr: F,
     ) -> bool {
@@ -69,16 +69,17 @@ impl ProcessSession for MockProcessSession {
         Some(flow_file.content.to_vec())
     }
 
-    fn read_in_batches<F: FnMut(&[u8])>(
+    fn read_in_batches<F>(
         &mut self,
         flow_file: &Self::FlowFile,
         batch_size: usize,
         mut process_batch: F,
-    ) -> bool {
+    ) -> Result<(), MinifiError> where
+        F: FnMut(&[u8]) -> Result<(), MinifiError>, {
         for chunk in flow_file.content.chunks(batch_size) {
-            process_batch(chunk);
+            process_batch(chunk)?;
         }
-        true
+        Ok(())
     }
 }
 

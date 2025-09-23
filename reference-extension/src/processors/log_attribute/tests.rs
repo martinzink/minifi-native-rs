@@ -1,6 +1,14 @@
 use super::*;
 use minifi_native::{MockFlowFile, MockLogger, MockProcessContext, MockProcessSession};
 
+#[test]
+fn schedule_succeeds_with_default_values() {
+    let mut processor = LogAttribute::new(MockLogger::new());
+    let context = MockProcessContext::new();
+
+    assert_eq!(processor.on_schedule(&context), Ok(()));
+}
+
 fn tester(
     input_flow_files: Vec<MockFlowFile>,
     log_level: LogLevel,

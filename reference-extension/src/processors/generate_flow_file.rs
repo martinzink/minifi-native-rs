@@ -119,7 +119,7 @@ impl<L: Logger> Processor<L> for GenerateFlowFile<L> {
 
         self.mode = Self::get_mode(is_unique, is_text, has_custom_text, self.file_size);
         if self.mode == Mode::NotUniqueText || self.mode == Mode::NotUniqueBytes {
-            self.data_generated_during_on_schedule = Vec::with_capacity(self.file_size as usize);
+            self.data_generated_during_on_schedule = vec![0; self.file_size as usize];
             Self::generate_data(&mut self.data_generated_during_on_schedule, is_text);
         }
 
@@ -149,9 +149,9 @@ impl<L: Logger> ConcurrentOnTrigger<L> for GenerateFlowFile<L> {
 
         for _ in 0..self.batch_size {
             let mut ff = session.create()?;
-            if self.file_size != 0 {
+            if self.mode != Mode::Empty {
                 if self.is_unique() {
-                    let mut unique_data: Vec<u8> = Vec::with_capacity(self.file_size as usize);
+                    let mut unique_data: Vec<u8> = vec![0; self.file_size as usize];
                     Self::generate_data(&mut unique_data, self.is_text());
                     session.write(&mut ff, unique_data.as_slice());
                 } else {

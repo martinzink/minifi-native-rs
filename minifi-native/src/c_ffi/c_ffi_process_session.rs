@@ -1,7 +1,7 @@
 use super::c_ffi_flow_file::CffiFlowFile;
-use crate::MinifiError;
 use crate::api::ProcessSession;
 use crate::c_ffi::c_ffi_primitives::{ConvertMinifiStringView, StringView};
+use crate::MinifiError;
 use minifi_native_sys::{
     MinifiDestroyFlowFile, MinifiFlowFileGetAttribute, MinifiFlowFileGetAttributes,
     MinifiFlowFileSetAttribute, MinifiInputStream, MinifiInputStreamRead, MinifiInputStreamSize,
@@ -9,7 +9,7 @@ use minifi_native_sys::{
     MinifiProcessSessionGet, MinifiProcessSessionRead, MinifiProcessSessionTransfer,
     MinifiProcessSessionWrite, MinifiStringView,
 };
-use std::ffi::{CString, c_void};
+use std::ffi::{c_void, CString};
 use std::os::raw::c_char;
 
 pub struct CffiProcessSession<'a> {
@@ -77,7 +77,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
         }
     }
 
-    fn get_attribute(&mut self, flow_file: &mut Self::FlowFile, attr_key: &str) -> Option<String> {
+    fn get_attribute(&self, flow_file: &mut Self::FlowFile, attr_key: &str) -> Option<String> {
         let mut attr_value: Option<String> = None;
         unsafe {
             unsafe extern "C" fn cb(
@@ -103,7 +103,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
     }
 
     fn on_attributes<F: FnMut(&str, &str)>(
-        &mut self,
+        &self,
         flow_file: &Self::FlowFile,
         process_attr: F,
     ) -> bool {
@@ -259,13 +259,19 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
         output
     }
 
-    fn read_in_batches<F: FnMut(&[u8])>(
+    fn read_in_batches<F>(
         &mut self,
         flow_file: &Self::FlowFile,
         batch_size: usize,
         process_batch: F,
-    ) -> bool {
-        struct BatchReadHelper<F: FnMut(&[u8])> {
+    ) -> Result<(), MinifiError>
+    where
+        F: FnMut(&[u8]) -> Result<(), MinifiError>,
+    {
+        struct BatchReadHelper<F>
+        where
+            F: FnMut(&[u8]) -> Result<(), MinifiError>,
+        {
             batch_size: usize,
             process_batch: F,
         }
@@ -275,10 +281,13 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
             process_batch,
         };
         unsafe {
-            unsafe extern "C" fn cb<F: FnMut(&[u8])>(
+            unsafe extern "C" fn cb<F>(
                 output_option: *mut c_void,
                 input_stream: MinifiInputStream,
-            ) -> i64 {
+            ) -> i64
+            where
+                F: FnMut(&[u8]) -> Result<(), MinifiError>,
+            {
                 unsafe {
                     let batch_helper = &mut *(output_option as *mut BatchReadHelper<F>);
 
@@ -299,7 +308,13 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
 
                         buffer.set_len(bytes_read as usize);
 
-                        (batch_helper.process_batch)(&*buffer);
+                        match (batch_helper.process_batch)(&*buffer) {
+                            Ok(_) => {}
+                            Err(err) => {
+                                eprintln!("Error during read_in_batch {:?}", err);
+                                return -1;
+                            }
+                        }
                         remaining_size -= bytes_read as usize;
                         overall_read += bytes_read;
                     }
@@ -307,13 +322,15 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                 }
             }
 
-            MinifiProcessSessionRead(
+            match MinifiProcessSessionRead(
                 self.ptr,
                 flow_file.ptr,
                 Some(cb::<F>),
                 &mut batch_helper as *mut _ as *mut c_void,
-            );
+            ) {
+                0 => Ok(()),
+                _ => Err(MinifiError::UnknownError) // TODO(MinifiStatusError?)
+            }
         }
-        true
     }
 }

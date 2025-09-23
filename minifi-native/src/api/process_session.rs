@@ -1,5 +1,5 @@
-use crate::MinifiError;
 use crate::api::flow_file::FlowFile;
+use crate::MinifiError;
 
 pub trait ProcessSession {
     type FlowFile: FlowFile;
@@ -9,9 +9,9 @@ pub trait ProcessSession {
     fn transfer(&mut self, flow_file: Self::FlowFile, relationship: &str);
 
     fn set_attribute(&mut self, flow_file: &mut Self::FlowFile, attr_key: &str, attr_value: &str); // TODO(mzink) Result
-    fn get_attribute(&mut self, flow_file: &mut Self::FlowFile, attr_key: &str) -> Option<String>; // TODO(mzink) Result
+    fn get_attribute(&self, flow_file: &mut Self::FlowFile, attr_key: &str) -> Option<String>; // TODO(mzink) Result
     fn on_attributes<F: FnMut(&str, &str)>(
-        &mut self,
+        &self,
         flow_file: &Self::FlowFile,
         process_attr: F,
     ) -> bool; // TODO(mzink) Result
@@ -23,10 +23,12 @@ pub trait ProcessSession {
         produce_batch: F,
     ) -> bool;
     fn read(&mut self, flow_file: &Self::FlowFile) -> Option<Vec<u8>>;
-    fn read_in_batches<F: FnMut(&[u8])>(
+    fn read_in_batches<F>(
         &mut self,
         flow_file: &Self::FlowFile,
         batch_size: usize,
         process_batch: F,
-    ) -> bool;
+    ) -> Result<(), MinifiError>
+    where
+        F: FnMut(&[u8]) -> Result<(), MinifiError>;
 }

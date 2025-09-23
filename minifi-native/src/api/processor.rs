@@ -27,17 +27,17 @@ pub trait Processor<L: Logger>: Sized {
 }
 
 pub trait ExclusiveOnTrigger<L: Logger>: Processor<L, Threading = Exclusive> {
-    fn on_trigger<P: ProcessContext, S: ProcessSession>(
+    fn on_trigger<PC, PS>(
         &mut self,
-        context: &mut P,
-        session: &mut S,
-    ) -> Result<(), MinifiError>;
+        context: &mut PC,
+        session: &mut PS,
+    ) -> Result<(), MinifiError> where PC: ProcessContext, PS: ProcessSession<FlowFile = PC::FlowFile>;
 }
 
 pub trait ConcurrentOnTrigger<L: Logger>: Processor<L, Threading = Concurrent> {
-    fn on_trigger<P: ProcessContext, S: ProcessSession>(
+    fn on_trigger<PC, PS>(
         &self,
-        context: &mut P,
-        session: &mut S,
-    ) -> Result<(), MinifiError>;
+        context: &mut PC,
+        session: &mut PS,
+    ) -> Result<(), MinifiError> where PC: ProcessContext, PS: ProcessSession<FlowFile = PC::FlowFile>;
 }
