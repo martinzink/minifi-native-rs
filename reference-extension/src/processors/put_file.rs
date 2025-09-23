@@ -1,9 +1,3 @@
-mod properties;
-mod relationships;
-#[cfg(unix)]
-mod unix_only_properties;
-
-use crate::processors::put_file::properties::{CONFLICT_RESOLUTION, CREATE_DIRS, MAX_FILE_COUNT};
 use minifi_native::{
     ConcurrentOnTrigger, LogLevel, Logger, MinifiError, ProcessContext, ProcessSession, Processor,
 };
@@ -11,6 +5,11 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
 use walkdir::WalkDir;
+
+mod properties;
+mod relationships;
+#[cfg(unix)]
+mod unix_only_properties;
 
 #[derive(Debug, Clone, Copy, PartialEq, Display, EnumString, VariantNames, IntoStaticStr)]
 #[strum(serialize_all = "camelCase")]
@@ -113,15 +112,15 @@ impl<L: Logger> Processor<L> for PutFile<L> {
 
     fn on_schedule<P: ProcessContext>(&mut self, context: &P) -> Result<(), MinifiError> {
         self.conflict_resolution_strategy = context
-            .get_property(&CONFLICT_RESOLUTION, None)?
+            .get_property(&properties::CONFLICT_RESOLUTION, None)?
             .expect("required property")
             .parse::<ConflictResolutionStrategy>()?;
 
         self.try_make_dirs = context
-            .get_bool_property(&CREATE_DIRS, None)?
+            .get_bool_property(&properties::CREATE_DIRS, None)?
             .expect("required property");
 
-        self.maximum_file_count = context.get_u64_property(&MAX_FILE_COUNT, None)?;
+        self.maximum_file_count = context.get_u64_property(&properties::MAX_FILE_COUNT, None)?;
 
         Ok(())
     }
@@ -170,7 +169,7 @@ impl<L: Logger> ConcurrentOnTrigger<L> for PutFile<L> {
                 session.transfer(ff, relationships::SUCCESS.name);
                 Ok(())
             }
-            Err(e) => {
+            Err(_e) => {
                 session.transfer(ff, relationships::FAILURE.name);
                 Ok(())
             }

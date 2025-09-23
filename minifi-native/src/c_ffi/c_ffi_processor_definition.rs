@@ -171,18 +171,11 @@ where
         session_ptr: MinifiProcessSession,
     ) -> MinifiStatus {
         unsafe {
-            let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                <T as DispatchOnTrigger<T::Threading>>::dispatch_on_trigger(
-                    processor_ptr,
-                    context_ptr,
-                    session_ptr,
-                )
-            }));
-
-            result.unwrap_or_else(|_| {
-                eprintln!("A panic occurred inside on_trigger_processor!");
-                MinifiStatus_MINIFI_UNKNOWN_ERROR
-            })
+            <T as DispatchOnTrigger<T::Threading>>::dispatch_on_trigger(
+                processor_ptr,
+                context_ptr,
+                session_ptr,
+            )
         }
     }
 

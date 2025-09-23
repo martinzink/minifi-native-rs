@@ -1,5 +1,4 @@
 use super::*;
-use crate::processors::put_file::properties::DIRECTORY;
 use minifi_native::{CffiLogger, ProcessorDefinition, ProcessorInputRequirement};
 
 #[cfg_attr(test, allow(dead_code))]
@@ -16,8 +15,12 @@ fn put_file_definition() -> ProcessorDefinition<PutFile<CffiLogger>> {
     simple_log_processor_definition.supports_dynamic_relationships = false;
     simple_log_processor_definition.relationships =
         &[relationships::SUCCESS, relationships::FAILURE];
-    simple_log_processor_definition.properties =
-        &[DIRECTORY, CONFLICT_RESOLUTION, CREATE_DIRS, MAX_FILE_COUNT];
+    simple_log_processor_definition.properties = &[
+        properties::DIRECTORY,
+        properties::CONFLICT_RESOLUTION,
+        properties::CREATE_DIRS,
+        properties::MAX_FILE_COUNT,
+    ];
     simple_log_processor_definition
 }
 
