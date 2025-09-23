@@ -7,7 +7,7 @@ pub(crate) const LOG_LEVEL: Property = Property {
     is_required: true,
     is_sensitive: false,
     supports_expr_lang: false,
-    default_value: Some("info"),
+    default_value: Some("Info"),
     validator: StandardPropertyValidator::AlwaysValidValidator,
     allowed_values: &LogLevel::VARIANTS,
     allowed_types: &[],
@@ -69,6 +69,18 @@ pub(crate) const FLOW_FILES_TO_LOG: Property = Property {
     supports_expr_lang: false,
     default_value: Some("1"),
     validator: StandardPropertyValidator::AlwaysValidValidator,
+    allowed_values: &[],
+    allowed_types: &[],
+};
+
+pub(crate) const HEX_ENCODE_PAYLOAD: Property = Property {
+    name: "Hexencode Payload",
+    description: "If true, the FlowFile's payload will be logged in a hexencoded format",
+    is_required: true,
+    is_sensitive: false,
+    supports_expr_lang: false,
+    default_value: Some("false"),
+    validator: StandardPropertyValidator::BoolValidator,
     allowed_values: &[],
     allowed_types: &[],
 };

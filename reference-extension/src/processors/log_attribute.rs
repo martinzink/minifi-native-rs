@@ -16,6 +16,7 @@ struct LogAttribute<L: Logger> {
     log_payload: bool,
     flow_files_to_log: usize,
     dash_line: String,
+    hex_encode_payload: bool,
 }
 
 impl<L: Logger> LogAttribute<L> {
@@ -43,13 +44,12 @@ impl<L: Logger> LogAttribute<L> {
         });
         if self.log_payload {
             log_msg.push_str("\nPayload:\n");
-            log_msg.push_str(
-                session
-                    .read(flow_file)
-                    .and_then(|v| String::from_utf8(v).ok())
-                    .unwrap_or(String::new())
-                    .as_str(),
-            ); // TODO(mzink) Handle binary data
+            let flow_file_payload = session.read(flow_file).unwrap();
+            if self.hex_encode_payload {
+                log_msg.push_str(&hex::encode(flow_file_payload));
+            } else {
+                log_msg.push_str(String::from_utf8(flow_file_payload).unwrap_or(String::new()).as_str());  // TODO(error handling)
+            }
         }
         log_msg.push_str("\n");
         log_msg.push_str(self.dash_line.as_str());
@@ -104,6 +104,7 @@ impl<L: Logger> Processor<L> for LogAttribute<L> {
             log_payload: false,
             flow_files_to_log: 1,
             dash_line: String::new(),
+            hex_encode_payload: false,
         }
     }
 
@@ -147,6 +148,10 @@ impl<L: Logger> Processor<L> for LogAttribute<L> {
                 .get_property(&properties::LOG_PREFIX, None)?
                 .unwrap_or(String::new())
         );
+
+        self.hex_encode_payload = context
+            .get_bool_property(&properties::HEX_ENCODE_PAYLOAD, None)?
+            .expect("required property");
 
         Ok(())
     }

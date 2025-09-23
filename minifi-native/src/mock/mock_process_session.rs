@@ -1,5 +1,6 @@
 use crate::api::ProcessSession;
 use crate::{MinifiError, MockFlowFile};
+use itertools::Itertools;
 
 pub struct TransferredFlowFile {
     pub relationship: String,
@@ -41,7 +42,8 @@ impl ProcessSession for MockProcessSession {
         flow_file: &Self::FlowFile,
         mut process_attr: F,
     ) -> bool {
-        for (attr_key, attr_value) in flow_file.attributes.iter() {
+        // Sorting for deterministic tests.
+        for (attr_key, attr_value) in flow_file.attributes.iter().sorted_by_key(|x| x.0) {
             process_attr(attr_key, attr_value);
         }
         true

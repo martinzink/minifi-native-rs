@@ -22,6 +22,7 @@ fn log_attribute_definition() -> ProcessorDefinition<LogAttribute<CffiLogger>> {
         LOG_PAYLOAD,
         LOG_PREFIX,
         FLOW_FILES_TO_LOG,
+        HEX_ENCODE_PAYLOAD
     ];
     simple_log_processor_definition
 }
