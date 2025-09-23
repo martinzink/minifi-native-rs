@@ -10,7 +10,6 @@ fn get_file_definition() -> ProcessorDefinition<GetFile<CffiLogger>> {
         "Creates FlowFiles from files in a directory. MiNiFi will ignore files for which it doesn't have read permissions.",
     );
 
-    simple_log_processor_definition.is_single_threaded = false;
     simple_log_processor_definition.input_requirement = ProcessorInputRequirement::Forbidden;
     simple_log_processor_definition.supports_dynamic_properties = false;
     simple_log_processor_definition.supports_dynamic_relationships = false;

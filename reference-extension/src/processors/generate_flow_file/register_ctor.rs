@@ -11,7 +11,6 @@ fn get_file_definition() -> ProcessorDefinition<GenerateFlowFile<CffiLogger>> {
             "This processor creates FlowFiles with random data or custom content. GenerateFlowFile is useful for load testing, configuration, and simulation.",
         );
 
-    simple_log_processor_definition.is_single_threaded = false;
     simple_log_processor_definition.input_requirement = ProcessorInputRequirement::Forbidden;
     simple_log_processor_definition.supports_dynamic_properties = false;
     simple_log_processor_definition.supports_dynamic_relationships = false;

@@ -10,7 +10,6 @@ fn log_attribute_definition() -> ProcessorDefinition<LogAttribute<CffiLogger>> {
         "Logs attributes of flow files in the MiNiFi application log.",
     );
 
-    simple_log_processor_definition.is_single_threaded = false;
     simple_log_processor_definition.input_requirement = ProcessorInputRequirement::Required;
     simple_log_processor_definition.supports_dynamic_properties = false;
     simple_log_processor_definition.supports_dynamic_relationships = false;

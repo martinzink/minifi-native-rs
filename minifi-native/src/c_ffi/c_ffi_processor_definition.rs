@@ -92,7 +92,7 @@ where
             input_requirement: ProcessorInputRequirement::Allowed,
             supports_dynamic_properties: false,
             supports_dynamic_relationships: false,
-            is_single_threaded: false,
+            is_single_threaded: T::Threading::IS_EXCLUSIVE,
             relationships: &[],
             properties: &[],
             _phantom: std::marker::PhantomData,
