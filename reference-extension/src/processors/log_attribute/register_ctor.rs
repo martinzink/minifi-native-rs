@@ -4,17 +4,17 @@ use minifi_native::{CffiLogger, ProcessorDefinition, ProcessorInputRequirement};
 
 #[cfg_attr(test, allow(dead_code))]
 fn log_attribute_definition() -> ProcessorDefinition<LogAttribute<CffiLogger>> {
-    let mut simple_log_processor_definition = ProcessorDefinition::<LogAttribute<CffiLogger>>::new(
+    let mut log_attribute_definition = ProcessorDefinition::<LogAttribute<CffiLogger>>::new(
         "rust_reference_extension",
         "rs::LogAttributeRs",
         "Logs attributes of flow files in the MiNiFi application log.",
     );
 
-    simple_log_processor_definition.input_requirement = ProcessorInputRequirement::Required;
-    simple_log_processor_definition.supports_dynamic_properties = false;
-    simple_log_processor_definition.supports_dynamic_relationships = false;
-    simple_log_processor_definition.relationships = &[relationships::SUCCESS];
-    simple_log_processor_definition.properties = &[
+    log_attribute_definition.input_requirement = ProcessorInputRequirement::Required;
+    log_attribute_definition.supports_dynamic_properties = false;
+    log_attribute_definition.supports_dynamic_relationships = false;
+    log_attribute_definition.relationships = &[relationships::SUCCESS];
+    log_attribute_definition.properties = &[
         LOG_LEVEL,
         ATTRIBUTES_TO_LOG,
         ATTRIBUTES_TO_IGNORE,
@@ -23,7 +23,7 @@ fn log_attribute_definition() -> ProcessorDefinition<LogAttribute<CffiLogger>> {
         FLOW_FILES_TO_LOG,
         HEX_ENCODE_PAYLOAD,
     ];
-    simple_log_processor_definition
+    log_attribute_definition
 }
 
 #[ctor::ctor]

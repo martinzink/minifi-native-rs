@@ -8,16 +8,18 @@ Feature: Test Minifi Native C Api capabilities
 
     When the MiNiFi instance starts up
 
-    Then the Minifi logs contain the following message: "Successfully initialized extension 'minifi-rust'" in less than 200 seconds
+    Then the Minifi logs contain the following message: "Successfully initialized extension 'minifi-rust'" in less than 20 seconds
     And the Minifi logs do not contain errors
     And the Minifi logs do not contain warnings
 
-  Scenario: The SimpleSourceProcessor writes property value into FlowFiles
+  Scenario: Simple GenerateFlowFileRs -> PutFileRs
     Given the built rust extension library is inside minifi's extension folder
-    And a SimpleSourceProcessor processor with the "Content" property set to "Ferris the crab"
-    And a PutFile processor with the "Directory" property set to "/tmp/output"
-    And the "success" relationship of the SimpleSourceProcessor processor is connected to the PutFile
-    And PutFile's success relationship is auto-terminated
+    And a GenerateFlowFileRs processor with the "Custom Text" property set to "Ferris the crab"
+    And the "Data Format" property of the GenerateFlowFileRs processor is set to "Text"
+    And the "Unique FlowFiles" property of the GenerateFlowFileRs processor is set to "false"
+    And a PutFileRs processor with the "Directory" property set to "/tmp/output"
+    And the "success" relationship of the GenerateFlowFileRs processor is connected to the PutFileRs
+    And PutFileRs's success relationship is auto-terminated
 
     When the MiNiFi instance starts up
 
@@ -25,14 +27,31 @@ Feature: Test Minifi Native C Api capabilities
     And the Minifi logs do not contain errors
     And the Minifi logs do not contain warnings
 
+  Scenario: Simple GetFileRs -> PutFileRs
+    Given the built rust extension library is inside minifi's extension folder
+    And a GetFileRs processor with the "Input Directory" property set to "/tmp/input"
+    And a PutFileRs processor with the "Directory" property set to "/tmp/output"
+    And the "success" relationship of the GetFileRs processor is connected to the PutFileRs
+    And PutFileRs's success relationship is auto-terminated
+    And PutFileRs's failure relationship is auto-terminated
+    And a directory at "/tmp/input" has a file ("test_file.log") with the content "test content"
+    And log property "logger.rs::PutFileRs" is set to "TRACE,stderr"
+    And log property "logger.rs::GetFileRs" is set to "TRACE,stderr"
+
+    When the MiNiFi instance starts up
+
+    Then there is a file with "test content" content at /tmp/output/test_file.log in less than 10 seconds
+    And the Minifi logs do not contain errors
+    And the Minifi logs do not contain warnings
+
   Scenario Outline: The LogAttributeRs can read and log FlowFile content
     Given the built rust extension library is inside minifi's extension folder
-    And a GenerateFlowFile processor with the "Custom Text" property set to "<custom_text>"
-    And the "Data Format" property of the GenerateFlowFile processor is set to "Text"
-    And the "Unique FlowFiles" property of the GenerateFlowFile processor is set to "false"
+    And a GenerateFlowFileRs processor with the "Custom Text" property set to "<custom_text>"
+    And the "Data Format" property of the GenerateFlowFileRs processor is set to "Text"
+    And the "Unique FlowFiles" property of the GenerateFlowFileRs processor is set to "false"
     And a LogAttributeRs processor with the "Log Level" property set to "<log_level>"
     And the "Log Payload" property of the LogAttributeRs processor is set to "true"
-    And the "success" relationship of the GenerateFlowFile processor is connected to the LogAttributeRs
+    And the "success" relationship of the GenerateFlowFileRs processor is connected to the LogAttributeRs
     And LogAttributeRs's success relationship is auto-terminated
 
     When the MiNiFi instance starts up
@@ -48,9 +67,11 @@ Feature: Test Minifi Native C Api capabilities
 
   Scenario: The Api handles empty flow-files
     Given the built rust extension library is inside minifi's extension folder
-    And a SimpleSourceProcessor processor with the "Content" property set to "${invalid_attribute}"
+    And a GenerateFlowFileRs processor with the "Custom Text" property set to "${invalid_attribute}"
+    And the "Data Format" property of the GenerateFlowFileRs processor is set to "Text"
+    And the "Unique FlowFiles" property of the GenerateFlowFileRs processor is set to "false"
     And a LogAttributeRs processor with the "Log Level" property set to "Critical"
-    And the "success" relationship of the SimpleSourceProcessor processor is connected to the LogAttributeRs
+    And the "success" relationship of the GenerateFlowFileRs processor is connected to the LogAttributeRs
     And LogAttributeRs's success relationship is auto-terminated
 
     When the MiNiFi instance starts up

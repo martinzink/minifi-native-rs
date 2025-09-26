@@ -150,7 +150,12 @@ impl<L: Logger> GetFile<L> {
         let contents = std::fs::read_to_string(&path).expect("Failed to read file");
         session.write(&mut ff, contents.as_bytes()); // TODO(return value)
         if !self.keep_source_file {
-            let _ = std::fs::remove_file(&path); // TODO(error handling)
+            match std::fs::remove_file(&path) {
+                Ok(_) => {}
+                Err(err) => {
+                    self.logger.warn(format!("Failed to remove source file {:?}", err).as_str());
+                }
+            }
         }
         session.transfer(ff, relationships::SUCCESS.name);
     }
@@ -225,6 +230,7 @@ impl<L: Logger> ConcurrentOnTrigger<L> for GetFile<L> {
         P: ProcessContext,
         S: ProcessSession,
     {
+        self.logger.trace(format!("on_trigger: {:?}", self).as_str());
         {
             let is_dir_empty_before_poll = self.is_listing_empty();
             self.logger.debug(

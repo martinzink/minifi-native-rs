@@ -111,6 +111,7 @@ impl<L: Logger> Processor<L> for PutFile<L> {
     }
 
     fn on_schedule<P: ProcessContext>(&mut self, context: &P) -> Result<(), MinifiError> {
+        self.logger.trace(format!("on_schedule: {:?}", self).as_str());
         self.conflict_resolution_strategy = context
             .get_property(&properties::CONFLICT_RESOLUTION, None)?
             .expect("required property")
@@ -132,18 +133,20 @@ impl<L: Logger> ConcurrentOnTrigger<L> for PutFile<L> {
         C: ProcessContext,
         S: ProcessSession<FlowFile = C::FlowFile>,
     {
+        self.logger.trace(format!("on_trigger: {:?}", self).as_str());
         let Some(mut ff) = session.get() else {
             return Ok(());
         };
 
         let Ok(destination_path) = Self::get_destination_path::<C, S>(context, session, &mut ff)
         else {
+            self.logger.warn("Invalid destination path");
             session.transfer(ff, relationships::FAILURE.name);
             return Ok(());
         };
 
         if self.directory_is_full(&destination_path) {
-            // TODO(log warn)
+            self.logger.warn("Directory is full");
             session.transfer(ff, relationships::FAILURE.name);
             return Ok(());
         }
@@ -169,7 +172,8 @@ impl<L: Logger> ConcurrentOnTrigger<L> for PutFile<L> {
                 session.transfer(ff, relationships::SUCCESS.name);
                 Ok(())
             }
-            Err(_e) => {
+            Err(e) => {
+                self.logger.warn(format!("Failed to put file due to {:?}", e).as_str());
                 session.transfer(ff, relationships::FAILURE.name);
                 Ok(())
             }

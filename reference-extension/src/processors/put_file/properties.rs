@@ -44,7 +44,7 @@ pub(crate) const MAX_FILE_COUNT: Property = Property {
     is_required: false,
     is_sensitive: false,
     supports_expr_lang: false,
-    default_value: None, // Diverged from the original implementation, u64 with no default describes the behaviour better
+    default_value: None, // Diverged from the original implementation, u64 with no default describes the behavior better
     validator: StandardPropertyValidator::U64Validator,
     allowed_values: &[],
     allowed_types: &[],

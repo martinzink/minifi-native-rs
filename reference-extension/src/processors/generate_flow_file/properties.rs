@@ -49,7 +49,7 @@ pub(crate) const UNIQUE_FLOW_FILES: Property = Property {
 };
 
 pub(crate) const CUSTOM_TEXT: Property = Property {
-    name: "Maximum File Age",
+    name: "Custom Text",
     description: "If Data Format is text and if Unique FlowFiles is false, then this custom text will be used as content of the generated FlowFiles and the File Size will be ignored. Finally, if Expression Language is used, evaluation will be performed only once per batch of generated FlowFiles",
     is_required: false,
     is_sensitive: false,
