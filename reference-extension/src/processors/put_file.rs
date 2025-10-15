@@ -2,9 +2,12 @@ use minifi_native::{
     ConcurrentOnTrigger, LogLevel, Logger, MinifiError, ProcessContext, ProcessSession, Processor,
 };
 use std::io::Write;
+use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
+use std::str::FromStr;
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
 use walkdir::WalkDir;
+use crate::processors::put_file::unix_only_properties::{DIRECTORY_PERMISSIONS, PERMISSIONS};
 
 mod properties;
 mod relationships;
@@ -19,12 +22,59 @@ enum ConflictResolutionStrategy {
     Ignore,
 }
 
+#[cfg(unix)]
+#[derive(Debug)]
+struct PutFileUnixPermissions {
+    file_permissions: Option<std::fs::Permissions>,
+    directory_permissions: Option<std::fs::Permissions>,
+}
+
+#[cfg(unix)]
+impl PutFileUnixPermissions {
+    fn new() -> Self {
+        Self {
+            file_permissions: None,
+            directory_permissions: None,
+        }
+    }
+
+    fn set_directory_permissions(&self, path: &Path) -> std::io::Result<()>{
+        if let Some(permissions) = self.directory_permissions.as_ref().map(|p| p.clone()) {
+            return std::fs::set_permissions(path, permissions);
+        }
+        Ok(())
+    }
+
+    fn set_file_permissions(&self, file: &Path) -> std::io::Result<()> {
+        if let Some(permissions) = self.file_permissions.as_ref().map(|p| p.clone()) {
+            return std::fs::set_permissions(file, permissions);
+        }
+        Ok(())
+    }
+}
+
+#[cfg(windows)]
+#[derive(Debug)]
+struct PutFileWindowsPermissions {
+}
+
+#[cfg(windows)]
+impl PutFileWindowsPermissions {
+    fn new() -> Self {
+        Self {
+        }
+    }
+
+}
+
+
 #[derive(Debug)]
 struct PutFile<L: Logger> {
     logger: L,
     conflict_resolution_strategy: ConflictResolutionStrategy,
     try_make_dirs: bool,
     maximum_file_count: Option<u64>,
+    unix_permissions: PutFileUnixPermissions
 }
 
 impl<L: Logger> PutFile<L> {
@@ -37,9 +87,7 @@ impl<L: Logger> PutFile<L> {
             false
         }
     }
-}
 
-impl<L: Logger> PutFile<L> {
     fn get_destination_path<C, S>(
         context: &C,
         session: &S,
@@ -59,19 +107,14 @@ impl<L: Logger> PutFile<L> {
         Ok(PathBuf::from(directory + "/" + file_name.as_str()))
     }
 
-    #[cfg(unix)]
-    fn prepare_destination(&self, destination: &Path) {
+    fn prepare_destination(&self, destination: &Path) -> std::io::Result<()> {
         if let Some(parent) = destination.parent() {
             if self.try_make_dirs {
-                std::fs::create_dir_all(parent); // TODO(error handling)
+                std::fs::create_dir_all(parent)?;
+                self.unix_permissions.set_directory_permissions(parent)?;
             }
         }
-        // TODO(do permissions)
-    }
-
-    #[cfg(windows)]
-    fn prepare_destination(&self, destination: &Path) {
-        todo!("windows implementation");
+        Ok(())
     }
 
     fn put_file<C, S>(
@@ -84,13 +127,42 @@ impl<L: Logger> PutFile<L> {
         C: ProcessContext,
         S: ProcessSession<FlowFile = C::FlowFile>,
     {
-        self.prepare_destination(destination);
-        let mut file = std::fs::File::create(destination).map_err(|_| MinifiError::UnknownError)?;
+        match self.prepare_destination(destination) {
+            Ok(_) => {}
+            Err(err) => {
+                self.logger.warn(format!("Failed to prepare destination due to {:?}", err).as_str());
+            }
+        }
+        let mut file = std::fs::File::create(destination).map_err(|e| MinifiError::TriggerError(e.to_string()))?;
+        match self.unix_permissions.set_file_permissions(destination) {
+            Ok(_) => {}
+            Err(err) => {
+                self.logger.warn(format!("Failed to set file permissions due to {:?}", err).as_str());
+            }
+        }
 
         session.read_in_batches(ff, 1024, |batch| {
-            file.write_all(batch).map_err(|_| MinifiError::UnknownError) // TODO(proper mapping)
+            file.write_all(batch).map_err(|e| MinifiError::TriggerError(e.to_string()))
         })?;
 
+        Ok(())
+    }
+
+    #[cfg(unix)]
+    fn parse_unix_permissions<P: ProcessContext>(&mut self, context: &P) -> Result<(), MinifiError> {
+        if let Some(dir_perm_str) = context.get_property(&DIRECTORY_PERMISSIONS, None)? {
+            let dir_perm = u32::from_str_radix(&dir_perm_str, 8)?;
+            self.unix_permissions.directory_permissions = Some(std::fs::Permissions::from_mode(dir_perm));
+        }
+        if let Some(perm_str) = context.get_property(&PERMISSIONS, None)? {
+            let perm = u32::from_str_radix(&perm_str, 8)?;
+            self.unix_permissions.file_permissions = Some(std::fs::Permissions::from_mode(perm));
+        }
+        Ok(())
+    }
+
+    #[cfg(windows)]
+    fn parse_unix_permissions<P: ProcessContext>(&mut self, context: &P) -> Result<(), MinifiError> {
         Ok(())
     }
 }
@@ -103,6 +175,7 @@ impl<L: Logger> Processor<L> for PutFile<L> {
             conflict_resolution_strategy: ConflictResolutionStrategy::Fail,
             try_make_dirs: true,
             maximum_file_count: None,
+            unix_permissions: PutFileUnixPermissions::new()
         }
     }
 
@@ -122,6 +195,8 @@ impl<L: Logger> Processor<L> for PutFile<L> {
             .expect("required property");
 
         self.maximum_file_count = context.get_u64_property(&properties::MAX_FILE_COUNT, None)?;
+
+        self.parse_unix_permissions(context)?;
 
         Ok(())
     }

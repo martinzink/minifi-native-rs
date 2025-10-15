@@ -30,6 +30,7 @@ pub enum MinifiError {
     InvalidValidator,
     Parse(ParseError),
     ScheduleError(String),
+    TriggerError(String),
 }
 
 impl From<strum::ParseError> for MinifiError {

@@ -4,17 +4,17 @@ use minifi_native::{CffiLogger, ProcessorDefinition, ProcessorInputRequirement};
 
 #[cfg_attr(test, allow(dead_code))]
 fn get_file_definition() -> ProcessorDefinition<GetFile<CffiLogger>> {
-    let mut simple_log_processor_definition = ProcessorDefinition::<GetFile<CffiLogger>>::new(
+    let mut get_file_def = ProcessorDefinition::<GetFile<CffiLogger>>::new(
         "rust_reference_extension",
         "rs::GetFileRs",
         "Creates FlowFiles from files in a directory. MiNiFi will ignore files for which it doesn't have read permissions.",
     );
 
-    simple_log_processor_definition.input_requirement = ProcessorInputRequirement::Forbidden;
-    simple_log_processor_definition.supports_dynamic_properties = false;
-    simple_log_processor_definition.supports_dynamic_relationships = false;
-    simple_log_processor_definition.relationships = &[relationships::SUCCESS];
-    simple_log_processor_definition.properties = &[
+    get_file_def.input_requirement = ProcessorInputRequirement::Forbidden;
+    get_file_def.supports_dynamic_properties = false;
+    get_file_def.supports_dynamic_relationships = false;
+    get_file_def.relationships = &[relationships::SUCCESS];
+    get_file_def.properties = &[
         DIRECTORY,
         RECURSE,
         KEEP_SOURCE_FILE,
@@ -25,7 +25,7 @@ fn get_file_definition() -> ProcessorDefinition<GetFile<CffiLogger>> {
         IGNORE_HIDDEN_FILES,
         BATCH_SIZE,
     ];
-    simple_log_processor_definition
+    get_file_def
 }
 
 #[ctor::ctor]

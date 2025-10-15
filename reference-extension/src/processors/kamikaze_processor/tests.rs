@@ -2,7 +2,7 @@ use minifi_native::{MockLogger, MockProcessContext, MockProcessSession};
 use minifi_native::MinifiError::UnknownError;
 use crate::processors::kamikaze_processor::properties::{ON_SCHEDULE_BEHAVIOUR, ON_TRIGGER_BEHAVIOUR};
 use super::*;
-use std::panic::{self, AssertUnwindSafe};
+use std::panic::{AssertUnwindSafe};
 
 #[test]
 fn on_schedule_ok() {

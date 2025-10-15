@@ -3,6 +3,7 @@ import os
 import time
 import humanfriendly
 
+from minifi_test_framework.core.helpers import wait_for_condition
 from minifi_test_framework.steps import checking_steps
 from minifi_test_framework.steps import configuration_steps
 from minifi_test_framework.steps import core_steps
@@ -21,3 +22,9 @@ def step_impl(context: MinifiTestContext):
 def step_impl(context: MinifiTestContext, duration: str):
     timeout_in_seconds = humanfriendly.parse_timespan(duration)
     time.sleep(timeout_in_seconds)
+
+@then('Minifi crashes with the following "{crash_msg}" in less than {duration}')
+def step_impl(context: MinifiTestContext, crash_msg: str, duration: str):
+    duration_seconds = humanfriendly.parse_timespan(duration)
+    assert wait_for_condition(condition=lambda: context.minifi_container.exited and crash_msg in context.minifi_container.get_logs(),
+                              timeout_seconds=duration_seconds, bail_condition=lambda: False, context=context)

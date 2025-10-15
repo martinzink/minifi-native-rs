@@ -79,3 +79,44 @@ Feature: Test Minifi Native C Api capabilities
     Then Waits for 3 seconds
     And the Minifi logs do not contain errors
     And the Minifi logs do not contain warnings
+
+  Scenario: Minifi handles errors from on_schedule
+    Given the built rust extension library is inside minifi's extension folder
+    And a KamikazeProcessorRs processor with the "On Schedule Behaviour" property set to "ReturnErr"
+    And KamikazeProcessorRs's success relationship is auto-terminated
+
+    When the MiNiFi instance starts up
+
+    Then the Minifi logs contain the following message: "(KamikazeProcessorRs): Process Schedule Operation: Error while scheduling processor" in less than 3 seconds
+
+
+  Scenario: Panic in extension's on_schedule crashes the agent aswell
+    Given the built rust extension library is inside minifi's extension folder
+    And a KamikazeProcessorRs processor with the "On Schedule Behaviour" property set to "Panic"
+    And KamikazeProcessorRs's success relationship is auto-terminated
+
+    When the MiNiFi instance starts up
+
+    Then Minifi crashes with the following "KamikazeProcessor panic" in less than 5 seconds
+
+  Scenario: Minifi handles errors from on_trigger
+    Given the built rust extension library is inside minifi's extension folder
+    And a KamikazeProcessorRs processor with the "On Schedule Behaviour" property set to "ReturnOk"
+    And the "On Trigger Behaviour" property of the KamikazeProcessorRs processor is set to "ReturnErr"
+    And KamikazeProcessorRs's success relationship is auto-terminated
+
+    When the MiNiFi instance starts up
+
+    Then the Minifi logs contain the following message: "Trigger and commit failed for processor KamikazeProcessorRs" in less than 3 seconds
+
+
+  Scenario: Panic in extension's on_schedule crashes the agent aswell
+    Given the built rust extension library is inside minifi's extension folder
+    And a KamikazeProcessorRs processor with the "On Schedule Behaviour" property set to "ReturnOk"
+    And the "On Trigger Behaviour" property of the KamikazeProcessorRs processor is set to "Panic"
+    And KamikazeProcessorRs's success relationship is auto-terminated
+
+    When the MiNiFi instance starts up
+
+    Then Minifi crashes with the following "KamikazeProcessor panic" in less than 5 seconds
+
