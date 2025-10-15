@@ -1,3 +1,4 @@
+use crate::processors::put_file::unix_only_properties::{DIRECTORY_PERMISSIONS, PERMISSIONS};
 use minifi_native::{
     ConcurrentOnTrigger, LogLevel, Logger, MinifiError, ProcessContext, ProcessSession, Processor,
 };
@@ -7,7 +8,6 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
 use walkdir::WalkDir;
-use crate::processors::put_file::unix_only_properties::{DIRECTORY_PERMISSIONS, PERMISSIONS};
 
 mod properties;
 mod relationships;
@@ -38,7 +38,7 @@ impl PutFileUnixPermissions {
         }
     }
 
-    fn set_directory_permissions(&self, path: &Path) -> std::io::Result<()>{
+    fn set_directory_permissions(&self, path: &Path) -> std::io::Result<()> {
         if let Some(permissions) = self.directory_permissions.as_ref().map(|p| p.clone()) {
             return std::fs::set_permissions(path, permissions);
         }
@@ -55,18 +55,14 @@ impl PutFileUnixPermissions {
 
 #[cfg(windows)]
 #[derive(Debug)]
-struct PutFileWindowsPermissions {
-}
+struct PutFileWindowsPermissions {}
 
 #[cfg(windows)]
 impl PutFileWindowsPermissions {
     fn new() -> Self {
-        Self {
-        }
+        Self {}
     }
-
 }
-
 
 #[derive(Debug)]
 struct PutFile<L: Logger> {
@@ -74,7 +70,7 @@ struct PutFile<L: Logger> {
     conflict_resolution_strategy: ConflictResolutionStrategy,
     try_make_dirs: bool,
     maximum_file_count: Option<u64>,
-    unix_permissions: PutFileUnixPermissions
+    unix_permissions: PutFileUnixPermissions,
 }
 
 impl<L: Logger> PutFile<L> {
@@ -130,29 +126,37 @@ impl<L: Logger> PutFile<L> {
         match self.prepare_destination(destination) {
             Ok(_) => {}
             Err(err) => {
-                self.logger.warn(format!("Failed to prepare destination due to {:?}", err).as_str());
+                self.logger
+                    .warn(format!("Failed to prepare destination due to {:?}", err).as_str());
             }
         }
-        let mut file = std::fs::File::create(destination).map_err(|e| MinifiError::TriggerError(e.to_string()))?;
+        let mut file = std::fs::File::create(destination)
+            .map_err(|e| MinifiError::TriggerError(e.to_string()))?;
         match self.unix_permissions.set_file_permissions(destination) {
             Ok(_) => {}
             Err(err) => {
-                self.logger.warn(format!("Failed to set file permissions due to {:?}", err).as_str());
+                self.logger
+                    .warn(format!("Failed to set file permissions due to {:?}", err).as_str());
             }
         }
 
         session.read_in_batches(ff, 1024, |batch| {
-            file.write_all(batch).map_err(|e| MinifiError::TriggerError(e.to_string()))
+            file.write_all(batch)
+                .map_err(|e| MinifiError::TriggerError(e.to_string()))
         })?;
 
         Ok(())
     }
 
     #[cfg(unix)]
-    fn parse_unix_permissions<P: ProcessContext>(&mut self, context: &P) -> Result<(), MinifiError> {
+    fn parse_unix_permissions<P: ProcessContext>(
+        &mut self,
+        context: &P,
+    ) -> Result<(), MinifiError> {
         if let Some(dir_perm_str) = context.get_property(&DIRECTORY_PERMISSIONS, None)? {
             let dir_perm = u32::from_str_radix(&dir_perm_str, 8)?;
-            self.unix_permissions.directory_permissions = Some(std::fs::Permissions::from_mode(dir_perm));
+            self.unix_permissions.directory_permissions =
+                Some(std::fs::Permissions::from_mode(dir_perm));
         }
         if let Some(perm_str) = context.get_property(&PERMISSIONS, None)? {
             let perm = u32::from_str_radix(&perm_str, 8)?;
@@ -162,7 +166,10 @@ impl<L: Logger> PutFile<L> {
     }
 
     #[cfg(windows)]
-    fn parse_unix_permissions<P: ProcessContext>(&mut self, context: &P) -> Result<(), MinifiError> {
+    fn parse_unix_permissions<P: ProcessContext>(
+        &mut self,
+        context: &P,
+    ) -> Result<(), MinifiError> {
         Ok(())
     }
 }
@@ -175,7 +182,7 @@ impl<L: Logger> Processor<L> for PutFile<L> {
             conflict_resolution_strategy: ConflictResolutionStrategy::Fail,
             try_make_dirs: true,
             maximum_file_count: None,
-            unix_permissions: PutFileUnixPermissions::new()
+            unix_permissions: PutFileUnixPermissions::new(),
         }
     }
 
@@ -184,7 +191,8 @@ impl<L: Logger> Processor<L> for PutFile<L> {
     }
 
     fn on_schedule<P: ProcessContext>(&mut self, context: &P) -> Result<(), MinifiError> {
-        self.logger.trace(format!("on_schedule: {:?}", self).as_str());
+        self.logger
+            .trace(format!("on_schedule: {:?}", self).as_str());
         self.conflict_resolution_strategy = context
             .get_property(&properties::CONFLICT_RESOLUTION, None)?
             .expect("required property")
@@ -208,7 +216,8 @@ impl<L: Logger> ConcurrentOnTrigger<L> for PutFile<L> {
         C: ProcessContext,
         S: ProcessSession<FlowFile = C::FlowFile>,
     {
-        self.logger.trace(format!("on_trigger: {:?}", self).as_str());
+        self.logger
+            .trace(format!("on_trigger: {:?}", self).as_str());
         let Some(mut ff) = session.get() else {
             return Ok(());
         };
@@ -248,7 +257,8 @@ impl<L: Logger> ConcurrentOnTrigger<L> for PutFile<L> {
                 Ok(())
             }
             Err(e) => {
-                self.logger.warn(format!("Failed to put file due to {:?}", e).as_str());
+                self.logger
+                    .warn(format!("Failed to put file due to {:?}", e).as_str());
                 session.transfer(ff, relationships::FAILURE.name);
                 Ok(())
             }

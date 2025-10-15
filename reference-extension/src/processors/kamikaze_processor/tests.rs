@@ -1,8 +1,10 @@
-use minifi_native::{MockLogger, MockProcessContext, MockProcessSession};
-use minifi_native::MinifiError::UnknownError;
-use crate::processors::kamikaze_processor::properties::{ON_SCHEDULE_BEHAVIOUR, ON_TRIGGER_BEHAVIOUR};
 use super::*;
-use std::panic::{AssertUnwindSafe};
+use crate::processors::kamikaze_processor::properties::{
+    ON_SCHEDULE_BEHAVIOUR, ON_TRIGGER_BEHAVIOUR,
+};
+use minifi_native::MinifiError::UnknownError;
+use minifi_native::{MockLogger, MockProcessContext, MockProcessSession};
+use std::panic::AssertUnwindSafe;
 
 #[test]
 fn on_schedule_ok() {
@@ -15,7 +17,10 @@ fn on_schedule_ok() {
 fn on_schedule_err() {
     let mut processor = KamikazeProcessor::new(MockLogger::new());
     let mut context = MockProcessContext::new();
-    context.properties.insert(ON_SCHEDULE_BEHAVIOUR.name.to_string(), "ReturnErr".to_string());
+    context.properties.insert(
+        ON_SCHEDULE_BEHAVIOUR.name.to_string(),
+        "ReturnErr".to_string(),
+    );
     assert_eq!(processor.on_schedule(&context), Err(UnknownError));
 }
 
@@ -23,7 +28,9 @@ fn on_schedule_err() {
 fn on_schedule_panic() {
     let mut processor = KamikazeProcessor::new(MockLogger::new());
     let mut context = MockProcessContext::new();
-    context.properties.insert(ON_SCHEDULE_BEHAVIOUR.name.to_string(), "Panic".to_string());
+    context
+        .properties
+        .insert(ON_SCHEDULE_BEHAVIOUR.name.to_string(), "Panic".to_string());
 
     let result = std::panic::catch_unwind(AssertUnwindSafe(|| processor.on_schedule(&context)));
     assert!(result.is_err());
@@ -43,21 +50,31 @@ fn on_trigger_ok() {
 fn on_trigger_err() {
     let mut processor = KamikazeProcessor::new(MockLogger::new());
     let mut context = MockProcessContext::new();
-    context.properties.insert(ON_TRIGGER_BEHAVIOUR.name.to_string(), "ReturnErr".to_string());
+    context.properties.insert(
+        ON_TRIGGER_BEHAVIOUR.name.to_string(),
+        "ReturnErr".to_string(),
+    );
     assert_eq!(processor.on_schedule(&context), Ok(()));
 
     let mut session = MockProcessSession::new();
-    assert_eq!(processor.on_trigger(&mut context, &mut session), Err(UnknownError));
+    assert_eq!(
+        processor.on_trigger(&mut context, &mut session),
+        Err(UnknownError)
+    );
 }
 
 #[test]
 fn on_trigger_panic() {
     let mut processor = KamikazeProcessor::new(MockLogger::new());
     let mut context = MockProcessContext::new();
-    context.properties.insert(ON_TRIGGER_BEHAVIOUR.name.to_string(), "Panic".to_string());
+    context
+        .properties
+        .insert(ON_TRIGGER_BEHAVIOUR.name.to_string(), "Panic".to_string());
     assert_eq!(processor.on_schedule(&context), Ok(()));
 
     let mut session = MockProcessSession::new();
-    let result = std::panic::catch_unwind(AssertUnwindSafe(|| processor.on_trigger(&mut context, &mut session)));
+    let result = std::panic::catch_unwind(AssertUnwindSafe(|| {
+        processor.on_trigger(&mut context, &mut session)
+    }));
     assert!(result.is_err());
 }

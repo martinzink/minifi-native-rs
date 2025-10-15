@@ -91,15 +91,13 @@ fn put_file_test_permissions() {
         put_file_dir.to_str().unwrap().to_string(),
     );
 
-    context.properties.insert(
-        "Directory Permissions".to_string(),
-        "0777".to_string(),
-    );
+    context
+        .properties
+        .insert("Directory Permissions".to_string(), "0777".to_string());
 
-    context.properties.insert(
-        "Permissions".to_string(),
-        "0777".to_string(),
-    );
+    context
+        .properties
+        .insert("Permissions".to_string(), "0777".to_string());
     assert_eq!(put_file.on_schedule(&context), Ok(()));
 
     let mut session = MockProcessSession::new();

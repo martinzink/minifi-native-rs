@@ -1,5 +1,5 @@
-use crate::api::flow_file::FlowFile;
 use crate::MinifiError;
+use crate::api::flow_file::FlowFile;
 
 pub trait ProcessSession {
     type FlowFile: FlowFile;

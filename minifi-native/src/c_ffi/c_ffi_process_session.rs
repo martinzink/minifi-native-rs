@@ -1,7 +1,7 @@
 use super::c_ffi_flow_file::CffiFlowFile;
+use crate::MinifiError;
 use crate::api::ProcessSession;
 use crate::c_ffi::c_ffi_primitives::{ConvertMinifiStringView, StringView};
-use crate::MinifiError;
 use minifi_native_sys::{
     MinifiDestroyFlowFile, MinifiFlowFileGetAttribute, MinifiFlowFileGetAttributes,
     MinifiFlowFileSetAttribute, MinifiInputStream, MinifiInputStreamRead, MinifiInputStreamSize,
@@ -9,7 +9,7 @@ use minifi_native_sys::{
     MinifiProcessSessionGet, MinifiProcessSessionRead, MinifiProcessSessionTransfer,
     MinifiProcessSessionWrite, MinifiStringView,
 };
-use std::ffi::{c_void, CString};
+use std::ffi::{CString, c_void};
 use std::os::raw::c_char;
 
 pub struct CffiProcessSession<'a> {
@@ -329,7 +329,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                 &mut batch_helper as *mut _ as *mut c_void,
             ) {
                 0 => Ok(()),
-                _ => Err(MinifiError::UnknownError) // TODO(MinifiStatusError?)
+                _ => Err(MinifiError::UnknownError), // TODO(MinifiStatusError?)
             }
         }
     }

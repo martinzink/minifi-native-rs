@@ -74,8 +74,10 @@ impl ProcessSession for MockProcessSession {
         flow_file: &Self::FlowFile,
         batch_size: usize,
         mut process_batch: F,
-    ) -> Result<(), MinifiError> where
-        F: FnMut(&[u8]) -> Result<(), MinifiError>, {
+    ) -> Result<(), MinifiError>
+    where
+        F: FnMut(&[u8]) -> Result<(), MinifiError>,
+    {
         for chunk in flow_file.content.chunks(batch_size) {
             process_batch(chunk)?;
         }

@@ -153,7 +153,8 @@ impl<L: Logger> GetFile<L> {
             match std::fs::remove_file(&path) {
                 Ok(_) => {}
                 Err(err) => {
-                    self.logger.warn(format!("Failed to remove source file {:?}", err).as_str());
+                    self.logger
+                        .warn(format!("Failed to remove source file {:?}", err).as_str());
                 }
             }
         }
@@ -230,7 +231,8 @@ impl<L: Logger> ConcurrentOnTrigger<L> for GetFile<L> {
         P: ProcessContext,
         S: ProcessSession,
     {
-        self.logger.trace(format!("on_trigger: {:?}", self).as_str());
+        self.logger
+            .trace(format!("on_trigger: {:?}", self).as_str());
         {
             let is_dir_empty_before_poll = self.is_listing_empty();
             self.logger.debug(
