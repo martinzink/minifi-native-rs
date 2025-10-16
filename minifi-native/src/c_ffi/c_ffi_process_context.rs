@@ -55,7 +55,7 @@ impl<'a> ProcessContext for CffiProcessContext<'a> {
         let property_name: StringView = StringView::new(property.name);
 
         let status = unsafe {
-            MinifiProcessContextGetProperty(
+            MinifiProcessContextGetProperty.unwrap()(
                 self.ptr,
                 property_name.as_raw(),
                 ff_ptr,
@@ -75,6 +75,6 @@ impl<'a> ProcessContext for CffiProcessContext<'a> {
     }
 
     fn yield_context(&mut self) {
-        unsafe { MinifiProcessContextYield(self.ptr) }
+        unsafe { MinifiProcessContextYield.unwrap()(self.ptr) }
     }
 }

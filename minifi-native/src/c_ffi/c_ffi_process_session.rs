@@ -31,7 +31,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
     type FlowFile = CffiFlowFile;
 
     fn create(&mut self) -> Result<Self::FlowFile, MinifiError> {
-        let ff_ptr = unsafe { MinifiProcessSessionCreate(self.ptr, std::ptr::null_mut()) };
+        let ff_ptr = unsafe { MinifiProcessSessionCreate.unwrap()(self.ptr, std::ptr::null_mut()) };
         if ff_ptr.is_null() {
             Err(MinifiError::UnknownError)
         } else {
@@ -40,7 +40,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
     }
 
     fn get(&mut self) -> Option<Self::FlowFile> {
-        let ff_ptr = unsafe { MinifiProcessSessionGet(self.ptr) };
+        let ff_ptr = unsafe { MinifiProcessSessionGet.unwrap()(self.ptr) };
         if ff_ptr.is_null() {
             None
         } else {
@@ -51,7 +51,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
     fn transfer(&mut self, flow_file: Self::FlowFile, relationship: &str) {
         if let Ok(c_relationship) = CString::new(relationship) {
             unsafe {
-                MinifiProcessSessionTransfer(
+                MinifiProcessSessionTransfer.unwrap()(
                     self.ptr,
                     flow_file.ptr,
                     MinifiStringView {
@@ -59,7 +59,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                         length: c_relationship.as_bytes().len() as u32,
                     },
                 );
-                MinifiDestroyFlowFile(flow_file.ptr);
+                MinifiDestroyFlowFile.unwrap()(flow_file.ptr);
             }
         }
     }
@@ -68,7 +68,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
         unsafe {
             let attr_key_string_view = StringView::new(attr_key);
             let attr_value_string_view = StringView::new(attr_value);
-            MinifiFlowFileSetAttribute(
+            MinifiFlowFileSetAttribute.unwrap()(
                 self.ptr,
                 flow_file.ptr,
                 attr_key_string_view.as_raw(),
@@ -91,7 +91,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
             }
 
             let attr_key_string_view = StringView::new(attr_key);
-            MinifiFlowFileGetAttribute(
+            MinifiFlowFileGetAttribute.unwrap()(
                 self.ptr,
                 flow_file.ptr,
                 attr_key_string_view.as_raw(),
@@ -135,7 +135,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
         }
 
         unsafe {
-            MinifiFlowFileGetAttributes(
+            MinifiFlowFileGetAttributes.unwrap()(
                 self.ptr,
                 flow_file.ptr,
                 Some(cb::<F>),
@@ -158,7 +158,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                         return -1;
                     }
 
-                    MinifiOutputStreamWrite(
+                    MinifiOutputStreamWrite.unwrap()(
                         output_stream,
                         result_target.unwrap().as_ptr() as *const c_char,
                         result_target.unwrap().len() as u64,
@@ -166,7 +166,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                 }
             }
 
-            match MinifiProcessSessionWrite(
+            match MinifiProcessSessionWrite.unwrap()(
                 self.ptr,
                 flow_file.ptr,
                 Some(cb),
@@ -192,7 +192,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                     let produce_batch = &mut *(user_ctx as *mut F);
                     let mut overall_writes = 0;
                     while let Some(batch) = produce_batch() {
-                        overall_writes += MinifiOutputStreamWrite(
+                        overall_writes += MinifiOutputStreamWrite.unwrap()(
                             output_stream,
                             batch.as_ptr() as *const c_char,
                             batch.len() as u64,
@@ -202,7 +202,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                 }
             }
 
-            match MinifiProcessSessionWrite(
+            match MinifiProcessSessionWrite.unwrap()(
                 self.ptr,
                 flow_file.ptr,
                 Some(cb::<F>),
@@ -224,14 +224,14 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                 unsafe {
                     let result_target = &mut *(output_option as *mut Option<Vec<u8>>);
 
-                    let stream_size = MinifiInputStreamSize(input_stream);
+                    let stream_size = MinifiInputStreamSize.unwrap()(input_stream);
                     if stream_size == 0 {
                         *result_target = None;
                         return 0;
                     }
                     let mut buffer: Vec<u8> = Vec::with_capacity(stream_size as usize);
 
-                    let bytes_read = MinifiInputStreamRead(
+                    let bytes_read = MinifiInputStreamRead.unwrap()(
                         input_stream,
                         buffer.as_mut_ptr() as *mut c_char,
                         stream_size,
@@ -249,7 +249,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                 }
             }
 
-            MinifiProcessSessionRead(
+            MinifiProcessSessionRead.unwrap()(
                 self.ptr,
                 flow_file.ptr,
                 Some(cb),
@@ -291,13 +291,13 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                 unsafe {
                     let batch_helper = &mut *(output_option as *mut BatchReadHelper<F>);
 
-                    let mut remaining_size = MinifiInputStreamSize(input_stream) as usize;
+                    let mut remaining_size = MinifiInputStreamSize.unwrap()(input_stream) as usize;
                     let mut overall_read = 0;
                     while remaining_size > 0 {
                         let read_size = remaining_size.min(batch_helper.batch_size);
                         let mut buffer: Vec<u8> = Vec::with_capacity(read_size);
 
-                        let bytes_read = MinifiInputStreamRead(
+                        let bytes_read = MinifiInputStreamRead.unwrap()(
                             input_stream,
                             buffer.as_mut_ptr() as *mut c_char,
                             read_size as u64,
@@ -322,7 +322,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                 }
             }
 
-            match MinifiProcessSessionRead(
+            match MinifiProcessSessionRead.unwrap()(
                 self.ptr,
                 flow_file.ptr,
                 Some(cb::<F>),

@@ -114,11 +114,17 @@ impl<L: Logger> GetFile<L> {
             return Ok(false);
         }
 
+        #[cfg(unix)]
         fn is_hidden(path: PathBuf) -> bool {
-            // TODO(windows)
             path.file_name()
                 .and_then(|f| f.to_str())
                 .map_or(false, |f| f.starts_with('.'))
+        }
+
+        #[cfg(windows)]
+        fn is_hidden(path: PathBuf) -> bool {
+            // TODO(windows)
+            false
         }
 
         if self.ignore_hidden_files && is_hidden(dir_entry.path().to_path_buf()) {

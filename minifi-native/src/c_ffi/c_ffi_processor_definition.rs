@@ -145,7 +145,7 @@ where
         };
 
         unsafe {
-            MinifiRegisterProcessorClass(&class_description);
+            MinifiRegisterProcessorClass.unwrap()(&class_description);
         }
     }
 

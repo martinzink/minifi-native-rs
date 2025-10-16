@@ -37,7 +37,8 @@ impl Logger for CffiLogger {
     fn log(&self, level: LogLevel, message: &str) {
         if let Ok(c_message) = CString::new(message) {
             unsafe {
-                MinifiLoggerLogString(
+
+                MinifiLoggerLogString.unwrap()(
                     self.ptr,
                     level.into(),
                     MinifiStringView {

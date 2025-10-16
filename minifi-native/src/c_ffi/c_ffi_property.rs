@@ -44,7 +44,7 @@ impl Property {
     pub(crate) fn create_c_validators_vec(properties: &[Self]) -> Vec<MinifiPropertyValidator> {
         properties
             .iter()
-            .map(|p| unsafe { MinifiGetStandardValidator(p.validator.as_minifi_c_type()) })
+            .map(|p| unsafe { MinifiGetStandardValidator.unwrap()(p.validator.as_minifi_c_type()) })
             .collect()
     }
 

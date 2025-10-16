@@ -102,13 +102,14 @@ mod tests {
     fn test_read_in_batches() {
         let mut session = MockProcessSession::new();
         let mut flow_file = MockFlowFile::new();
-        flow_file.content = "Hello, World!".to_string();
+        flow_file.content = "Hello, World!".as_bytes().to_vec();
         let mut vec: Vec<u8> = Vec::new();
 
         session.read_in_batches(&mut flow_file, 1, |batch| {
             assert_eq!(batch.len(), 1);
             vec.push(batch[0]);
-        });
+            Ok(())
+        }).expect("read_in_batches should succeed");
 
         assert_eq!(vec.len(), 13);
         assert_eq!(vec, b"Hello, World!");

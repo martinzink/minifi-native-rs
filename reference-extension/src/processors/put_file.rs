@@ -5,7 +5,6 @@ use minifi_native::{
 use std::io::Write;
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
-use std::str::FromStr;
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
 use walkdir::WalkDir;
 
