@@ -13,12 +13,26 @@ fn put_file_definition() -> ProcessorDefinition<PutFile<CffiLogger>> {
     put_file_definition.supports_dynamic_properties = false;
     put_file_definition.supports_dynamic_relationships = false;
     put_file_definition.relationships = &[relationships::SUCCESS, relationships::FAILURE];
-    put_file_definition.properties = &[
-        properties::DIRECTORY,
-        properties::CONFLICT_RESOLUTION,
-        properties::CREATE_DIRS,
-        properties::MAX_FILE_COUNT,
-    ];
+    #[cfg(unix)]
+    {
+        put_file_definition.properties = &[
+            properties::DIRECTORY,
+            properties::CONFLICT_RESOLUTION,
+            properties::CREATE_DIRS,
+            properties::MAX_FILE_COUNT,
+            unix_only_properties::PERMISSIONS,
+            unix_only_properties::DIRECTORY_PERMISSIONS,
+        ];
+    }
+    #[cfg(windows)]
+    {
+        put_file_definition.properties = &[
+            properties::DIRECTORY,
+            properties::CONFLICT_RESOLUTION,
+            properties::CREATE_DIRS,
+            properties::MAX_FILE_COUNT,
+        ];
+    }
     put_file_definition
 }
 

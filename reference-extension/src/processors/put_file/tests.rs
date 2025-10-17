@@ -81,6 +81,7 @@ fn put_file_without_create_dirs() {
 #[cfg(unix)]
 #[test]
 fn put_file_test_permissions() {
+    use std::os::unix::fs::PermissionsExt;
     let mut put_file = PutFile::new(MockLogger::new());
     let mut context = MockProcessContext::new();
     let temp_dir = tempfile::tempdir().expect("temp dir is required for testing PutFile");

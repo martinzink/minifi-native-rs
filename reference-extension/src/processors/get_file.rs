@@ -98,7 +98,7 @@ impl<L: Logger> GetFile<L> {
             return Ok(false);
         }
         let age = SystemTime::now().duration_since(metadata.modified()?)?;
-        let size = 0;
+        let size = metadata.len();
 
         if self.min_age.is_some() && age < self.min_age.unwrap() {
             return Ok(false);

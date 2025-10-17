@@ -158,12 +158,13 @@ impl<L: Logger> PutFile<L> {
         &mut self,
         context: &P,
     ) -> Result<(), MinifiError> {
-        if let Some(dir_perm_str) = context.get_property(&DIRECTORY_PERMISSIONS, None)? {
+        use std::os::unix::fs::PermissionsExt;
+        if let Some(dir_perm_str) = context.get_property(&unix_only_properties::DIRECTORY_PERMISSIONS, None)? {
             let dir_perm = u32::from_str_radix(&dir_perm_str, 8)?;
             self.unix_permissions.directory_permissions =
                 Some(std::fs::Permissions::from_mode(dir_perm));
         }
-        if let Some(perm_str) = context.get_property(&PERMISSIONS, None)? {
+        if let Some(perm_str) = context.get_property(&unix_only_properties::PERMISSIONS, None)? {
             let perm = u32::from_str_radix(&perm_str, 8)?;
             self.unix_permissions.file_permissions = Some(std::fs::Permissions::from_mode(perm));
         }
