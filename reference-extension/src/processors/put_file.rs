@@ -1,11 +1,8 @@
-use crate::processors::put_file::unix_only_properties::{DIRECTORY_PERMISSIONS, PERMISSIONS};
 use minifi_native::{
     ConcurrentOnTrigger, LogLevel, Logger, MinifiError, ProcessContext, ProcessSession, Processor,
 };
 use std::io::Write;
-use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
-use std::str::FromStr;
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
 use walkdir::WalkDir;
 
@@ -55,12 +52,20 @@ impl PutFileUnixPermissions {
 
 #[cfg(windows)]
 #[derive(Debug)]
-struct PutFileWindowsPermissions {}
+struct PutFileUnixPermissions {}
 
 #[cfg(windows)]
-impl PutFileWindowsPermissions {
+impl PutFileUnixPermissions {
     fn new() -> Self {
         Self {}
+    }
+        fn set_directory_permissions(&self, path: &Path) -> std::io::Result<()> {
+
+        Ok(())
+    }
+
+    fn set_file_permissions(&self, file: &Path) -> std::io::Result<()> {
+        Ok(())
     }
 }
 

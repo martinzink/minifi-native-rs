@@ -8,7 +8,6 @@ use minifi_native::{
 };
 use std::collections::VecDeque;
 use std::error;
-use std::os::unix::fs::MetadataExt;
 use std::path::PathBuf;
 use std::sync::Mutex;
 use std::time::{Duration, Instant, SystemTime};
@@ -99,7 +98,7 @@ impl<L: Logger> GetFile<L> {
             return Ok(false);
         }
         let age = SystemTime::now().duration_since(metadata.modified()?)?;
-        let size = metadata.size();
+        let size = 0;
 
         if self.min_age.is_some() && age < self.min_age.unwrap() {
             return Ok(false);
