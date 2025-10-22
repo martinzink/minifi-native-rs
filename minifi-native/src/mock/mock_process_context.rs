@@ -4,7 +4,6 @@ use std::collections::HashMap;
 
 pub struct MockProcessContext {
     pub properties: HashMap<String, String>,
-    pub yielded: bool,
 }
 
 impl ProcessContext for MockProcessContext {
@@ -27,17 +26,12 @@ impl ProcessContext for MockProcessContext {
             }
         }
     }
-
-    fn yield_context(&mut self) {
-        self.yielded = true;
-    }
 }
 
 impl MockProcessContext {
     pub fn new() -> Self {
         Self {
             properties: HashMap::new(),
-            yielded: false,
         }
     }
 }

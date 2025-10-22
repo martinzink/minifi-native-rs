@@ -28,7 +28,7 @@ fn generate_flow_file_empty_test() {
 
     assert_eq!(processor.on_schedule(&context), Ok(()));
     let mut session = MockProcessSession::new();
-    assert_eq!(processor.on_trigger(&mut context, &mut session), Ok(()));
+    assert_eq!(processor.on_trigger(&mut context, &mut session), Ok(OnTriggerResult::Ok));
     assert_eq!(session.transferred_flow_files.len(), 1);
     assert_eq!(session.transferred_flow_files[0].flow_file.content.len(), 0);
 }
@@ -52,7 +52,7 @@ fn generate_custom_text() {
 
     assert_eq!(processor.on_schedule(&context), Ok(()));
     let mut session = MockProcessSession::new();
-    assert_eq!(processor.on_trigger(&mut context, &mut session), Ok(()));
+    assert_eq!(processor.on_trigger(&mut context, &mut session), Ok(OnTriggerResult::Ok));
     assert_eq!(session.transferred_flow_files.len(), 1);
     assert_eq!(
         session.transferred_flow_files[0].flow_file.content,
@@ -79,7 +79,7 @@ fn random_bytes_unique() {
 
     assert_eq!(processor.on_schedule(&context), Ok(()));
     let mut session = MockProcessSession::new();
-    assert_eq!(processor.on_trigger(&mut context, &mut session), Ok(()));
+    assert_eq!(processor.on_trigger(&mut context, &mut session), Ok(OnTriggerResult::Ok));
     assert_eq!(session.transferred_flow_files.len(), 2);
     assert_eq!(
         session.transferred_flow_files[0].flow_file.content.len(),
@@ -114,7 +114,7 @@ fn random_bytes_non_unique() {
 
     assert_eq!(processor.on_schedule(&context), Ok(()));
     let mut session = MockProcessSession::new();
-    assert_eq!(processor.on_trigger(&mut context, &mut session), Ok(()));
+    assert_eq!(processor.on_trigger(&mut context, &mut session), Ok(OnTriggerResult::Ok));
     assert_eq!(session.transferred_flow_files.len(), 2);
     assert_eq!(
         session.transferred_flow_files[0].flow_file.content.len(),

@@ -73,8 +73,4 @@ impl<'a> ProcessContext for CffiProcessContext<'a> {
             },
         }
     }
-
-    fn yield_context(&mut self) {
-        unsafe { MinifiProcessContextYield(self.ptr) }
-    }
 }

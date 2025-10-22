@@ -8,6 +8,12 @@ pub enum ProcessorInputRequirement {
     Forbidden,
 }
 
+#[derive(Debug, PartialEq, Eq)]
+pub enum OnTriggerResult {
+    Ok,
+    Yield
+}
+
 pub trait Processor<L: Logger>: Sized {
     type Threading: ThreadingModel;
 
@@ -27,14 +33,14 @@ pub trait Processor<L: Logger>: Sized {
 }
 
 pub trait ExclusiveOnTrigger<L: Logger>: Processor<L, Threading = Exclusive> {
-    fn on_trigger<PC, PS>(&mut self, context: &mut PC, session: &mut PS) -> Result<(), MinifiError>
+    fn on_trigger<PC, PS>(&mut self, context: &mut PC, session: &mut PS) -> Result<OnTriggerResult, MinifiError>
     where
         PC: ProcessContext,
         PS: ProcessSession<FlowFile = PC::FlowFile>;
 }
 
 pub trait ConcurrentOnTrigger<L: Logger>: Processor<L, Threading = Concurrent> {
-    fn on_trigger<PC, PS>(&self, context: &mut PC, session: &mut PS) -> Result<(), MinifiError>
+    fn on_trigger<PC, PS>(&self, context: &mut PC, session: &mut PS) -> Result<OnTriggerResult, MinifiError>
     where
         PC: ProcessContext,
         PS: ProcessSession<FlowFile = PC::FlowFile>;

@@ -14,7 +14,7 @@ pub use logger::{LogLevel, Logger};
 pub use process_context::ProcessContext;
 pub use process_session::ProcessSession;
 pub use processor::{
-    ConcurrentOnTrigger, ExclusiveOnTrigger, Processor, ProcessorInputRequirement,
+    ConcurrentOnTrigger, ExclusiveOnTrigger, Processor, ProcessorInputRequirement, OnTriggerResult,
 };
 pub use property::{Property, StandardPropertyValidator};
 pub use relationship::Relationship;

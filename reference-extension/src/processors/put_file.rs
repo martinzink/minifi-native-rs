@@ -1,6 +1,4 @@
-use minifi_native::{
-    ConcurrentOnTrigger, LogLevel, Logger, MinifiError, ProcessContext, ProcessSession, Processor,
-};
+use minifi_native::{ConcurrentOnTrigger, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, Processor};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
@@ -217,7 +215,7 @@ impl<L: Logger> Processor<L> for PutFile<L> {
 }
 
 impl<L: Logger> ConcurrentOnTrigger<L> for PutFile<L> {
-    fn on_trigger<C, S>(&self, context: &mut C, session: &mut S) -> Result<(), MinifiError>
+    fn on_trigger<C, S>(&self, context: &mut C, session: &mut S) -> Result<OnTriggerResult, MinifiError>
     where
         C: ProcessContext,
         S: ProcessSession<FlowFile = C::FlowFile>,
@@ -225,34 +223,34 @@ impl<L: Logger> ConcurrentOnTrigger<L> for PutFile<L> {
         self.logger
             .trace(format!("on_trigger: {:?}", self).as_str());
         let Some(mut ff) = session.get() else {
-            return Ok(());
+            return Ok(OnTriggerResult::Yield);
         };
 
         let Ok(destination_path) = Self::get_destination_path::<C, S>(context, session, &mut ff)
         else {
             self.logger.warn("Invalid destination path");
             session.transfer(ff, relationships::FAILURE.name);
-            return Ok(());
+            return Ok(OnTriggerResult::Yield);
         };
 
         if self.directory_is_full(&destination_path) {
             self.logger.warn("Directory is full");
             session.transfer(ff, relationships::FAILURE.name);
-            return Ok(());
+            return Ok(OnTriggerResult::Yield);
         }
 
         if destination_path.exists() {
             match self.conflict_resolution_strategy {
                 ConflictResolutionStrategy::Fail => {
                     session.transfer(ff, relationships::FAILURE.name);
-                    return Ok(());
+                    return Ok(OnTriggerResult::Ok);
                 }
                 ConflictResolutionStrategy::Replace => {
                     // continue with PutFile operation
                 }
                 ConflictResolutionStrategy::Ignore => {
                     session.transfer(ff, relationships::SUCCESS.name);
-                    return Ok(());
+                    return Ok(OnTriggerResult::Ok);
                 }
             }
         }
@@ -260,13 +258,13 @@ impl<L: Logger> ConcurrentOnTrigger<L> for PutFile<L> {
         match self.put_file::<C, S>(session, &destination_path, &ff) {
             Ok(_) => {
                 session.transfer(ff, relationships::SUCCESS.name);
-                Ok(())
+                Ok(OnTriggerResult::Ok)
             }
             Err(e) => {
                 self.logger
                     .warn(format!("Failed to put file due to {:?}", e).as_str());
                 session.transfer(ff, relationships::FAILURE.name);
-                Ok(())
+                Ok(OnTriggerResult::Ok)
             }
         }
     }

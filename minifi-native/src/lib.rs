@@ -5,7 +5,7 @@ mod mock;
 pub use api::{
     Concurrent, ConcurrentOnTrigger, Exclusive, ExclusiveOnTrigger, FlowFile, LogLevel, Logger,
     MinifiError, ProcessContext, ProcessSession, Processor, ProcessorInputRequirement, Property,
-    Relationship, StandardPropertyValidator,
+    Relationship, StandardPropertyValidator, OnTriggerResult
 };
 pub use c_ffi::{CffiLogger, ProcessorDefinition};
 pub use mock::{MockFlowFile, MockLogger, MockProcessContext, MockProcessSession};

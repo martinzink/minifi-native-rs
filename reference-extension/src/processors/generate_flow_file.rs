@@ -1,7 +1,4 @@
-use minifi_native::{
-    Concurrent, ConcurrentOnTrigger, LogLevel, Logger, MinifiError, ProcessContext, ProcessSession,
-    Processor,
-};
+use minifi_native::{Concurrent, ConcurrentOnTrigger, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, Processor};
 use rand::Rng;
 use rand::distr::Alphanumeric;
 use std::cmp::PartialEq;
@@ -134,7 +131,7 @@ impl<L: Logger> ConcurrentOnTrigger<L> for GenerateFlowFile<L> {
         &self,
         context: &mut P,
         session: &mut S,
-    ) -> Result<(), MinifiError> {
+    ) -> Result<OnTriggerResult, MinifiError> {
         let non_unique_data_buffer: &[u8];
         let custom_text_for_batch: Option<String>;
 
@@ -160,7 +157,7 @@ impl<L: Logger> ConcurrentOnTrigger<L> for GenerateFlowFile<L> {
             }
             session.transfer(ff, relationships::SUCCESS.name);
         }
-        Ok(())
+        Ok(OnTriggerResult::Ok)
     }
 }
 

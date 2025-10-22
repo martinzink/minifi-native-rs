@@ -5,7 +5,7 @@ use super::c_ffi_logger::CffiLogger;
 use super::c_ffi_primitives::{BoolAsMinifiCBool, StaticStrAsMinifiCStr};
 use super::c_ffi_process_context::CffiProcessContext;
 use super::c_ffi_process_session::CffiProcessSession;
-use crate::Relationship;
+use crate::{OnTriggerResult, Relationship};
 use crate::api::{Processor, ProcessorInputRequirement, ThreadingModel};
 use crate::{Concurrent, ConcurrentOnTrigger, Exclusive, ExclusiveOnTrigger, LogLevel, Property};
 use minifi_native_sys::*;
@@ -32,7 +32,8 @@ where
             let mut context = CffiProcessContext::new(context_ptr);
             let mut session = CffiProcessSession::new(session_ptr);
             match processor.on_trigger(&mut context, &mut session) {
-                Ok(_) => 0,
+                Ok(OnTriggerResult::Ok) => MinifiStatus_MINIFI_SUCCESS,
+                Ok(OnTriggerResult::Yield) => MinifiStatus_MINIFI_PROCESSOR_YIELD,
                 Err(error_code) => error_code.to_status(),
             }
         }
@@ -53,7 +54,8 @@ where
             let mut context = CffiProcessContext::new(context_ptr);
             let mut session = CffiProcessSession::new(session_ptr);
             match processor.on_trigger(&mut context, &mut session) {
-                Ok(_) => 0,
+                Ok(OnTriggerResult::Ok) => MinifiStatus_MINIFI_SUCCESS,
+                Ok(OnTriggerResult::Yield) => MinifiStatus_MINIFI_PROCESSOR_YIELD,
                 Err(error_code) => error_code.to_status(),
             }
         }

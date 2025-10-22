@@ -74,6 +74,4 @@ pub trait ProcessContext {
             Ok(None)
         }
     }
-
-    fn yield_context(&mut self);
 }
