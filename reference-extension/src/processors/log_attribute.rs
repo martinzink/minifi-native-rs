@@ -1,5 +1,8 @@
 use crate::processors::log_attribute::properties::{FLOW_FILES_TO_LOG, LOG_LEVEL, LOG_PAYLOAD};
-use minifi_native::{ConcurrentOnTrigger, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, Processor, Property};
+use minifi_native::{
+    ConcurrentOnTrigger, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext,
+    ProcessSession, Processor, Property,
+};
 
 mod properties;
 mod relationships;
@@ -60,7 +63,11 @@ impl<L: Logger> LogAttribute<L> {
 }
 
 impl<L: Logger> ConcurrentOnTrigger<L> for LogAttribute<L> {
-    fn on_trigger<P, S>(&self, _context: &mut P, session: &mut S) -> Result<OnTriggerResult, MinifiError>
+    fn on_trigger<P, S>(
+        &self,
+        _context: &mut P,
+        session: &mut S,
+    ) -> Result<OnTriggerResult, MinifiError>
     where
         P: ProcessContext,
         S: ProcessSession,

@@ -2,7 +2,10 @@ use crate::processors::get_file::properties::{
     BATCH_SIZE, DIRECTORY, IGNORE_HIDDEN_FILES, KEEP_SOURCE_FILE, MAX_AGE, MAX_SIZE, MIN_AGE,
     MIN_SIZE, RECURSE,
 };
-use minifi_native::{Concurrent, ConcurrentOnTrigger, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, Processor};
+use minifi_native::{
+    Concurrent, ConcurrentOnTrigger, LogLevel, Logger, MinifiError, OnTriggerResult,
+    ProcessContext, ProcessSession, Processor,
+};
 use std::collections::VecDeque;
 use std::error;
 use std::path::PathBuf;
@@ -222,7 +225,11 @@ impl<L: Logger> Processor<L> for GetFile<L> {
 }
 
 impl<L: Logger> ConcurrentOnTrigger<L> for GetFile<L> {
-    fn on_trigger<P, S>(&self, _context: &mut P, session: &mut S) -> Result<OnTriggerResult, MinifiError>
+    fn on_trigger<P, S>(
+        &self,
+        _context: &mut P,
+        session: &mut S,
+    ) -> Result<OnTriggerResult, MinifiError>
     where
         P: ProcessContext,
         S: ProcessSession,

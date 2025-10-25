@@ -1,4 +1,7 @@
-use minifi_native::{ConcurrentOnTrigger, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, Processor};
+use minifi_native::{
+    ConcurrentOnTrigger, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext,
+    ProcessSession, Processor,
+};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
@@ -57,8 +60,7 @@ impl PutFileUnixPermissions {
     fn new() -> Self {
         Self {}
     }
-        fn set_directory_permissions(&self, path: &Path) -> std::io::Result<()> {
-
+    fn set_directory_permissions(&self, path: &Path) -> std::io::Result<()> {
         Ok(())
     }
 
@@ -157,7 +159,9 @@ impl<L: Logger> PutFile<L> {
         context: &P,
     ) -> Result<(), MinifiError> {
         use std::os::unix::fs::PermissionsExt;
-        if let Some(dir_perm_str) = context.get_property(&unix_only_properties::DIRECTORY_PERMISSIONS, None)? {
+        if let Some(dir_perm_str) =
+            context.get_property(&unix_only_properties::DIRECTORY_PERMISSIONS, None)?
+        {
             let dir_perm = u32::from_str_radix(&dir_perm_str, 8)?;
             self.unix_permissions.directory_permissions =
                 Some(std::fs::Permissions::from_mode(dir_perm));
@@ -215,7 +219,11 @@ impl<L: Logger> Processor<L> for PutFile<L> {
 }
 
 impl<L: Logger> ConcurrentOnTrigger<L> for PutFile<L> {
-    fn on_trigger<C, S>(&self, context: &mut C, session: &mut S) -> Result<OnTriggerResult, MinifiError>
+    fn on_trigger<C, S>(
+        &self,
+        context: &mut C,
+        session: &mut S,
+    ) -> Result<OnTriggerResult, MinifiError>
     where
         C: ProcessContext,
         S: ProcessSession<FlowFile = C::FlowFile>,

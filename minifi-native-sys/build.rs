@@ -1,7 +1,6 @@
 use std::env;
 use std::path::PathBuf;
 
-
 fn main() {
     #[cfg(windows)]
     {
@@ -18,7 +17,10 @@ fn main() {
             .join("lib.exe");
 
         if !lib_exe_path.exists() {
-            panic!("Could not find lib.exe at the expected path: {}", lib_exe_path.display());
+            panic!(
+                "Could not find lib.exe at the expected path: {}",
+                lib_exe_path.display()
+            );
         }
 
         let def_file = PathBuf::from("../minifi-cpp/minifi-api/minifi-c-api.def");
@@ -29,7 +31,10 @@ fn main() {
         let status = Command::new(&lib_exe_path)
             .arg(format!("/def:{}", def_file.display()))
             .arg(format!("/out:{}", lib_out_path.display()))
-            .arg(format!("/machine:{}", env::var("CARGO_CFG_TARGET_ARCH").unwrap().to_uppercase()))
+            .arg(format!(
+                "/machine:{}",
+                env::var("CARGO_CFG_TARGET_ARCH").unwrap().to_uppercase()
+            ))
             .status()
             .expect("Failed to execute lib.exe.");
 

@@ -5,9 +5,9 @@ use super::c_ffi_logger::CffiLogger;
 use super::c_ffi_primitives::{BoolAsMinifiCBool, StaticStrAsMinifiCStr};
 use super::c_ffi_process_context::CffiProcessContext;
 use super::c_ffi_process_session::CffiProcessSession;
-use crate::{OnTriggerResult, Relationship};
 use crate::api::{Processor, ProcessorInputRequirement, ThreadingModel};
 use crate::{Concurrent, ConcurrentOnTrigger, Exclusive, ExclusiveOnTrigger, LogLevel, Property};
+use crate::{OnTriggerResult, Relationship};
 use minifi_native_sys::*;
 
 pub trait DispatchOnTrigger<M: ThreadingModel> {

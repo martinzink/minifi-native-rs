@@ -31,7 +31,10 @@ fn simple_put_file_test() {
     flow_file.content = "test".as_bytes().to_vec();
     session.input_flow_files.push(flow_file);
 
-    assert_eq!(put_file.on_trigger(&mut context, &mut session), Ok(OnTriggerResult::Ok));
+    assert_eq!(
+        put_file.on_trigger(&mut context, &mut session),
+        Ok(OnTriggerResult::Ok)
+    );
 
     assert_eq!(session.transferred_flow_files.len(), 1);
     assert_eq!(session.transferred_flow_files[0].relationship, SUCCESS.name);
@@ -69,7 +72,10 @@ fn put_file_without_create_dirs() {
     flow_file.content = "test".as_bytes().to_vec();
     session.input_flow_files.push(flow_file);
 
-    assert_eq!(put_file.on_trigger(&mut context, &mut session), Ok(OnTriggerResult::Ok));
+    assert_eq!(
+        put_file.on_trigger(&mut context, &mut session),
+        Ok(OnTriggerResult::Ok)
+    );
 
     assert_eq!(session.transferred_flow_files.len(), 1);
     assert_eq!(session.transferred_flow_files[0].relationship, FAILURE.name);
@@ -109,7 +115,10 @@ fn put_file_test_permissions() {
     flow_file.content = "test".as_bytes().to_vec();
     session.input_flow_files.push(flow_file);
 
-    assert_eq!(put_file.on_trigger(&mut context, &mut session), Ok(OnTriggerResult::Ok));
+    assert_eq!(
+        put_file.on_trigger(&mut context, &mut session),
+        Ok(OnTriggerResult::Ok)
+    );
 
     assert_eq!(session.transferred_flow_files.len(), 1);
     assert_eq!(session.transferred_flow_files[0].relationship, SUCCESS.name);

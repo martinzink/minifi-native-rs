@@ -1,7 +1,10 @@
 mod properties;
 mod relationships;
 
-use minifi_native::{Concurrent, ConcurrentOnTrigger, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, Processor};
+use minifi_native::{
+    Concurrent, ConcurrentOnTrigger, LogLevel, Logger, MinifiError, OnTriggerResult,
+    ProcessContext, ProcessSession, Processor,
+};
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
 
 #[derive(Debug, Clone, Copy, PartialEq, Display, EnumString, VariantNames, IntoStaticStr)]
@@ -63,7 +66,11 @@ impl<L: Logger> Processor<L> for KamikazeProcessor<L> {
 }
 
 impl<L: Logger> ConcurrentOnTrigger<L> for KamikazeProcessor<L> {
-    fn on_trigger<PC, PS>(&self, _context: &mut PC, session: &mut PS) -> Result<OnTriggerResult, MinifiError>
+    fn on_trigger<PC, PS>(
+        &self,
+        _context: &mut PC,
+        session: &mut PS,
+    ) -> Result<OnTriggerResult, MinifiError>
     where
         PC: ProcessContext,
         PS: ProcessSession<FlowFile = PC::FlowFile>,

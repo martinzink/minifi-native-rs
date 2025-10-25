@@ -43,7 +43,10 @@ fn on_trigger_ok() {
     assert_eq!(processor.on_schedule(&context), Ok(()));
 
     let mut session = MockProcessSession::new();
-    assert_eq!(processor.on_trigger(&mut context, &mut session), Ok(OnTriggerResult::Ok));
+    assert_eq!(
+        processor.on_trigger(&mut context, &mut session),
+        Ok(OnTriggerResult::Ok)
+    );
 }
 
 #[test]
