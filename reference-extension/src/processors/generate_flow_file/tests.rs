@@ -6,7 +6,7 @@ use minifi_native::{MockLogger, MockProcessContext, MockProcessSession};
 
 #[test]
 fn schedule_succeeds_with_default_values() {
-    let mut processor = GenerateFlowFile::new(MockLogger::new());
+    let mut processor = GenerateFlowFileProcessor::new(MockLogger::new());
     let context = MockProcessContext::new();
 
     assert_eq!(processor.on_schedule(&context), Ok(()));
@@ -14,7 +14,7 @@ fn schedule_succeeds_with_default_values() {
 
 #[test]
 fn generate_flow_file_empty_test() {
-    let mut processor = GenerateFlowFile::new(MockLogger::new());
+    let mut processor = GenerateFlowFileProcessor::new(MockLogger::new());
     let mut context = MockProcessContext::new();
     context
         .properties
@@ -38,7 +38,7 @@ fn generate_flow_file_empty_test() {
 
 #[test]
 fn generate_custom_text() {
-    let mut processor = GenerateFlowFile::new(MockLogger::new());
+    let mut processor = GenerateFlowFileProcessor::new(MockLogger::new());
     let mut context = MockProcessContext::new();
     context
         .properties
@@ -68,7 +68,7 @@ fn generate_custom_text() {
 
 #[test]
 fn random_bytes_unique() {
-    let mut processor = GenerateFlowFile::new(MockLogger::new());
+    let mut processor = GenerateFlowFileProcessor::new(MockLogger::new());
     let mut context = MockProcessContext::new();
     context
         .properties
@@ -106,7 +106,7 @@ fn random_bytes_unique() {
 
 #[test]
 fn random_bytes_non_unique() {
-    let mut processor = GenerateFlowFile::new(MockLogger::new());
+    let mut processor = GenerateFlowFileProcessor::new(MockLogger::new());
     let mut context = MockProcessContext::new();
     context
         .properties

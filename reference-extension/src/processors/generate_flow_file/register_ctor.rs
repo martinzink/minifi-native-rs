@@ -1,15 +1,16 @@
 use super::properties::*;
-use super::{GenerateFlowFile, relationships};
+use super::{GenerateFlowFileProcessor, relationships};
 use minifi_native::{CffiLogger, ProcessorDefinition, ProcessorInputRequirement};
 
 #[cfg_attr(test, allow(dead_code))]
-fn generate_flow_file_definition() -> ProcessorDefinition<GenerateFlowFile<CffiLogger>> {
-    let mut generate_flow_file_definition =
-        ProcessorDefinition::<GenerateFlowFile<CffiLogger>>::new(
-            "rust_reference_extension",
-            "rs::GenerateFlowFileRs",
-            "This processor creates FlowFiles with random data or custom content. GenerateFlowFile is useful for load testing, configuration, and simulation.",
-        );
+fn generate_flow_file_definition() -> ProcessorDefinition<GenerateFlowFileProcessor<CffiLogger>> {
+    let mut generate_flow_file_definition = ProcessorDefinition::<
+        GenerateFlowFileProcessor<CffiLogger>,
+    >::new(
+        "rust_reference_extension",
+        "rs::GenerateFlowFileRs",
+        "This processor creates FlowFiles with random data or custom content. GenerateFlowFile is useful for load testing, configuration, and simulation.",
+    );
 
     generate_flow_file_definition.input_requirement = ProcessorInputRequirement::Forbidden;
     generate_flow_file_definition.supports_dynamic_properties = false;
