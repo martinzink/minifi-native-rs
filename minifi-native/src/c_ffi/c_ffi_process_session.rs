@@ -3,7 +3,7 @@ use crate::MinifiError;
 use crate::api::ProcessSession;
 use crate::c_ffi::c_ffi_primitives::{ConvertMinifiStringView, StringView};
 use minifi_native_sys::{
-    MinifiDestroyFlowFile, MinifiFlowFileGetAttribute, MinifiFlowFileGetAttributes,
+    MinifiFlowFileGetAttribute, MinifiFlowFileGetAttributes,
     MinifiFlowFileSetAttribute, MinifiInputStream, MinifiInputStreamRead, MinifiInputStreamSize,
     MinifiOutputStream, MinifiOutputStreamWrite, MinifiProcessSession, MinifiProcessSessionCreate,
     MinifiProcessSessionGet, MinifiProcessSessionRead, MinifiProcessSessionTransfer,
@@ -13,13 +13,13 @@ use std::ffi::{CString, c_void};
 use std::os::raw::c_char;
 
 pub struct CffiProcessSession<'a> {
-    ptr: MinifiProcessSession,
+    ptr: *mut MinifiProcessSession,
     // The lifetime ensures the session cannot outlive the `on_trigger` call.
     _lifetime: std::marker::PhantomData<&'a ()>,
 }
 
 impl<'a> CffiProcessSession<'a> {
-    pub fn new(ptr: MinifiProcessSession) -> Self {
+    pub fn new(ptr: *mut MinifiProcessSession) -> Self {
         Self {
             ptr,
             _lifetime: std::marker::PhantomData,
@@ -56,10 +56,9 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                     flow_file.ptr,
                     MinifiStringView {
                         data: c_relationship.as_ptr(),
-                        length: c_relationship.as_bytes().len() as u32,
+                        length: c_relationship.as_bytes().len(),
                     },
                 );
-                MinifiDestroyFlowFile(flow_file.ptr);
             }
         }
     }
@@ -150,7 +149,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
         unsafe {
             unsafe extern "C" fn cb(
                 user_ctx: *mut c_void,
-                output_stream: MinifiOutputStream,
+                output_stream: *mut MinifiOutputStream,
             ) -> i64 {
                 unsafe {
                     let result_target = &mut *(user_ctx as *mut Option<&str>);
@@ -186,7 +185,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
         unsafe {
             unsafe extern "C" fn cb<'b, F: FnMut() -> Option<&'b [u8]>>(
                 user_ctx: *mut c_void,
-                output_stream: MinifiOutputStream,
+                output_stream: *mut MinifiOutputStream,
             ) -> i64 {
                 unsafe {
                     let produce_batch = &mut *(user_ctx as *mut F);
@@ -219,7 +218,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
         unsafe {
             unsafe extern "C" fn cb(
                 output_option: *mut c_void,
-                input_stream: MinifiInputStream,
+                input_stream: *mut MinifiInputStream,
             ) -> i64 {
                 unsafe {
                     let result_target = &mut *(output_option as *mut Option<Vec<u8>>);
@@ -283,7 +282,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
         unsafe {
             unsafe extern "C" fn cb<F>(
                 output_option: *mut c_void,
-                input_stream: MinifiInputStream,
+                input_stream: *mut MinifiInputStream,
             ) -> i64
             where
                 F: FnMut(&[u8]) -> Result<(), MinifiError>,

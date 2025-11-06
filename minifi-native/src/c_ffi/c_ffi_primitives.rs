@@ -23,7 +23,7 @@ impl<'a> StringView<'a> {
         Self {
             inner: MinifiStringView {
                 data: str.as_ptr() as *const c_char,
-                length: str.len() as u32,
+                length: str.len(),
             },
             _marker: std::marker::PhantomData,
         }
@@ -42,7 +42,7 @@ impl StaticStrAsMinifiCStr for &'static str {
     fn as_minifi_c_type(&self) -> MinifiStringView {
         MinifiStringView {
             data: self.as_ptr() as *const c_char,
-            length: self.len() as u32,
+            length: self.len(),
         }
     }
 }

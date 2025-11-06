@@ -17,6 +17,12 @@ mod properties;
 mod relationships;
 
 #[derive(Debug)]
+struct GetFileMetrics {
+    accepted_files: u32,
+    input_bytes: u64,
+}
+
+#[derive(Debug)]
 struct DirectoryListing {
     paths: VecDeque<PathBuf>,
     last_polling_time: Option<Instant>,
@@ -32,7 +38,7 @@ impl DirectoryListing {
 }
 
 #[derive(Debug)]
-struct GetFile<L: Logger> {
+pub(crate) struct GetFile<L: Logger> {
     logger: L,
     recursive: bool,
     keep_source_file: bool,
@@ -45,6 +51,7 @@ struct GetFile<L: Logger> {
     min_age: Option<Duration>,
     max_age: Option<Duration>,
     ignore_hidden_files: bool,
+    metrics: Mutex<GetFileMetrics>,
 }
 
 impl<L: Logger> GetFile<L> {
@@ -84,11 +91,19 @@ impl<L: Logger> GetFile<L> {
         let mut directory_listings = self.directory_listing.lock().unwrap();
         let walker = WalkDir::new(&self.input_directory);
 
+        let mut files_added = 0u32;
+        let mut bytes_added = 0u64;
         for entry in walker.into_iter().filter_map(Result::ok) {
             if self.entry_matches_criteria(&entry).unwrap_or(false) {
+                let file_size = entry.metadata().map(|m| m.len()).unwrap_or(0);
                 directory_listings.paths.push_back(entry.into_path());
+                files_added += 1;
+                bytes_added += file_size;
             }
         }
+        let mut metrics = self.metrics.lock().unwrap();
+        metrics.accepted_files += files_added;
+        metrics.input_bytes += bytes_added;
         directory_listings.last_polling_time = Some(Instant::now());
     }
 
@@ -178,6 +193,10 @@ impl<L: Logger> Processor<L> for GetFile<L> {
             max_size: None,
             min_size: None,
             ignore_hidden_files: true,
+            metrics: Mutex::new(GetFileMetrics {
+                accepted_files: 0,
+                input_bytes: 0,
+            }),
         }
     }
 
@@ -221,6 +240,14 @@ impl<L: Logger> Processor<L> for GetFile<L> {
             .expect("required property");
 
         Ok(())
+    }
+
+    fn calculate_metrics(&self) -> Vec<(String, f64)> {
+        let metrics = self.metrics.lock().unwrap();
+        vec![
+            ("accepted_files".to_string(), metrics.accepted_files as f64),
+            ("input_bytes".to_string(), metrics.input_bytes as f64),
+        ]
     }
 }
 
@@ -274,7 +301,7 @@ impl<L: Logger> ConcurrentOnTrigger<L> for GetFile<L> {
 }
 
 #[cfg(not(test))]
-mod register_ctor;
+pub(crate) mod c_ffi_class_description;
 
 #[cfg(test)]
 mod tests;

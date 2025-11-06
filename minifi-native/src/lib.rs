@@ -7,7 +7,7 @@ pub use api::{
     MinifiError, OnTriggerResult, ProcessContext, ProcessSession, Processor,
     ProcessorInputRequirement, Property, Relationship, StandardPropertyValidator,
 };
-pub use c_ffi::{CffiLogger, ProcessorDefinition};
+pub use c_ffi::{CffiLogger, ProcessorDefinition, StaticStrAsMinifiCStr};
 pub use mock::{MockFlowFile, MockLogger, MockProcessContext, MockProcessSession};
 
 pub use minifi_native_sys as sys;

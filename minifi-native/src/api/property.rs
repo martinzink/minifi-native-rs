@@ -19,5 +19,5 @@ pub struct Property {
     pub default_value: Option<&'static str>,
     pub validator: StandardPropertyValidator,
     pub allowed_values: &'static [&'static str],
-    pub allowed_types: &'static [&'static str],
+    pub allowed_type: &'static str,
 }

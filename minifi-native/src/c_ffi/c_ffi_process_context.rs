@@ -7,12 +7,12 @@ use std::ffi::c_void;
 
 /// A safe wrapper around a `MinifiProcessContext` pointer.
 pub struct CffiProcessContext<'a> {
-    ptr: MinifiProcessContext,
+    ptr: *mut MinifiProcessContext,
     _lifetime: std::marker::PhantomData<&'a ()>,
 }
 
 impl<'a> CffiProcessContext<'a> {
-    pub fn new(ptr: MinifiProcessContext) -> Self {
+    pub fn new(ptr: *mut MinifiProcessContext) -> Self {
         Self {
             ptr,
             _lifetime: std::marker::PhantomData,
@@ -66,7 +66,7 @@ impl<'a> ProcessContext for CffiProcessContext<'a> {
 
         #[allow(non_upper_case_globals)]
         match status {
-            MinifiStatus_MINIFI_SUCCESS => Ok(result),
+            MinifiStatus_MINIFI_STATUS_SUCCESS => Ok(result),
             _ => match property.is_required {
                 true => Err(MinifiError::MissingRequiredProperty(property.name)),
                 false => Ok(None),

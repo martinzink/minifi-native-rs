@@ -8,7 +8,7 @@ mod properties;
 mod relationships;
 
 #[derive(Debug)]
-struct LogAttribute<L: Logger> {
+pub(crate) struct LogAttribute<L: Logger> {
     logger: L,
     log_level: LogLevel,
     attributes_to_log: Option<Vec<String>>,
@@ -167,7 +167,7 @@ impl<L: Logger> Processor<L> for LogAttribute<L> {
 }
 
 #[cfg(not(test))]
-mod register_ctor;
+pub(crate) mod c_ffi_class_description;
 
 #[cfg(test)]
 mod tests;

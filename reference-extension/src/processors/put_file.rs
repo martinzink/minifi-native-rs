@@ -70,7 +70,7 @@ impl PutFileUnixPermissions {
 }
 
 #[derive(Debug)]
-struct PutFile<L: Logger> {
+pub(crate) struct PutFile<L: Logger> {
     logger: L,
     conflict_resolution_strategy: ConflictResolutionStrategy,
     try_make_dirs: bool,
@@ -279,7 +279,7 @@ impl<L: Logger> ConcurrentOnTrigger<L> for PutFile<L> {
 }
 
 #[cfg(not(test))]
-mod register_ctor;
+pub(crate) mod c_ffi_class_description;
 
 #[cfg(test)]
 mod tests;

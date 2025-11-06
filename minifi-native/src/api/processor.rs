@@ -30,6 +30,10 @@ pub trait Processor<L: Logger>: Sized {
     fn log(&self, log_level: LogLevel, message: &str);
     fn on_schedule<P: ProcessContext>(&mut self, context: &P) -> Result<(), MinifiError>;
     fn on_unschedule(&mut self) {}
+
+    fn calculate_metrics(&self) -> Vec<(String, f64)> {
+        vec![]
+    }
 }
 
 pub trait ExclusiveOnTrigger<L: Logger>: Processor<L, Threading = Exclusive> {

@@ -16,7 +16,7 @@ enum KamikazeBehaviour {
 }
 
 #[derive(Debug)]
-struct KamikazeProcessor<L: Logger> {
+pub(crate) struct KamikazeProcessor<L: Logger> {
     logger: L,
     on_trigger_behaviour: KamikazeBehaviour,
     read_behaviour: Option<KamikazeBehaviour>,
@@ -99,7 +99,7 @@ impl<L: Logger> ConcurrentOnTrigger<L> for KamikazeProcessor<L> {
 }
 
 #[cfg(not(test))]
-mod register_ctor;
+pub(crate) mod c_ffi_class_description;
 
 #[cfg(test)]
 mod tests;

@@ -24,11 +24,11 @@ impl From<LogLevel> for MinifiLogLevel {
 
 #[derive(Clone, Copy, Debug)]
 pub struct CffiLogger {
-    ptr: MinifiLogger,
+    ptr: *mut MinifiLogger,
 }
 
 impl CffiLogger {
-    pub fn new(logger: MinifiLogger) -> Self {
+    pub fn new(logger: *mut MinifiLogger) -> Self {
         Self { ptr: logger }
     }
 }
@@ -42,7 +42,7 @@ impl Logger for CffiLogger {
                     level.into(),
                     MinifiStringView {
                         data: c_message.as_ptr(),
-                        length: c_message.as_bytes().len() as u32,
+                        length: c_message.as_bytes().len(),
                     },
                 );
             }

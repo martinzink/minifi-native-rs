@@ -1,4 +1,4 @@
-use minifi_native_sys::{MinifiStatus, MinifiStatus_MINIFI_UNKNOWN_ERROR};
+use minifi_native_sys::{MinifiStatus, MinifiStatus_MINIFI_STATUS_UNKNOWN_ERROR};
 use std::num::ParseIntError;
 use std::str::ParseBoolError;
 
@@ -65,6 +65,6 @@ impl From<byte_unit::ParseError> for MinifiError {
 
 impl MinifiError {
     pub(crate) fn to_status(&self) -> MinifiStatus {
-        MinifiStatus_MINIFI_UNKNOWN_ERROR
+        MinifiStatus_MINIFI_STATUS_UNKNOWN_ERROR
     }
 }

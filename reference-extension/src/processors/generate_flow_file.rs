@@ -28,7 +28,7 @@ struct GenerateFlowFile {
 }
 
 #[derive(Debug)]
-struct GenerateFlowFileProcessor<L: Logger> {
+pub(crate) struct GenerateFlowFileProcessor<L: Logger> {
     logger: L,
     generate_flow_file: Option<GenerateFlowFile>,
 }
@@ -192,7 +192,7 @@ impl<L: Logger> ConcurrentOnTrigger<L> for GenerateFlowFileProcessor<L> {
 }
 
 #[cfg(not(test))]
-mod register_ctor;
+pub(crate) mod c_ffi_class_description;
 
 #[cfg(test)]
 mod tests;

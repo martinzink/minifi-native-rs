@@ -11,7 +11,7 @@ pub(crate) const ON_SCHEDULE_BEHAVIOUR: Property = Property {
     default_value: Some("ReturnOk"),
     validator: StandardPropertyValidator::AlwaysValidValidator,
     allowed_values: &KamikazeBehaviour::VARIANTS,
-    allowed_types: &[],
+    allowed_type: "",
 };
 
 pub(crate) const ON_TRIGGER_BEHAVIOUR: Property = Property {
@@ -23,7 +23,7 @@ pub(crate) const ON_TRIGGER_BEHAVIOUR: Property = Property {
     default_value: Some("ReturnOk"),
     validator: StandardPropertyValidator::AlwaysValidValidator,
     allowed_values: &KamikazeBehaviour::VARIANTS,
-    allowed_types: &[],
+    allowed_type: "",
 };
 
 pub(crate) const READ_BEHAVIOUR: Property = Property {
@@ -35,7 +35,7 @@ pub(crate) const READ_BEHAVIOUR: Property = Property {
     default_value: None,
     validator: StandardPropertyValidator::AlwaysValidValidator,
     allowed_values: &KamikazeBehaviour::VARIANTS,
-    allowed_types: &[],
+    allowed_type: "",
 };
 
 pub(crate) const WRITE_BEHAVIOUR: Property = Property {
@@ -47,5 +47,5 @@ pub(crate) const WRITE_BEHAVIOUR: Property = Property {
     default_value: None,
     validator: StandardPropertyValidator::AlwaysValidValidator,
     allowed_values: &KamikazeBehaviour::VARIANTS,
-    allowed_types: &[],
+    allowed_type: "",
 };

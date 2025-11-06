@@ -5,10 +5,16 @@ Feature: Test Minifi Native C Api capabilities
   Scenario: The rust library is loaded into minifi
     Given the built rust extension library is inside minifi's extension folder
     And log property "logger.org::apache::nifi::minifi::core::extension::ExtensionManager" is set to "TRACE,stderr"
+    And log property "logger.org::apache::nifi::minifi::core::ClassLoader" is set to "TRACE,stderr"
 
     When the MiNiFi instance starts up
 
-    Then the Minifi logs contain the following message: "Successfully initialized extension 'minifi-rust'" in less than 20 seconds
+    Then the Minifi logs contain the following message: "minifi-rust.so as CApi extension" in less than 10 seconds
+    And the Minifi logs contain the following message: "Registering class 'GenerateFlowFileRs' at '/Rust Reference Extension'" in less than 1 seconds
+    And the Minifi logs contain the following message: "Registering class 'GetFileRs' at '/Rust Reference Extension'" in less than 1 seconds
+    And the Minifi logs contain the following message: "Registering class 'KamikazeProcessorRs' at '/Rust Reference Extension'" in less than 1 seconds
+    And the Minifi logs contain the following message: "Registering class 'LogAttributeRs' at '/Rust Reference Extension'" in less than 1 seconds
+    And the Minifi logs contain the following message: "Registering class 'PutFileRs' at '/Rust Reference Extension'" in less than 1 seconds
     And the Minifi logs do not contain errors
     And the Minifi logs do not contain warnings
 
@@ -53,6 +59,7 @@ Feature: Test Minifi Native C Api capabilities
     And the "Log Payload" property of the LogAttributeRs processor is set to "true"
     And the "success" relationship of the GenerateFlowFileRs processor is connected to the LogAttributeRs
     And LogAttributeRs's success relationship is auto-terminated
+    And log property "logger.rs::LogAttributeRs" is set to "TRACE,stderr"
 
     When the MiNiFi instance starts up
 
@@ -61,9 +68,10 @@ Feature: Test Minifi Native C Api capabilities
     And the Minifi logs do not contain errors
     And the Minifi logs do not contain warnings
     Examples:
-      | custom_text   | log_level | expected_log_1                   | expected_log_2 |
-      | Keith the rat | Critical  | [critical] Logging for flow file | Keith the rat  |
-      | Keith the rat | Info      | [info] Logging for flow file     | Keith the rat  |
+      | custom_text | log_level | expected_log_1                   | expected_log_2 |
+      | Elephant    | Critical  | [critical] Logging for flow file | Elephant       |
+      | Lynx        | Info      | [info] Logging for flow file     | Lynx           |
+      | Ant         | Trace     | [trace] Logging for flow file    | Ant            |
 
   Scenario: The Api handles empty flow-files
     Given the built rust extension library is inside minifi's extension folder
@@ -89,7 +97,6 @@ Feature: Test Minifi Native C Api capabilities
 
     Then the Minifi logs contain the following message: "(KamikazeProcessorRs): Process Schedule Operation: Error while scheduling processor" in less than 3 seconds
 
-
   Scenario: Panic in extension's on_schedule crashes the agent aswell
     Given the built rust extension library is inside minifi's extension folder
     And a KamikazeProcessorRs processor with the "On Schedule Behaviour" property set to "Panic"
@@ -108,7 +115,6 @@ Feature: Test Minifi Native C Api capabilities
     When the MiNiFi instance starts up
 
     Then the Minifi logs contain the following message: "Trigger and commit failed for processor KamikazeProcessorRs" in less than 3 seconds
-
 
   Scenario: Panic in extension's on_schedule crashes the agent aswell
     Given the built rust extension library is inside minifi's extension folder

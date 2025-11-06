@@ -9,3 +9,4 @@ mod c_ffi_relationship;
 
 pub use c_ffi_logger::CffiLogger;
 pub use c_ffi_processor_definition::ProcessorDefinition;
+pub use c_ffi_primitives::StaticStrAsMinifiCStr;
