@@ -116,7 +116,10 @@ fn test_complex_dir_with_filter(
                 .and_then(|filename| Some(filename.contains(expected_filename_part)))
                 .unwrap_or(false)
     }));
-    let sum_file_len = session.transferred_flow_files.iter().fold(0, |acc, transfer| {acc + transfer.flow_file.content.len()} );
+    let sum_file_len = session
+        .transferred_flow_files
+        .iter()
+        .fold(0, |acc, transfer| acc + transfer.flow_file.content.len());
 
     let metrics = processor.calculate_metrics();
     assert_eq!(metrics.len(), 2);

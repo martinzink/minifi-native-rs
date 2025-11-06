@@ -3,9 +3,9 @@ use crate::MinifiError;
 use crate::api::ProcessSession;
 use crate::c_ffi::c_ffi_primitives::{ConvertMinifiStringView, StringView};
 use minifi_native_sys::{
-    MinifiFlowFileGetAttribute, MinifiFlowFileGetAttributes,
-    MinifiFlowFileSetAttribute, MinifiInputStream, MinifiInputStreamRead, MinifiInputStreamSize,
-    MinifiOutputStream, MinifiOutputStreamWrite, MinifiProcessSession, MinifiProcessSessionCreate,
+    MinifiFlowFileGetAttribute, MinifiFlowFileGetAttributes, MinifiFlowFileSetAttribute,
+    MinifiInputStream, MinifiInputStreamRead, MinifiInputStreamSize, MinifiOutputStream,
+    MinifiOutputStreamWrite, MinifiProcessSession, MinifiProcessSessionCreate,
     MinifiProcessSessionGet, MinifiProcessSessionRead, MinifiProcessSessionTransfer,
     MinifiProcessSessionWrite, MinifiStringView,
 };

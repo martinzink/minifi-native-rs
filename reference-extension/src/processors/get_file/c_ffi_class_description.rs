@@ -1,5 +1,5 @@
 use crate::processors::get_file::properties::*;
-use crate::processors::get_file::{relationships, GetFile};
+use crate::processors::get_file::{GetFile, relationships};
 use minifi_native::{CffiLogger, ProcessorDefinition, ProcessorInputRequirement};
 
 #[cfg_attr(test, allow(dead_code))]

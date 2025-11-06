@@ -2,7 +2,7 @@ use super::*;
 use minifi_native::{CffiLogger, ProcessorDefinition, ProcessorInputRequirement, Property};
 
 #[cfg_attr(test, allow(dead_code))]
-pub(crate) fn processor_class_description() -> ProcessorDefinition::<PutFile<CffiLogger>> {
+pub(crate) fn processor_class_description() -> ProcessorDefinition<PutFile<CffiLogger>> {
     let properties: &'static [Property] = if cfg!(unix) {
         &[
             properties::DIRECTORY,

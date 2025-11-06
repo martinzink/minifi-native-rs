@@ -1,9 +1,19 @@
 use super::c_ffi_primitives::{BoolAsMinifiCBool, StaticStrAsMinifiCStr};
 use crate::{Property, StandardPropertyValidator};
-use minifi_native_sys::{MinifiGetStandardValidator, MinifiProperty, MinifiPropertyValidator, MinifiStandardPropertyValidator, MinifiStandardPropertyValidator_MINIFI_ALWAYS_VALID_VALIDATOR, MinifiStandardPropertyValidator_MINIFI_BOOLEAN_VALIDATOR, MinifiStandardPropertyValidator_MINIFI_DATA_SIZE_VALIDATOR, MinifiStandardPropertyValidator_MINIFI_INTEGER_VALIDATOR, MinifiStandardPropertyValidator_MINIFI_NON_BLANK_VALIDATOR, MinifiStandardPropertyValidator_MINIFI_PORT_VALIDATOR, MinifiStandardPropertyValidator_MINIFI_TIME_PERIOD_VALIDATOR, MinifiStandardPropertyValidator_MINIFI_UNSIGNED_INTEGER_VALIDATOR, MinifiStringView};
+use minifi_native_sys::{
+    MinifiGetStandardValidator, MinifiProperty, MinifiPropertyValidator,
+    MinifiStandardPropertyValidator, MinifiStandardPropertyValidator_MINIFI_ALWAYS_VALID_VALIDATOR,
+    MinifiStandardPropertyValidator_MINIFI_BOOLEAN_VALIDATOR,
+    MinifiStandardPropertyValidator_MINIFI_DATA_SIZE_VALIDATOR,
+    MinifiStandardPropertyValidator_MINIFI_INTEGER_VALIDATOR,
+    MinifiStandardPropertyValidator_MINIFI_NON_BLANK_VALIDATOR,
+    MinifiStandardPropertyValidator_MINIFI_PORT_VALIDATOR,
+    MinifiStandardPropertyValidator_MINIFI_TIME_PERIOD_VALIDATOR,
+    MinifiStandardPropertyValidator_MINIFI_UNSIGNED_INTEGER_VALIDATOR, MinifiStringView,
+};
 use std::ptr;
 
-#[allow(dead_code)]  // the c_ vecs are holding the values referenced from the properties
+#[allow(dead_code)] // the c_ vecs are holding the values referenced from the properties
 pub struct CProperties {
     c_default_values: Vec<MinifiStringView>,
     c_allowed_values: Vec<Vec<MinifiStringView>>,
@@ -13,11 +23,13 @@ pub struct CProperties {
 }
 
 impl CProperties {
-    pub fn new(    c_default_values: Vec<MinifiStringView>,
-                   c_allowed_values: Vec<Vec<MinifiStringView>>,
-                   c_allowed_types: Vec<MinifiStringView>,
-                   c_validators: Vec<*const MinifiPropertyValidator>,
-                   properties: Vec<MinifiProperty>) -> Self {
+    pub fn new(
+        c_default_values: Vec<MinifiStringView>,
+        c_allowed_values: Vec<Vec<MinifiStringView>>,
+        c_allowed_types: Vec<MinifiStringView>,
+        c_validators: Vec<*const MinifiPropertyValidator>,
+        properties: Vec<MinifiProperty>,
+    ) -> Self {
         Self {
             c_default_values,
             c_allowed_values,
@@ -49,9 +61,7 @@ impl Property {
             .collect()
     }
 
-    fn create_c_allowed_values_vec_vec(
-        properties: &[Self],
-    ) -> Vec<Vec<MinifiStringView>> {
+    fn create_c_allowed_values_vec_vec(properties: &[Self]) -> Vec<Vec<MinifiStringView>> {
         properties
             .iter()
             .map(|p| {
@@ -63,20 +73,14 @@ impl Property {
             .collect()
     }
 
-    fn create_c_allowed_types_vec(
-        properties: &[Self],
-    ) -> Vec<MinifiStringView> {
+    fn create_c_allowed_types_vec(properties: &[Self]) -> Vec<MinifiStringView> {
         properties
             .iter()
-            .map(|p| {
-                p.allowed_type.as_minifi_c_type()
-            })
+            .map(|p| p.allowed_type.as_minifi_c_type())
             .collect()
     }
 
-    pub(crate) fn create_c_properties(
-        properties: &[Self]
-    ) -> CProperties {
+    pub(crate) fn create_c_properties(properties: &[Self]) -> CProperties {
         let c_default_values = Property::create_c_default_value_holder(properties);
         let c_allowed_values = Property::create_c_allowed_values_vec_vec(properties);
         let c_allowed_types = Property::create_c_allowed_types_vec(properties);
@@ -117,7 +121,13 @@ impl Property {
                 },
             )
             .collect();
-        CProperties::new(c_default_values, c_allowed_values, c_allowed_types, c_validators, c_properties)
+        CProperties::new(
+            c_default_values,
+            c_allowed_values,
+            c_allowed_types,
+            c_validators,
+            c_properties,
+        )
     }
 }
 
