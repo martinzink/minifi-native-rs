@@ -3,7 +3,7 @@ use crate::processors::get_file::{GetFile, relationships};
 use minifi_native::{CffiLogger, ProcessorDefinition, ProcessorInputRequirement};
 
 #[cfg_attr(test, allow(dead_code))]
-pub(crate) fn processor_class_description() -> ProcessorDefinition<GetFile<CffiLogger>> {
+pub(crate) fn processor_definition() -> ProcessorDefinition<GetFile<CffiLogger>> {
     ProcessorDefinition::<GetFile<CffiLogger>>::new(
         "rs::GetFileRs",
         "Creates FlowFiles from files in a directory. MiNiFi will ignore files for which it doesn't have read permissions.",

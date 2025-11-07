@@ -3,7 +3,7 @@ use super::{GenerateFlowFileProcessor, relationships};
 use minifi_native::{CffiLogger, ProcessorDefinition, ProcessorInputRequirement};
 
 #[cfg_attr(test, allow(dead_code))]
-pub(crate) fn processor_class_description()
+pub(crate) fn processor_definition()
 -> ProcessorDefinition<GenerateFlowFileProcessor<CffiLogger>> {
     ProcessorDefinition::<GenerateFlowFileProcessor<CffiLogger>>::new(
         "rs::GenerateFlowFileRs",

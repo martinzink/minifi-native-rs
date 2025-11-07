@@ -72,7 +72,6 @@ where
     input_requirement: ProcessorInputRequirement,
     supports_dynamic_properties: bool,
     supports_dynamic_relationships: bool,
-    is_single_threaded: bool,
 
     c_relationships: Vec<MinifiRelationship>,
     c_properties: CProperties,
@@ -102,40 +101,9 @@ where
             input_requirement,
             supports_dynamic_properties,
             supports_dynamic_relationships,
-            is_single_threaded: T::Threading::IS_EXCLUSIVE,
             c_relationships,
             c_properties,
             _phantom: std::marker::PhantomData,
-        }
-    }
-
-    pub fn class_description(&self) -> MinifiProcessorClassDescription {
-        MinifiProcessorClassDescription {
-            full_name: self.name.as_minifi_c_type(),
-            description: self.description_text.as_minifi_c_type(),
-            class_properties_count: self.c_properties.properties.len() as u32,
-            class_properties_ptr: self.c_properties.properties.as_ptr(),
-            dynamic_properties_count: 0,
-            dynamic_properties_ptr: ptr::null(),
-            class_relationships_count: self.c_relationships.len() as u32,
-            class_relationships_ptr: self.c_relationships.as_ptr(),
-            output_attributes_count: 0,
-            output_attributes_ptr: ptr::null(),
-            supports_dynamic_properties: self.supports_dynamic_properties.as_minifi_c_type(),
-            supports_dynamic_relationships: self.supports_dynamic_relationships.as_minifi_c_type(),
-            input_requirement: self.input_requirement.as_minifi_c_type(),
-            is_single_threaded: self.is_single_threaded.as_minifi_c_type(),
-            callbacks: MinifiProcessorCallbacks {
-                create: Some(Self::create_processor),
-                destroy: Some(Self::destroy_processor),
-                isWorkAvailable: Some(Self::is_work_available),
-                restore: Some(Self::restore),
-                getTriggerWhenEmpty: Some(Self::get_trigger_when_empty),
-                onTrigger: Some(Self::on_trigger_processor),
-                onSchedule: Some(Self::on_schedule_processor),
-                onUnSchedule: Some(Self::on_unschedule_processor),
-                calculateMetrics: Some(Self::calculate_metrics),
-            },
         }
     }
 
@@ -233,6 +201,44 @@ where
                 metric_minifi_string_view.as_ptr(),
                 metric_values.as_ptr(),
             )
+        }
+    }
+}
+
+pub trait DynProcessorDefinition {
+    unsafe fn class_description(&self) -> MinifiProcessorClassDescription;
+}
+
+impl<T> DynProcessorDefinition for ProcessorDefinition<T>
+where
+    T: Processor<CffiLogger> + DispatchOnTrigger<T::Threading> {
+    unsafe fn class_description(&self) -> MinifiProcessorClassDescription {
+        MinifiProcessorClassDescription {
+            full_name: self.name.as_minifi_c_type(),
+            description: self.description_text.as_minifi_c_type(),
+            class_properties_count: self.c_properties.properties.len() as u32,
+            class_properties_ptr: self.c_properties.properties.as_ptr(),
+            dynamic_properties_count: 0,
+            dynamic_properties_ptr: ptr::null(),
+            class_relationships_count: self.c_relationships.len() as u32,
+            class_relationships_ptr: self.c_relationships.as_ptr(),
+            output_attributes_count: 0,
+            output_attributes_ptr: ptr::null(),
+            supports_dynamic_properties: self.supports_dynamic_properties.as_minifi_c_type(),
+            supports_dynamic_relationships: self.supports_dynamic_relationships.as_minifi_c_type(),
+            input_requirement: self.input_requirement.as_minifi_c_type(),
+            is_single_threaded: T::Threading::IS_EXCLUSIVE.as_minifi_c_type(),
+            callbacks: MinifiProcessorCallbacks {
+                create: Some(Self::create_processor),
+                destroy: Some(Self::destroy_processor),
+                isWorkAvailable: Some(Self::is_work_available),
+                restore: Some(Self::restore),
+                getTriggerWhenEmpty: Some(Self::get_trigger_when_empty),
+                onTrigger: Some(Self::on_trigger_processor),
+                onSchedule: Some(Self::on_schedule_processor),
+                onUnSchedule: Some(Self::on_unschedule_processor),
+                calculateMetrics: Some(Self::calculate_metrics),
+            },
         }
     }
 }

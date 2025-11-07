@@ -192,7 +192,7 @@ impl<L: Logger> ConcurrentOnTrigger<L> for GenerateFlowFileProcessor<L> {
 }
 
 #[cfg(not(test))]
-pub(crate) mod c_ffi_class_description;
+pub(crate) mod processor_definition;
 
 #[cfg(test)]
 mod tests;

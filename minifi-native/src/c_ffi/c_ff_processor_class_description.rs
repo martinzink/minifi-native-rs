@@ -1,0 +1,32 @@
+use minifi_native_sys::MinifiProcessorClassDescription;
+use crate::c_ffi::c_ffi_processor_definition::{DynProcessorDefinition};
+
+pub struct CffiProcessorList {
+    processor_definitions: Vec<Box<dyn DynProcessorDefinition>>,
+    minifi_processor_class_description_list: Vec<MinifiProcessorClassDescription>
+}
+
+impl CffiProcessorList {
+    pub fn new() -> Self {
+        Self {
+            processor_definitions: Vec::new(),
+            minifi_processor_class_description_list: Vec::new()
+        }
+    }
+
+    pub fn add_processor_definition(&mut self, processor_definition: Box<dyn DynProcessorDefinition>) {
+        unsafe {
+            self.processor_definitions.push(processor_definition);
+            self.minifi_processor_class_description_list.push(self.processor_definitions.last().unwrap().class_description());
+        }
+    }
+
+    pub fn get_processor_count(&self) -> u32 {
+       assert_eq!(self.processor_definitions.len(), self.minifi_processor_class_description_list.len());
+       self.minifi_processor_class_description_list.len() as u32
+    }
+
+    pub unsafe fn get_processor_ptr(&self) -> *const MinifiProcessorClassDescription {
+        self.minifi_processor_class_description_list.as_ptr()
+    }
+}

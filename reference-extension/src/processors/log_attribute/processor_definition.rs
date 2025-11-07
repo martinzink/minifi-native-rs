@@ -3,7 +3,7 @@ use crate::processors::log_attribute::{LogAttribute, relationships};
 use minifi_native::{CffiLogger, ProcessorDefinition, ProcessorInputRequirement};
 
 #[cfg_attr(test, allow(dead_code))]
-pub(crate) fn processor_class_description() -> ProcessorDefinition<LogAttribute<CffiLogger>> {
+pub(crate) fn processor_definition() -> ProcessorDefinition<LogAttribute<CffiLogger>> {
     ProcessorDefinition::<LogAttribute<CffiLogger>>::new(
         "rs::LogAttributeRs",
         "Logs attributes of flow files in the MiNiFi application log.",
