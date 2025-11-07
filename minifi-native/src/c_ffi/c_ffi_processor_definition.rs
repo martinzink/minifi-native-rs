@@ -206,12 +206,14 @@ where
 }
 
 pub trait DynProcessorDefinition {
+    // unsafe because self must outlive the resulting MinifiProcessorClassDescription 
     unsafe fn class_description(&self) -> MinifiProcessorClassDescription;
 }
 
 impl<T> DynProcessorDefinition for ProcessorDefinition<T>
 where
     T: Processor<CffiLogger> + DispatchOnTrigger<T::Threading> {
+    // unsafe because self must outlive the resulting MinifiProcessorClassDescription 
     unsafe fn class_description(&self) -> MinifiProcessorClassDescription {
         MinifiProcessorClassDescription {
             full_name: self.name.as_minifi_c_type(),

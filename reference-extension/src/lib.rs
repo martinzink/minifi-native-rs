@@ -39,7 +39,7 @@ pub extern "C" fn InitExtension(
         processor_list.add_processor_definition(Box::new(processors::put_file::processor_definition::processor_definition()));
         processor_list.add_processor_definition(Box::new(processors::log_attribute::processor_definition::processor_definition()));
 
-        // processor_list must outlive this call
+        // processor_list must outlive this MinifiExtensionCreateInfo call
         let extension_create_info: MinifiExtensionCreateInfo = MinifiExtensionCreateInfo {
             name: "Rust Reference Extension".as_minifi_c_type(),
             version: env!("CARGO_PKG_VERSION").as_minifi_c_type(),
