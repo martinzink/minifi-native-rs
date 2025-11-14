@@ -105,7 +105,7 @@ mod tests {
         flow_file.content = "Hello, World!".to_string().as_bytes().to_vec();
         let mut vec: Vec<u8> = Vec::new();
 
-        let res =session.read_in_batches(&mut flow_file, 1, |batch| {
+        let res = session.read_in_batches(&mut flow_file, 1, |batch| {
             assert_eq!(batch.len(), 1);
             vec.push(batch[0]);
             Ok(())

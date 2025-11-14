@@ -1,8 +1,8 @@
 use crate::ProcessorInputRequirement;
 use minifi_native_sys::{
-    MINIFI_FALSE, MINIFI_TRUE, MinifiBool, MinifiInputRequirement,
-    MinifiInputRequirement_MINIFI_INPUT_ALLOWED, MinifiInputRequirement_MINIFI_INPUT_FORBIDDEN,
-    MinifiInputRequirement_MINIFI_INPUT_REQUIRED, MinifiStringView,
+    MinifiInputRequirement, MinifiInputRequirement_MINIFI_INPUT_ALLOWED,
+    MinifiInputRequirement_MINIFI_INPUT_FORBIDDEN, MinifiInputRequirement_MINIFI_INPUT_REQUIRED,
+    MinifiStringView,
 };
 use std::os::raw::c_char;
 
@@ -71,16 +71,6 @@ impl ConvertMinifiStringView for MinifiStringView {
             let slice = std::slice::from_raw_parts(self.data as *const u8, self.length as usize);
             str::from_utf8(slice).map_err(|_| FfiConversionError::InvalidUtf8)
         }
-    }
-}
-
-pub trait BoolAsMinifiCBool {
-    fn as_minifi_c_type(&self) -> MinifiBool;
-}
-
-impl BoolAsMinifiCBool for bool {
-    fn as_minifi_c_type(&self) -> MinifiBool {
-        if *self { MINIFI_TRUE } else { MINIFI_FALSE }
     }
 }
 

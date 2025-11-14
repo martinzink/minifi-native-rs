@@ -1,6 +1,7 @@
 mod error_code;
 mod flow_file;
 mod logger;
+mod output_attribute;
 mod process_context;
 mod process_session;
 mod processor;
@@ -11,6 +12,7 @@ mod threading_model;
 pub use error_code::MinifiError;
 pub use flow_file::FlowFile;
 pub use logger::{LogLevel, Logger};
+pub use output_attribute::OutputAttribute;
 pub use process_context::ProcessContext;
 pub use process_session::ProcessSession;
 pub use processor::{

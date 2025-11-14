@@ -7,6 +7,6 @@ docker buildx build -f reference-extension/integration-test/docker/rocky.dockerf
 
 docker create --name temp-container reference-extension-build:latest
 
-docker cp temp-container:/opt/minifi-native-rs/reference-extension/target/release/libreference_extension.so ./reference-extension/integration-test/features/linux_so/
+docker cp temp-container:/opt/minifi-native-rs/reference-extension/target/release/librust_reference_extension.so ./reference-extension/integration-test/features/linux_so/
 
 docker rm temp-container

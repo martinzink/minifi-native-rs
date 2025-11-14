@@ -160,7 +160,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                     MinifiOutputStreamWrite(
                         output_stream,
                         result_target.unwrap().as_ptr() as *const c_char,
-                        result_target.unwrap().len() as u64,
+                        result_target.unwrap().len(),
                     )
                 }
             }
@@ -194,7 +194,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                         overall_writes += MinifiOutputStreamWrite(
                             output_stream,
                             batch.as_ptr() as *const c_char,
-                            batch.len() as u64,
+                            batch.len(),
                         )
                     }
                     overall_writes
@@ -299,7 +299,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                         let bytes_read = MinifiInputStreamRead(
                             input_stream,
                             buffer.as_mut_ptr() as *mut c_char,
-                            read_size as u64,
+                            read_size,
                         );
                         if bytes_read < 0 || bytes_read > read_size as i64 {
                             return -1;

@@ -20,7 +20,7 @@ enum Mode {
 }
 
 #[derive(Debug)]
-struct GenerateFlowFile {
+struct ScheduledMembers {
     mode: Mode,
     batch_size: u64,
     file_size: u64,
@@ -28,12 +28,12 @@ struct GenerateFlowFile {
 }
 
 #[derive(Debug)]
-pub(crate) struct GenerateFlowFileProcessor<L: Logger> {
+pub(crate) struct GenerateFlowFile<L: Logger> {
     logger: L,
-    generate_flow_file: Option<GenerateFlowFile>,
+    scheduled_members: Option<ScheduledMembers>,
 }
 
-impl GenerateFlowFile {
+impl ScheduledMembers {
     fn is_unique(&self) -> bool {
         match self.mode {
             Mode::UniqueBytes => true,
@@ -119,12 +119,12 @@ impl GenerateFlowFile {
     }
 }
 
-impl<L: Logger> Processor<L> for GenerateFlowFileProcessor<L> {
+impl<L: Logger> Processor<L> for GenerateFlowFile<L> {
     type Threading = Concurrent;
     fn new(logger: L) -> Self {
         Self {
             logger,
-            generate_flow_file: None,
+            scheduled_members: None,
         }
     }
 
@@ -152,17 +152,17 @@ impl<L: Logger> Processor<L> for GenerateFlowFileProcessor<L> {
             .get_u64_property(&properties::BATCH_SIZE, None)?
             .expect("Required property");
 
-        let mode = GenerateFlowFile::get_mode(is_unique, is_text, has_custom_text, file_size);
+        let mode = ScheduledMembers::get_mode(is_unique, is_text, has_custom_text, file_size);
         let data_generated_during_on_schedule =
             if mode == Mode::NotUniqueText || mode == Mode::NotUniqueBytes {
                 let mut data = vec![0; file_size as usize];
-                GenerateFlowFile::generate_data(&mut data, is_text);
+                ScheduledMembers::generate_data(&mut data, is_text);
                 data
             } else {
                 vec![]
             };
 
-        self.generate_flow_file = Some(GenerateFlowFile {
+        self.scheduled_members = Some(ScheduledMembers {
             mode,
             batch_size,
             file_size,
@@ -175,13 +175,13 @@ impl<L: Logger> Processor<L> for GenerateFlowFileProcessor<L> {
     }
 }
 
-impl<L: Logger> ConcurrentOnTrigger<L> for GenerateFlowFileProcessor<L> {
+impl<L: Logger> ConcurrentOnTrigger<L> for GenerateFlowFile<L> {
     fn on_trigger<P: ProcessContext, S: ProcessSession>(
         &self,
         context: &mut P,
         session: &mut S,
     ) -> Result<OnTriggerResult, MinifiError> {
-        if let Some(ref generate_flow_file) = self.generate_flow_file {
+        if let Some(ref generate_flow_file) = self.scheduled_members {
             generate_flow_file.on_trigger(context, session)
         } else {
             Err(MinifiError::TriggerError(
