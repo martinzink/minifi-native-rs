@@ -9,9 +9,3 @@
 //! The bindings are generated automatically by `bindgen` from the `minifi-c.h` header.
 
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
-
-// Since bindgen can struggle with C macros that involve type casting,
-// we manually define the boolean constants here to ensure they are
-// always available to any crate that uses this one.
-pub const MINIFI_TRUE: MinifiBool = 1;
-pub const MINIFI_FALSE: MinifiBool = 0;

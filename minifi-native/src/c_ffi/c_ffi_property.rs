@@ -110,7 +110,7 @@ impl Property {
                         exclusive_of_property_names_ptr: ptr::null(), // Not supported yet.
                         exclusive_of_property_values_ptr: ptr::null(), // Not supported yet.
                         default_value: def_value,
-                        allowed_values_count: allowed_values.len() as u32,
+                        allowed_values_count: allowed_values.len(),
                         allowed_values_ptr: allowed_values.as_ptr(),
                         validator: *validator,
                         type_: allowed_type,

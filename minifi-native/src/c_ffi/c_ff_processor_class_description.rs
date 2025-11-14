@@ -21,9 +21,9 @@ impl CffiProcessorList {
         }
     }
 
-    pub fn get_processor_count(&self) -> u32 {
+    pub fn get_processor_count(&self) -> usize {
        assert_eq!(self.processor_definitions.len(), self.minifi_processor_class_description_list.len());
-       self.minifi_processor_class_description_list.len() as u32
+       self.minifi_processor_class_description_list.len()
     }
 
     pub unsafe fn get_processor_ptr(&self) -> *const MinifiProcessorClassDescription {

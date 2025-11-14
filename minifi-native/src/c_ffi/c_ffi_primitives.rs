@@ -1,6 +1,6 @@
 use crate::ProcessorInputRequirement;
 use minifi_native_sys::{
-    MINIFI_FALSE, MINIFI_TRUE, MinifiBool, MinifiInputRequirement,
+    MinifiBool, MinifiInputRequirement,
     MinifiInputRequirement_MINIFI_INPUT_ALLOWED, MinifiInputRequirement_MINIFI_INPUT_FORBIDDEN,
     MinifiInputRequirement_MINIFI_INPUT_REQUIRED, MinifiStringView,
 };
@@ -80,7 +80,7 @@ pub trait BoolAsMinifiCBool {
 
 impl BoolAsMinifiCBool for bool {
     fn as_minifi_c_type(&self) -> MinifiBool {
-        if *self { MINIFI_TRUE } else { MINIFI_FALSE }
+        *self
     }
 }
 
