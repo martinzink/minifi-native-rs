@@ -12,6 +12,7 @@ use std::path::PathBuf;
 use std::sync::Mutex;
 use std::time::{Duration, Instant, SystemTime};
 use walkdir::{DirEntry, WalkDir};
+use crate::processors::get_file::output_attributes::{ABSOLUTE_PATH_OUTPUT_ATTRIBUTE, FILENAME_OUTPUT_ATTRIBUTE};
 
 mod properties;
 mod relationships;
@@ -153,12 +154,12 @@ impl<L: Logger> GetFile<L> {
             .expect("Successful FlowFile creation is expected");
 
         if let Some(file_name) = path.file_name().and_then(|f| f.to_str()) {
-            session.set_attribute(&mut ff, "filename", file_name);
+            session.set_attribute(&mut ff, FILENAME_OUTPUT_ATTRIBUTE.name, file_name);
         } else {
             self.logger
                 .warn(format!("Couldnt get filename of {:?}", path).as_str());
         }
-        session.set_attribute(&mut ff, "absolute.path", path.to_string_lossy().trim());
+        session.set_attribute(&mut ff, ABSOLUTE_PATH_OUTPUT_ATTRIBUTE.name, path.to_string_lossy().trim());
         // TODO(relative path)
 
         let contents = std::fs::read_to_string(&path).expect("Failed to read file");
@@ -305,3 +306,4 @@ pub(crate) mod processor_definition;
 
 #[cfg(test)]
 mod tests;
+mod output_attributes;

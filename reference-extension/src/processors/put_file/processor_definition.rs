@@ -27,6 +27,7 @@ pub(crate) fn processor_definition() -> ProcessorDefinition<PutFile<CffiLogger>>
         ProcessorInputRequirement::Required,
         false,
         false,
+        &[],
         &[relationships::SUCCESS, relationships::FAILURE],
         properties,
     )

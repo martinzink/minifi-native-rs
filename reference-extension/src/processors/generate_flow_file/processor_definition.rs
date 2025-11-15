@@ -11,6 +11,7 @@ pub(crate) fn processor_definition()
         ProcessorInputRequirement::Forbidden,
         false,
         false,
+        &[],
         &[relationships::SUCCESS],
         &[
             FILE_SIZE,

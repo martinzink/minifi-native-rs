@@ -10,6 +10,7 @@ pub(crate) fn processor_definition() -> ProcessorDefinition<GetFile<CffiLogger>>
         ProcessorInputRequirement::Forbidden,
         false,
         false,
+        &[],
         &[relationships::SUCCESS],
         &[
             DIRECTORY,

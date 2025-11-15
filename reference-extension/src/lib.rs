@@ -41,7 +41,7 @@ pub extern "C" fn InitExtension(
 
         // processor_list must outlive this MinifiExtensionCreateInfo call
         let extension_create_info: MinifiExtensionCreateInfo = MinifiExtensionCreateInfo {
-            name: "Rust Reference Extension".as_minifi_c_type(),
+            name: env!("CARGO_PKG_NAME").as_minifi_c_type(),
             version: env!("CARGO_PKG_VERSION").as_minifi_c_type(),
             deinit: None,
             user_data: std::ptr::null_mut(),

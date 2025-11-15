@@ -7,7 +7,7 @@ mod c_ffi_processor_definition;
 mod c_ffi_property;
 mod c_ffi_relationship;
 mod c_ff_processor_class_description;
-
+mod c_ffi_output_attribute;
 
 pub use c_ffi_logger::CffiLogger;
 pub use c_ffi_primitives::StaticStrAsMinifiCStr;

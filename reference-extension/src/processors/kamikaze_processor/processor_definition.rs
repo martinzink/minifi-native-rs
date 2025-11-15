@@ -9,6 +9,7 @@ pub(crate) fn processor_definition() -> ProcessorDefinition<KamikazeProcessor<Cf
         ProcessorInputRequirement::Allowed,
         false,
         false,
+        &[],
         &[relationships::SUCCESS],
         &[
             properties::ON_SCHEDULE_BEHAVIOUR,

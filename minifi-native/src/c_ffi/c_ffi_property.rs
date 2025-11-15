@@ -1,4 +1,4 @@
-use super::c_ffi_primitives::{BoolAsMinifiCBool, StaticStrAsMinifiCStr};
+use super::c_ffi_primitives::{StaticStrAsMinifiCStr};
 use crate::{Property, StandardPropertyValidator};
 use minifi_native_sys::{
     MinifiGetStandardValidator, MinifiProperty, MinifiPropertyValidator,
@@ -19,11 +19,11 @@ pub struct CProperties {
     c_allowed_values: Vec<Vec<MinifiStringView>>,
     c_allowed_types: Vec<MinifiStringView>,
     c_validators: Vec<*const MinifiPropertyValidator>,
-    pub(crate) properties: Vec<MinifiProperty>,
+    properties: Vec<MinifiProperty>,
 }
 
 impl CProperties {
-    pub fn new(
+    pub(crate) fn new(
         c_default_values: Vec<MinifiStringView>,
         c_allowed_values: Vec<Vec<MinifiStringView>>,
         c_allowed_types: Vec<MinifiStringView>,
@@ -37,6 +37,14 @@ impl CProperties {
             c_validators,
             properties,
         }
+    }
+
+    pub(crate) fn len(&self) -> usize {
+        self.properties.len()
+    }
+
+    pub(crate) unsafe fn get_ptr(&self) -> *const MinifiProperty {
+        self.properties.as_ptr()
     }
 }
 
@@ -102,21 +110,15 @@ impl Property {
                         name: property.name.as_minifi_c_type(),
                         display_name: property.name.as_minifi_c_type(),
                         description: property.description.as_minifi_c_type(),
-                        is_required: property.is_required.as_minifi_c_type(),
-                        is_sensitive: property.is_sensitive.as_minifi_c_type(),
-                        dependent_properties_count: 0,
-                        dependent_properties_ptr: ptr::null(), // Not supported yet.
-                        exclusive_of_properties_count: 0,
-                        exclusive_of_property_names_ptr: ptr::null(), // Not supported yet.
-                        exclusive_of_property_values_ptr: ptr::null(), // Not supported yet.
+                        is_required: property.is_required,
+                        is_sensitive: property.is_sensitive,
                         default_value: def_value,
                         allowed_values_count: allowed_values.len(),
                         allowed_values_ptr: allowed_values.as_ptr(),
                         validator: *validator,
                         type_: allowed_type,
                         supports_expression_language: property
-                            .supports_expr_lang
-                            .as_minifi_c_type(),
+                            .supports_expr_lang,
                     }
                 },
             )

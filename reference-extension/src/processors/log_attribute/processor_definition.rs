@@ -10,6 +10,7 @@ pub(crate) fn processor_definition() -> ProcessorDefinition<LogAttribute<CffiLog
         ProcessorInputRequirement::Required,
         false,
         false,
+        &[],
         &[relationships::SUCCESS],
         &[
             LOG_LEVEL,

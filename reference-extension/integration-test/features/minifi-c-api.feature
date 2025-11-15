@@ -116,7 +116,7 @@ Feature: Test Minifi Native C Api capabilities
 
     Then the Minifi logs contain the following message: "Trigger and commit failed for processor KamikazeProcessorRs" in less than 3 seconds
 
-  Scenario: Panic in extension's on_schedule crashes the agent aswell
+  Scenario: Panic in extension's on_trigger crashes the agent aswell
     Given the built rust extension library is inside minifi's extension folder
     And a KamikazeProcessorRs processor with the "On Schedule Behaviour" property set to "ReturnOk"
     And the "On Trigger Behaviour" property of the KamikazeProcessorRs processor is set to "Panic"
