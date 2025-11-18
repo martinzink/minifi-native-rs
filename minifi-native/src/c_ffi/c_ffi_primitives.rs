@@ -1,8 +1,8 @@
 use crate::ProcessorInputRequirement;
 use minifi_native_sys::{
-    MinifiInputRequirement,
-    MinifiInputRequirement_MINIFI_INPUT_ALLOWED, MinifiInputRequirement_MINIFI_INPUT_FORBIDDEN,
-    MinifiInputRequirement_MINIFI_INPUT_REQUIRED, MinifiStringView,
+    MinifiInputRequirement, MinifiInputRequirement_MINIFI_INPUT_ALLOWED,
+    MinifiInputRequirement_MINIFI_INPUT_FORBIDDEN, MinifiInputRequirement_MINIFI_INPUT_REQUIRED,
+    MinifiStringView,
 };
 use std::os::raw::c_char;
 

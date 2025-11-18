@@ -1,9 +1,6 @@
 use crate::api::LogLevel;
 use crate::api::Logger;
-use minifi_native_sys::{
-    MinifiLogLevel, MinifiLogger,
-    MinifiLoggerLogString, MinifiStringView,
-};
+use minifi_native_sys::{MinifiLogLevel, MinifiLogger, MinifiLoggerLogString, MinifiStringView};
 use std::ffi::CString;
 
 impl From<LogLevel> for MinifiLogLevel {

@@ -29,13 +29,6 @@ struct PutFileUnixPermissions {
 
 #[cfg(unix)]
 impl PutFileUnixPermissions {
-    fn new() -> Self {
-        Self {
-            file_permissions: None,
-            directory_permissions: None,
-        }
-    }
-
     fn set_directory_permissions(&self, path: &Path) -> std::io::Result<()> {
         if let Some(permissions) = self.directory_permissions.as_ref().map(|p| p.clone()) {
             return std::fs::set_permissions(path, permissions);
@@ -70,17 +63,27 @@ impl PutFileUnixPermissions {
 }
 
 #[derive(Debug)]
-pub(crate) struct PutFile<L: Logger> {
-    logger: L,
+struct ScheduledMembers {
     conflict_resolution_strategy: ConflictResolutionStrategy,
     try_make_dirs: bool,
     maximum_file_count: Option<u64>,
     unix_permissions: PutFileUnixPermissions,
 }
 
+#[derive(Debug)]
+pub(crate) struct PutFile<L: Logger> {
+    logger: L,
+    scheduled_members: Option<ScheduledMembers>,
+}
+
 impl<L: Logger> PutFile<L> {
     pub(crate) fn directory_is_full(&self, p0: &Path) -> bool {
-        if let Some(max_file_count) = self.maximum_file_count
+        let put_file = self
+            .scheduled_members
+            .as_ref()
+            .expect("on_schedule should create GetFileImpl");
+
+        if let Some(max_file_count) = put_file.maximum_file_count
             && let Some(parent) = p0.parent()
         {
             parent.exists() && WalkDir::new(parent).into_iter().count() >= max_file_count as usize
@@ -109,10 +112,17 @@ impl<L: Logger> PutFile<L> {
     }
 
     fn prepare_destination(&self, destination: &Path) -> std::io::Result<()> {
+        let put_file = self
+            .scheduled_members
+            .as_ref()
+            .expect("on_schedule should create GetFileImpl");
+
         if let Some(parent) = destination.parent() {
-            if self.try_make_dirs {
+            if put_file.try_make_dirs {
                 std::fs::create_dir_all(parent)?;
-                self.unix_permissions.set_directory_permissions(parent)?;
+                put_file
+                    .unix_permissions
+                    .set_directory_permissions(parent)?;
             }
         }
         Ok(())
@@ -128,6 +138,11 @@ impl<L: Logger> PutFile<L> {
         C: ProcessContext,
         S: ProcessSession<FlowFile = C::FlowFile>,
     {
+        let put_file = self
+            .scheduled_members
+            .as_ref()
+            .expect("on_schedule should create GetFileImpl");
+
         match self.prepare_destination(destination) {
             Ok(_) => {}
             Err(err) => {
@@ -137,7 +152,7 @@ impl<L: Logger> PutFile<L> {
         }
         let mut file = std::fs::File::create(destination)
             .map_err(|e| MinifiError::TriggerError(e.to_string()))?;
-        match self.unix_permissions.set_file_permissions(destination) {
+        match put_file.unix_permissions.set_file_permissions(destination) {
             Ok(_) => {}
             Err(err) => {
                 self.logger
@@ -155,30 +170,30 @@ impl<L: Logger> PutFile<L> {
 
     #[cfg(unix)]
     fn parse_unix_permissions<P: ProcessContext>(
-        &mut self,
         context: &P,
-    ) -> Result<(), MinifiError> {
+    ) -> Result<PutFileUnixPermissions, MinifiError> {
         use std::os::unix::fs::PermissionsExt;
-        if let Some(dir_perm_str) =
-            context.get_property(&unix_only_properties::DIRECTORY_PERMISSIONS, None)?
-        {
-            let dir_perm = u32::from_str_radix(&dir_perm_str, 8)?;
-            self.unix_permissions.directory_permissions =
-                Some(std::fs::Permissions::from_mode(dir_perm));
-        }
-        if let Some(perm_str) = context.get_property(&unix_only_properties::PERMISSIONS, None)? {
-            let perm = u32::from_str_radix(&perm_str, 8)?;
-            self.unix_permissions.file_permissions = Some(std::fs::Permissions::from_mode(perm));
-        }
-        Ok(())
+        let parse_permission = |property: &minifi_native::Property| -> Result<Option<std::fs::Permissions>, MinifiError> {
+            Ok(context.get_property(&property, None)?
+                .map(|perm_str| { u32::from_str_radix(&perm_str, 8) })
+                .transpose()?
+                .map(|perm| std::fs::Permissions::from_mode(perm)))
+        };
+        let file_permissions = parse_permission(&unix_only_properties::PERMISSIONS)?;
+        let directory_permissions = parse_permission(&unix_only_properties::DIRECTORY_PERMISSIONS)?;
+
+        Ok(PutFileUnixPermissions {
+            file_permissions,
+            directory_permissions,
+        })
     }
 
     #[cfg(windows)]
     fn parse_unix_permissions<P: ProcessContext>(
         &mut self,
         context: &P,
-    ) -> Result<(), MinifiError> {
-        Ok(())
+    ) -> Result<PutFileUnixPermissions, MinifiError> {
+        Ok(PutFileUnixPermissions {})
     }
 }
 
@@ -187,10 +202,7 @@ impl<L: Logger> Processor<L> for PutFile<L> {
     fn new(logger: L) -> Self {
         Self {
             logger,
-            conflict_resolution_strategy: ConflictResolutionStrategy::Fail,
-            try_make_dirs: true,
-            maximum_file_count: None,
-            unix_permissions: PutFileUnixPermissions::new(),
+            scheduled_members: None,
         }
     }
 
@@ -201,19 +213,25 @@ impl<L: Logger> Processor<L> for PutFile<L> {
     fn on_schedule<P: ProcessContext>(&mut self, context: &P) -> Result<(), MinifiError> {
         self.logger
             .trace(format!("on_schedule: {:?}", self).as_str());
-        self.conflict_resolution_strategy = context
+        let conflict_resolution_strategy = context
             .get_property(&properties::CONFLICT_RESOLUTION, None)?
             .expect("required property")
             .parse::<ConflictResolutionStrategy>()?;
 
-        self.try_make_dirs = context
+        let try_make_dirs = context
             .get_bool_property(&properties::CREATE_DIRS, None)?
             .expect("required property");
 
-        self.maximum_file_count = context.get_u64_property(&properties::MAX_FILE_COUNT, None)?;
+        let maximum_file_count = context.get_u64_property(&properties::MAX_FILE_COUNT, None)?;
 
-        self.parse_unix_permissions(context)?;
+        let unix_permissions = PutFile::<L>::parse_unix_permissions(context)?;
 
+        self.scheduled_members = Some(ScheduledMembers {
+            conflict_resolution_strategy,
+            try_make_dirs,
+            maximum_file_count,
+            unix_permissions,
+        });
         Ok(())
     }
 }
@@ -228,6 +246,11 @@ impl<L: Logger> ConcurrentOnTrigger<L> for PutFile<L> {
         C: ProcessContext,
         S: ProcessSession<FlowFile = C::FlowFile>,
     {
+        let put_file = self
+            .scheduled_members
+            .as_ref()
+            .expect("on_schedule should create GetFileImpl");
+
         self.logger
             .trace(format!("on_trigger: {:?}", self).as_str());
         let Some(mut ff) = session.get() else {
@@ -248,7 +271,7 @@ impl<L: Logger> ConcurrentOnTrigger<L> for PutFile<L> {
         }
 
         if destination_path.exists() {
-            match self.conflict_resolution_strategy {
+            match put_file.conflict_resolution_strategy {
                 ConflictResolutionStrategy::Fail => {
                     session.transfer(ff, relationships::FAILURE.name);
                     return Ok(OnTriggerResult::Ok);

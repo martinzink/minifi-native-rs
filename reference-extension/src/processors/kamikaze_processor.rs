@@ -16,11 +16,15 @@ enum KamikazeBehaviour {
 }
 
 #[derive(Debug)]
-pub(crate) struct KamikazeProcessor<L: Logger> {
-    logger: L,
+struct ScheduledMembers {
     on_trigger_behaviour: KamikazeBehaviour,
     read_behaviour: Option<KamikazeBehaviour>,
-    write_behaviour: Option<KamikazeBehaviour>,
+}
+
+#[derive(Debug)]
+pub(crate) struct KamikazeProcessor<L: Logger> {
+    logger: L,
+    scheduled_members: Option<ScheduledMembers>,
 }
 
 impl<L: Logger> Processor<L> for KamikazeProcessor<L> {
@@ -28,9 +32,7 @@ impl<L: Logger> Processor<L> for KamikazeProcessor<L> {
     fn new(logger: L) -> Self {
         Self {
             logger,
-            on_trigger_behaviour: KamikazeBehaviour::ReturnOk,
-            read_behaviour: None,
-            write_behaviour: None,
+            scheduled_members: None,
         }
     }
 
@@ -39,15 +41,12 @@ impl<L: Logger> Processor<L> for KamikazeProcessor<L> {
     }
 
     fn on_schedule<P: ProcessContext>(&mut self, context: &P) -> Result<(), MinifiError> {
-        self.on_trigger_behaviour = context
+        let on_trigger_behaviour = context
             .get_property(&properties::ON_TRIGGER_BEHAVIOUR, None)?
             .expect("required property")
             .parse::<KamikazeBehaviour>()?;
-        self.read_behaviour = context
+        let read_behaviour = context
             .get_property(&properties::READ_BEHAVIOUR, None)?
-            .map(|s| s.parse::<KamikazeBehaviour>().unwrap());
-        self.write_behaviour = context
-            .get_property(&properties::WRITE_BEHAVIOUR, None)?
             .map(|s| s.parse::<KamikazeBehaviour>().unwrap());
 
         let on_schedule_behaviour = context
@@ -57,7 +56,13 @@ impl<L: Logger> Processor<L> for KamikazeProcessor<L> {
 
         match on_schedule_behaviour {
             KamikazeBehaviour::ReturnErr => Err(MinifiError::UnknownError),
-            KamikazeBehaviour::ReturnOk => Ok(()),
+            KamikazeBehaviour::ReturnOk => {
+                self.scheduled_members = Some(ScheduledMembers {
+                    on_trigger_behaviour,
+                    read_behaviour,
+                });
+                Ok(())
+            }
             KamikazeBehaviour::Panic => {
                 panic!("KamikazeProcessor panic")
             }
@@ -75,7 +80,12 @@ impl<L: Logger> ConcurrentOnTrigger<L> for KamikazeProcessor<L> {
         PC: ProcessContext,
         PS: ProcessSession<FlowFile = PC::FlowFile>,
     {
-        if let Some(read_behaviour) = self.read_behaviour
+        let kamikaze_proc = self
+            .scheduled_members
+            .as_ref()
+            .expect("on_schedule should create GetFileImpl");
+
+        if let Some(read_behaviour) = kamikaze_proc.read_behaviour
             && let Some(flow_file) = session.get()
         {
             let _read = session.read_in_batches(&flow_file, 1, |_data| match read_behaviour {
@@ -85,10 +95,11 @@ impl<L: Logger> ConcurrentOnTrigger<L> for KamikazeProcessor<L> {
                     panic!("KamikazeProcessor panic")
                 }
             });
+
             session.transfer(flow_file, relationships::SUCCESS.name);
         }
 
-        match self.on_trigger_behaviour {
+        match kamikaze_proc.on_trigger_behaviour {
             KamikazeBehaviour::ReturnErr => Err(MinifiError::UnknownError),
             KamikazeBehaviour::ReturnOk => Ok(OnTriggerResult::Ok),
             KamikazeBehaviour::Panic => {

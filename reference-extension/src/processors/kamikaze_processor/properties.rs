@@ -37,15 +37,3 @@ pub(crate) const READ_BEHAVIOUR: Property = Property {
     allowed_values: &KamikazeBehaviour::VARIANTS,
     allowed_type: "",
 };
-
-pub(crate) const WRITE_BEHAVIOUR: Property = Property {
-    name: "Write Behaviour",
-    description: "If specified it will create and process new flowfiles with the specified behaviour.",
-    is_required: false,
-    is_sensitive: false,
-    supports_expr_lang: false,
-    default_value: None,
-    validator: StandardPropertyValidator::AlwaysValidValidator,
-    allowed_values: &KamikazeBehaviour::VARIANTS,
-    allowed_type: "",
-};

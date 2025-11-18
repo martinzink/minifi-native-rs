@@ -6,6 +6,7 @@ description = "A safe, idiomatic Rust wrapper for the Apache MiNiFi Native C API
 license = "Apache-2.0"
 
 [dependencies]
+const_format = "0.2.34"
 minifi-native-sys = { path = "../minifi-native-sys" }
 strum = "0.27.2"
 strum_macros = "0.27.2"

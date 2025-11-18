@@ -6,11 +6,14 @@ use super::c_ffi_primitives::{StaticStrAsMinifiCStr, StringView};
 use super::c_ffi_process_context::CffiProcessContext;
 use super::c_ffi_process_session::CffiProcessSession;
 use crate::api::{Processor, ProcessorInputRequirement, ThreadingModel};
+use crate::c_ffi::c_ffi_output_attribute::COutputAttributes;
 use crate::c_ffi::c_ffi_property::CProperties;
-use crate::{Concurrent, ConcurrentOnTrigger, Exclusive, ExclusiveOnTrigger, LogLevel, OutputAttribute, Property};
+use crate::{
+    Concurrent, ConcurrentOnTrigger, Exclusive, ExclusiveOnTrigger, LogLevel, OutputAttribute,
+    Property,
+};
 use crate::{OnTriggerResult, Relationship};
 use minifi_native_sys::*;
-use crate::c_ffi::c_ffi_output_attribute::COutputAttributes;
 
 pub trait DispatchOnTrigger<M: ThreadingModel> {
     unsafe fn dispatch_on_trigger(
@@ -97,7 +100,7 @@ where
     ) -> Self {
         let c_relationships = Relationship::create_c_vec(relationships);
         let c_properties = Property::create_c_properties(properties);
-        let c_output_attributes= COutputAttributes::new(output_attributes);
+        let c_output_attributes = COutputAttributes::new(output_attributes);
 
         Self {
             name,
@@ -217,7 +220,8 @@ pub trait DynProcessorDefinition {
 
 impl<T> DynProcessorDefinition for ProcessorDefinition<T>
 where
-    T: Processor<CffiLogger> + DispatchOnTrigger<T::Threading> {
+    T: Processor<CffiLogger> + DispatchOnTrigger<T::Threading>,
+{
     // unsafe because self must outlive the resulting MinifiProcessorClassDescription
     unsafe fn class_description(&self) -> MinifiProcessorClassDescription {
         unsafe {
@@ -250,4 +254,8 @@ where
             }
         }
     }
+}
+
+pub trait RegisterableProcessor {
+    fn get_definition() -> Box<dyn DynProcessorDefinition>;
 }

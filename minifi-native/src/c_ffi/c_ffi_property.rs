@@ -1,4 +1,4 @@
-use super::c_ffi_primitives::{StaticStrAsMinifiCStr};
+use super::c_ffi_primitives::StaticStrAsMinifiCStr;
 use crate::{Property, StandardPropertyValidator};
 use minifi_native_sys::{
     MinifiGetStandardValidator, MinifiProperty, MinifiPropertyValidator,
@@ -117,8 +117,7 @@ impl Property {
                         allowed_values_ptr: allowed_values.as_ptr(),
                         validator: *validator,
                         type_: allowed_type,
-                        supports_expression_language: property
-                            .supports_expr_lang,
+                        supports_expression_language: property.supports_expr_lang,
                     }
                 },
             )
