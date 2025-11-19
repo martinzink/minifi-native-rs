@@ -1,0 +1,10 @@
+[package]
+name = "sftp-extension"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+minifi-native = { path = "../minifi-native" }
+const_format = "0.2.34"
+strum = "0.27.2"
+strum_macros = "0.27.2"
