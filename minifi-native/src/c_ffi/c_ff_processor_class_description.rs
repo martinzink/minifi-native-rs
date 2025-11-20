@@ -1,10 +1,10 @@
 use crate::RegisterableProcessor;
 use crate::c_ffi::c_ffi_processor_definition::DynProcessorDefinition;
-use minifi_native_sys::MinifiProcessorClassDescription;
+use minifi_native_sys::MinifiProcessorClassDefinition;
 
 pub struct CffiProcessorList {
     processor_definitions: Vec<Box<dyn DynProcessorDefinition>>,
-    minifi_processor_class_description_list: Vec<MinifiProcessorClassDescription>,
+    minifi_processor_class_description_list: Vec<MinifiProcessorClassDefinition>,
 }
 
 impl CffiProcessorList {
@@ -42,7 +42,7 @@ impl CffiProcessorList {
         self.minifi_processor_class_description_list.len()
     }
 
-    pub unsafe fn get_processor_ptr(&self) -> *const MinifiProcessorClassDescription {
+    pub unsafe fn get_processor_ptr(&self) -> *const MinifiProcessorClassDefinition {
         self.minifi_processor_class_description_list.as_ptr()
     }
 }

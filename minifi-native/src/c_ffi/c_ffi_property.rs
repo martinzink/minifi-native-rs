@@ -1,7 +1,7 @@
 use super::c_ffi_primitives::StaticStrAsMinifiCStr;
 use crate::{Property, StandardPropertyValidator};
 use minifi_native_sys::{
-    MinifiGetStandardValidator, MinifiProperty, MinifiPropertyValidator,
+    MinifiGetStandardValidator, MinifiPropertyDefinition, MinifiPropertyValidator,
     MinifiStandardPropertyValidator, MinifiStandardPropertyValidator_MINIFI_ALWAYS_VALID_VALIDATOR,
     MinifiStandardPropertyValidator_MINIFI_BOOLEAN_VALIDATOR,
     MinifiStandardPropertyValidator_MINIFI_DATA_SIZE_VALIDATOR,
@@ -19,7 +19,7 @@ pub struct CProperties {
     c_allowed_values: Vec<Vec<MinifiStringView>>,
     c_allowed_types: Vec<MinifiStringView>,
     c_validators: Vec<*const MinifiPropertyValidator>,
-    properties: Vec<MinifiProperty>,
+    properties: Vec<MinifiPropertyDefinition>,
 }
 
 impl CProperties {
@@ -28,7 +28,7 @@ impl CProperties {
         c_allowed_values: Vec<Vec<MinifiStringView>>,
         c_allowed_types: Vec<MinifiStringView>,
         c_validators: Vec<*const MinifiPropertyValidator>,
-        properties: Vec<MinifiProperty>,
+        properties: Vec<MinifiPropertyDefinition>,
     ) -> Self {
         Self {
             c_default_values,
@@ -43,7 +43,7 @@ impl CProperties {
         self.properties.len()
     }
 
-    pub(crate) unsafe fn get_ptr(&self) -> *const MinifiProperty {
+    pub(crate) unsafe fn get_ptr(&self) -> *const MinifiPropertyDefinition {
         self.properties.as_ptr()
     }
 }
@@ -106,7 +106,7 @@ impl Property {
             .zip(c_validators.iter())
             .map(
                 |((((property, def_value), allowed_values), allowed_type), validator)| {
-                    MinifiProperty {
+                    MinifiPropertyDefinition {
                         name: property.name.as_minifi_c_type(),
                         display_name: property.name.as_minifi_c_type(),
                         description: property.description.as_minifi_c_type(),
