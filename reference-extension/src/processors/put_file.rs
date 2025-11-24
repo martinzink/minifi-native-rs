@@ -50,14 +50,11 @@ struct PutFileUnixPermissions {}
 
 #[cfg(windows)]
 impl PutFileUnixPermissions {
-    fn new() -> Self {
-        Self {}
-    }
-    fn set_directory_permissions(&self, path: &Path) -> std::io::Result<()> {
+    fn set_directory_permissions(&self, _path: &Path) -> std::io::Result<()> {
         Ok(())
     }
 
-    fn set_file_permissions(&self, file: &Path) -> std::io::Result<()> {
+    fn set_file_permissions(&self, _file: &Path) -> std::io::Result<()> {
         Ok(())
     }
 }
@@ -190,8 +187,7 @@ impl<L: Logger> PutFile<L> {
 
     #[cfg(windows)]
     fn parse_unix_permissions<P: ProcessContext>(
-        &mut self,
-        context: &P,
+        _context: &P,
     ) -> Result<PutFileUnixPermissions, MinifiError> {
         Ok(PutFileUnixPermissions {})
     }
