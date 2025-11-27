@@ -13,8 +13,8 @@ pub use c_ffi::{
 };
 pub use mock::{MockFlowFile, MockLogger, MockProcessContext, MockProcessSession};
 
+use minifi_native_sys::{MINIFI_API_MAJOR_VERSION, MINIFI_API_MINOR_VERSION, MINIFI_API_PATCH_VERSION};
 pub use minifi_native_sys as sys;
-use crate::sys::{MINIFI_API_MAJOR_VERSION, MINIFI_API_MINOR_VERSION, MINIFI_API_PATCH_VERSION};
 
 #[unsafe(no_mangle)]
 #[cfg_attr(target_os = "linux", unsafe(link_section = ".rodata"))]
@@ -40,7 +40,6 @@ macro_rules! declare_minifi_extension {
             _config: *mut minifi_native::sys::MinifiConfig,
         ) -> *mut minifi_native::sys::MinifiExtension {
 
-            // Bring in the required trait
             use minifi_native::StaticStrAsMinifiCStr;
 
             unsafe {

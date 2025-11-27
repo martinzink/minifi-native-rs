@@ -88,23 +88,21 @@ impl Property {
             .zip(c_default_values.iter())
             .zip(c_allowed_values.iter())
             .zip(c_allowed_types.iter())
-            .map(
-                |(((property, def_value), allowed_values), allowed_type)| {
-                    MinifiPropertyDefinition {
-                        name: property.name.as_minifi_c_type(),
-                        display_name: property.name.as_minifi_c_type(),
-                        description: property.description.as_minifi_c_type(),
-                        is_required: property.is_required,
-                        is_sensitive: property.is_sensitive,
-                        default_value: def_value,
-                        allowed_values_count: allowed_values.len(),
-                        allowed_values_ptr: allowed_values.as_ptr(),
-                        validator: property.validator.as_minifi_c_type(),
-                        type_: allowed_type,
-                        supports_expression_language: property.supports_expr_lang,
-                    }
-                },
-            )
+            .map(|(((property, def_value), allowed_values), allowed_type)| {
+                MinifiPropertyDefinition {
+                    name: property.name.as_minifi_c_type(),
+                    display_name: property.name.as_minifi_c_type(),
+                    description: property.description.as_minifi_c_type(),
+                    is_required: property.is_required,
+                    is_sensitive: property.is_sensitive,
+                    default_value: def_value,
+                    allowed_values_count: allowed_values.len(),
+                    allowed_values_ptr: allowed_values.as_ptr(),
+                    validator: property.validator.as_minifi_c_type(),
+                    type_: allowed_type,
+                    supports_expression_language: property.supports_expr_lang,
+                }
+            })
             .collect();
         CProperties::new(
             c_default_values,
