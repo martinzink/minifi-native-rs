@@ -10,11 +10,11 @@ Feature: Test Minifi Native C Api capabilities
     When the MiNiFi instance starts up
 
     Then the Minifi logs contain the following message: "minifi-rust.so as CApi extension" in less than 10 seconds
-    And the Minifi logs contain the following message: "Registering class 'GenerateFlowFileRs' at '/Rust Reference Extension'" in less than 1 seconds
-    And the Minifi logs contain the following message: "Registering class 'GetFileRs' at '/Rust Reference Extension'" in less than 1 seconds
-    And the Minifi logs contain the following message: "Registering class 'KamikazeProcessorRs' at '/Rust Reference Extension'" in less than 1 seconds
-    And the Minifi logs contain the following message: "Registering class 'LogAttributeRs' at '/Rust Reference Extension'" in less than 1 seconds
-    And the Minifi logs contain the following message: "Registering class 'PutFileRs' at '/Rust Reference Extension'" in less than 1 seconds
+    And the Minifi logs contain the following message: "Registering class 'GenerateFlowFileRs' at '/rust-reference-extension'" in less than 1 seconds
+    And the Minifi logs contain the following message: "Registering class 'GetFileRs' at '/rust-reference-extension'" in less than 1 seconds
+    And the Minifi logs contain the following message: "Registering class 'KamikazeProcessorRs' at '/rust-reference-extension'" in less than 1 seconds
+    And the Minifi logs contain the following message: "Registering class 'LogAttributeRs' at '/rust-reference-extension'" in less than 1 seconds
+    And the Minifi logs contain the following message: "Registering class 'PutFileRs' at '/rust-reference-extension'" in less than 1 seconds
     And the Minifi logs do not contain errors
     And the Minifi logs do not contain warnings
 

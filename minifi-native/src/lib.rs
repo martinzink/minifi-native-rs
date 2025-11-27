@@ -53,7 +53,7 @@ macro_rules! declare_minifi_extension {
                 )*
 
                 let extension_create_info = minifi_native::sys::MinifiExtensionCreateInfo {
-                    name: "Rust Reference Extension".as_minifi_c_type(),
+                    name: env!("CARGO_PKG_NAME").as_minifi_c_type(),
                     version: env!("CARGO_PKG_VERSION").as_minifi_c_type(),
                     deinit: None,
                     user_data: std::ptr::null_mut(),

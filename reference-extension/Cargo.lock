@@ -604,21 +604,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "reference-extension"
-version = "0.1.0"
-dependencies = [
- "const_format",
- "filetime",
- "hex",
- "minifi-native",
- "rand 0.9.2",
- "strum",
- "strum_macros",
- "tempfile",
- "walkdir",
-]
-
-[[package]]
 name = "regex"
 version = "1.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -683,6 +668,21 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "rust-reference-extension"
+version = "0.1.0"
+dependencies = [
+ "const_format",
+ "filetime",
+ "hex",
+ "minifi-native",
+ "rand 0.9.2",
+ "strum",
+ "strum_macros",
+ "tempfile",
+ "walkdir",
 ]
 
 [[package]]

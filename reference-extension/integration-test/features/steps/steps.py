@@ -15,7 +15,7 @@ from minifi_test_framework.containers.host_file import HostFile
 @step("the built rust extension library is inside minifi's extension folder")
 def step_impl(context: MinifiTestContext):
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    host_path = f"{dir_path}/../linux_so/libreference_extension.so"
+    host_path = f"{dir_path}/../linux_so/librust_reference_extension.so"
     context.get_or_create_default_minifi_container().host_files.append(HostFile("/opt/minifi/minifi-current/extensions/libminifi-rust.so", host_path))
 
 @then("Waits for {duration}")
