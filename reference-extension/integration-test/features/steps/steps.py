@@ -16,7 +16,7 @@ from minifi_test_framework.containers.host_file import HostFile
 def step_impl(context: MinifiTestContext):
     dir_path = os.path.dirname(os.path.realpath(__file__))
     host_path = f"{dir_path}/../linux_so/libreference_extension.so"
-    context.minifi_container.host_files.append(HostFile(host_path, "/opt/minifi/minifi-current/extensions/libminifi-rust.so"))
+    context.get_or_create_default_minifi_container().host_files.append(HostFile("/opt/minifi/minifi-current/extensions/libminifi-rust.so", host_path))
 
 @then("Waits for {duration}")
 def step_impl(context: MinifiTestContext, duration: str):
@@ -26,5 +26,5 @@ def step_impl(context: MinifiTestContext, duration: str):
 @then('Minifi crashes with the following "{crash_msg}" in less than {duration}')
 def step_impl(context: MinifiTestContext, crash_msg: str, duration: str):
     duration_seconds = humanfriendly.parse_timespan(duration)
-    assert wait_for_condition(condition=lambda: context.minifi_container.exited and crash_msg in context.minifi_container.get_logs(),
+    assert wait_for_condition(condition=lambda: context.get_default_minifi_container().exited and crash_msg in context.get_default_minifi_container().get_logs(),
                               timeout_seconds=duration_seconds, bail_condition=lambda: False, context=context)

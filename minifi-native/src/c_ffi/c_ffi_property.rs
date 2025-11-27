@@ -1,15 +1,12 @@
 use super::c_ffi_primitives::StaticStrAsMinifiCStr;
 use crate::{Property, StandardPropertyValidator};
 use minifi_native_sys::{
-    MinifiGetStandardValidator, MinifiPropertyDefinition, MinifiPropertyValidator,
-    MinifiStandardPropertyValidator, MinifiStandardPropertyValidator_MINIFI_ALWAYS_VALID_VALIDATOR,
-    MinifiStandardPropertyValidator_MINIFI_BOOLEAN_VALIDATOR,
-    MinifiStandardPropertyValidator_MINIFI_DATA_SIZE_VALIDATOR,
-    MinifiStandardPropertyValidator_MINIFI_INTEGER_VALIDATOR,
-    MinifiStandardPropertyValidator_MINIFI_NON_BLANK_VALIDATOR,
-    MinifiStandardPropertyValidator_MINIFI_PORT_VALIDATOR,
-    MinifiStandardPropertyValidator_MINIFI_TIME_PERIOD_VALIDATOR,
-    MinifiStandardPropertyValidator_MINIFI_UNSIGNED_INTEGER_VALIDATOR, MinifiStringView,
+    MinifiPropertyDefinition, MinifiStringView, MinifiValidator,
+    MinifiValidator_MINIFI_VALIDATOR_ALWAYS_VALID, MinifiValidator_MINIFI_VALIDATOR_BOOLEAN,
+    MinifiValidator_MINIFI_VALIDATOR_DATA_SIZE, MinifiValidator_MINIFI_VALIDATOR_INTEGER,
+    MinifiValidator_MINIFI_VALIDATOR_NON_BLANK, MinifiValidator_MINIFI_VALIDATOR_PORT,
+    MinifiValidator_MINIFI_VALIDATOR_TIME_PERIOD,
+    MinifiValidator_MINIFI_VALIDATOR_UNSIGNED_INTEGER,
 };
 use std::ptr;
 
@@ -18,7 +15,6 @@ pub struct CProperties {
     c_default_values: Vec<MinifiStringView>,
     c_allowed_values: Vec<Vec<MinifiStringView>>,
     c_allowed_types: Vec<MinifiStringView>,
-    c_validators: Vec<*const MinifiPropertyValidator>,
     properties: Vec<MinifiPropertyDefinition>,
 }
 
@@ -27,14 +23,12 @@ impl CProperties {
         c_default_values: Vec<MinifiStringView>,
         c_allowed_values: Vec<Vec<MinifiStringView>>,
         c_allowed_types: Vec<MinifiStringView>,
-        c_validators: Vec<*const MinifiPropertyValidator>,
         properties: Vec<MinifiPropertyDefinition>,
     ) -> Self {
         Self {
             c_default_values,
             c_allowed_values,
             c_allowed_types,
-            c_validators,
             properties,
         }
     }
@@ -62,13 +56,6 @@ impl Property {
             .collect()
     }
 
-    fn create_c_validators_vec(properties: &[Self]) -> Vec<*const MinifiPropertyValidator> {
-        properties
-            .iter()
-            .map(|p| unsafe { MinifiGetStandardValidator(p.validator.as_minifi_c_type()) })
-            .collect()
-    }
-
     fn create_c_allowed_values_vec_vec(properties: &[Self]) -> Vec<Vec<MinifiStringView>> {
         properties
             .iter()
@@ -92,20 +79,17 @@ impl Property {
         let c_default_values = Property::create_c_default_value_holder(properties);
         let c_allowed_values = Property::create_c_allowed_values_vec_vec(properties);
         let c_allowed_types = Property::create_c_allowed_types_vec(properties);
-        let c_validators = Property::create_c_validators_vec(properties);
         assert_eq!(c_default_values.len(), properties.len());
         assert_eq!(c_allowed_values.len(), properties.len());
         assert_eq!(c_allowed_types.len(), properties.len());
-        assert_eq!(c_validators.len(), properties.len());
 
         let c_properties = properties
             .iter()
             .zip(c_default_values.iter())
             .zip(c_allowed_values.iter())
             .zip(c_allowed_types.iter())
-            .zip(c_validators.iter())
             .map(
-                |((((property, def_value), allowed_values), allowed_type), validator)| {
+                |(((property, def_value), allowed_values), allowed_type)| {
                     MinifiPropertyDefinition {
                         name: property.name.as_minifi_c_type(),
                         display_name: property.name.as_minifi_c_type(),
@@ -115,7 +99,7 @@ impl Property {
                         default_value: def_value,
                         allowed_values_count: allowed_values.len(),
                         allowed_values_ptr: allowed_values.as_ptr(),
-                        validator: *validator,
+                        validator: property.validator.as_minifi_c_type(),
                         type_: allowed_type,
                         supports_expression_language: property.supports_expr_lang,
                     }
@@ -126,39 +110,32 @@ impl Property {
             c_default_values,
             c_allowed_values,
             c_allowed_types,
-            c_validators,
             c_properties,
         )
     }
 }
 
 impl StandardPropertyValidator {
-    pub(crate) fn as_minifi_c_type(&self) -> MinifiStandardPropertyValidator {
+    pub(crate) fn as_minifi_c_type(&self) -> MinifiValidator {
         match self {
             StandardPropertyValidator::AlwaysValidValidator => {
-                MinifiStandardPropertyValidator_MINIFI_ALWAYS_VALID_VALIDATOR
+                MinifiValidator_MINIFI_VALIDATOR_ALWAYS_VALID
             }
             StandardPropertyValidator::NonBlankValidator => {
-                MinifiStandardPropertyValidator_MINIFI_NON_BLANK_VALIDATOR
+                MinifiValidator_MINIFI_VALIDATOR_NON_BLANK
             }
             StandardPropertyValidator::TimePeriodValidator => {
-                MinifiStandardPropertyValidator_MINIFI_TIME_PERIOD_VALIDATOR
+                MinifiValidator_MINIFI_VALIDATOR_TIME_PERIOD
             }
-            StandardPropertyValidator::BoolValidator => {
-                MinifiStandardPropertyValidator_MINIFI_BOOLEAN_VALIDATOR
-            }
-            StandardPropertyValidator::I64Validator => {
-                MinifiStandardPropertyValidator_MINIFI_INTEGER_VALIDATOR
-            }
+            StandardPropertyValidator::BoolValidator => MinifiValidator_MINIFI_VALIDATOR_BOOLEAN,
+            StandardPropertyValidator::I64Validator => MinifiValidator_MINIFI_VALIDATOR_INTEGER,
             StandardPropertyValidator::U64Validator => {
-                MinifiStandardPropertyValidator_MINIFI_UNSIGNED_INTEGER_VALIDATOR
+                MinifiValidator_MINIFI_VALIDATOR_UNSIGNED_INTEGER
             }
             StandardPropertyValidator::DataSizeValidator => {
-                MinifiStandardPropertyValidator_MINIFI_DATA_SIZE_VALIDATOR
+                MinifiValidator_MINIFI_VALIDATOR_DATA_SIZE
             }
-            StandardPropertyValidator::PortValidator => {
-                MinifiStandardPropertyValidator_MINIFI_PORT_VALIDATOR
-            }
+            StandardPropertyValidator::PortValidator => MinifiValidator_MINIFI_VALIDATOR_PORT,
         }
     }
 }

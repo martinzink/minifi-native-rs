@@ -14,14 +14,13 @@ pub use c_ffi::{
 pub use mock::{MockFlowFile, MockLogger, MockProcessContext, MockProcessSession};
 
 pub use minifi_native_sys as sys;
-
 use crate::sys::{MINIFI_API_MAJOR_VERSION, MINIFI_API_MINOR_VERSION, MINIFI_API_PATCH_VERSION};
 
 #[unsafe(no_mangle)]
 #[cfg_attr(target_os = "linux", unsafe(link_section = ".rodata"))]
 #[cfg_attr(target_os = "macos", unsafe(link_section = "__DATA,__const"))]
 #[cfg_attr(target_os = "windows", unsafe(link_section = ".rdata"))]
-static API_VERSION_STRING: &str = const_format::concatcp!(
+pub static API_VERSION_STRING: &str = const_format::concatcp!(
     "MINIFI_API_VERSION=[",
     MINIFI_API_MAJOR_VERSION,
     ".",
@@ -30,3 +29,41 @@ static API_VERSION_STRING: &str = const_format::concatcp!(
     MINIFI_API_PATCH_VERSION,
     "]"
 );
+
+#[macro_export]
+macro_rules! declare_minifi_extension {
+    ([ $($proc:path),* $(,)? ]) => {
+
+        #[unsafe(no_mangle)]
+        #[allow(non_snake_case)]
+        pub extern "C" fn InitExtension(
+            _config: *mut minifi_native::sys::MinifiConfig,
+        ) -> *mut minifi_native::sys::MinifiExtension {
+
+            // Bring in the required trait
+            use minifi_native::StaticStrAsMinifiCStr;
+
+            unsafe {
+                let mut processor_list = minifi_native::CffiProcessorList::new();
+
+                $(
+                    {
+                        use $proc as ProcessorTemplate;
+                        processor_list.add::<ProcessorTemplate<minifi_native::CffiLogger>>();
+                    }
+                )*
+
+                let extension_create_info = minifi_native::sys::MinifiExtensionCreateInfo {
+                    name: "Rust Reference Extension".as_minifi_c_type(),
+                    version: env!("CARGO_PKG_VERSION").as_minifi_c_type(),
+                    deinit: None,
+                    user_data: std::ptr::null_mut(),
+                    processors_count: processor_list.get_processor_count(),
+                    processors_ptr: processor_list.get_processor_ptr(),
+                };
+
+                minifi_native::sys::MinifiCreateExtension(minifi_native::API_VERSION_STRING.as_minifi_c_type(), &extension_create_info)
+            }
+        }
+    };
+}
