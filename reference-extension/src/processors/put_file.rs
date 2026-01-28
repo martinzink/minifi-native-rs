@@ -1,7 +1,4 @@
-use minifi_native::{
-    ConcurrentOnTrigger, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext,
-    ProcessSession, Processor,
-};
+use minifi_native::{ConcurrentOnTrigger, DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, Processor};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
@@ -68,12 +65,12 @@ struct ScheduledMembers {
 }
 
 #[derive(Debug)]
-pub(crate) struct PutFile<L: Logger> {
-    logger: L,
+pub(crate) struct PutFile {
+    logger: DefaultLogger,
     scheduled_members: Option<ScheduledMembers>,
 }
 
-impl<L: Logger> PutFile<L> {
+impl PutFile {
     pub(crate) fn directory_is_full(&self, p0: &Path) -> bool {
         let put_file = self
             .scheduled_members
@@ -193,9 +190,9 @@ impl<L: Logger> PutFile<L> {
     }
 }
 
-impl<L: Logger> Processor<L> for PutFile<L> {
+impl Processor for PutFile {
     type Threading = minifi_native::Concurrent;
-    fn new(logger: L) -> Self {
+    fn new(logger: DefaultLogger) -> Self {
         Self {
             logger,
             scheduled_members: None,
@@ -220,7 +217,7 @@ impl<L: Logger> Processor<L> for PutFile<L> {
 
         let maximum_file_count = context.get_u64_property(&properties::MAX_FILE_COUNT, None)?;
 
-        let unix_permissions = PutFile::<L>::parse_unix_permissions(context)?;
+        let unix_permissions = PutFile::parse_unix_permissions(context)?;
 
         self.scheduled_members = Some(ScheduledMembers {
             conflict_resolution_strategy,
@@ -232,7 +229,7 @@ impl<L: Logger> Processor<L> for PutFile<L> {
     }
 }
 
-impl<L: Logger> ConcurrentOnTrigger<L> for PutFile<L> {
+impl ConcurrentOnTrigger for PutFile {
     fn on_trigger<C, S>(
         &self,
         context: &mut C,

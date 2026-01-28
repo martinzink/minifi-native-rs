@@ -1,4 +1,4 @@
-use minifi_native::{CffiLogger, ControllerService, ControllerServiceDefinition, RegisterableControllerService};
+use minifi_native::{ControllerService, ControllerServiceDefinition, RegisterableControllerService};
 use super::properties::*;
 use super::{DummyControllerService};
 

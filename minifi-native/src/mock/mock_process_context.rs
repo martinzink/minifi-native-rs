@@ -1,5 +1,5 @@
 use crate::api::ProcessContext;
-use crate::{ControllerService, Logger, MinifiError, MockFlowFile, Property};
+use crate::{ControllerService, MinifiError, MockFlowFile, Property};
 use std::collections::HashMap;
 
 pub struct MockProcessContext {

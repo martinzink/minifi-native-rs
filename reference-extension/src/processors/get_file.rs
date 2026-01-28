@@ -5,10 +5,7 @@ use crate::processors::get_file::properties::{
     BATCH_SIZE, DIRECTORY, IGNORE_HIDDEN_FILES, KEEP_SOURCE_FILE, MAX_AGE, MAX_SIZE, MIN_AGE,
     MIN_SIZE, RECURSE,
 };
-use minifi_native::{
-    Concurrent, ConcurrentOnTrigger, LogLevel, Logger, MinifiError, OnTriggerResult,
-    ProcessContext, ProcessSession, Processor,
-};
+use minifi_native::{Concurrent, ConcurrentOnTrigger, DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, Processor};
 use std::collections::VecDeque;
 use std::error;
 use std::path::PathBuf;
@@ -57,12 +54,12 @@ struct ScheduledMembers {
 }
 
 #[derive(Debug)]
-pub(crate) struct GetFile<L: Logger> {
-    logger: L,
+pub(crate) struct GetFile {
+    logger: DefaultLogger,
     scheduled_members: Option<ScheduledMembers>,
 }
 
-impl<L: Logger> GetFile<L> {
+impl GetFile {
     fn is_listing_empty(&self) -> bool {
         let get_file = self
             .scheduled_members
@@ -219,10 +216,10 @@ impl<L: Logger> GetFile<L> {
     }
 }
 
-impl<L: Logger> Processor<L> for GetFile<L> {
+impl Processor for GetFile {
     type Threading = Concurrent;
 
-    fn new(logger: L) -> Self {
+    fn new(logger: DefaultLogger) -> Self {
         Self {
             logger,
             scheduled_members: None,
@@ -302,7 +299,7 @@ impl<L: Logger> Processor<L> for GetFile<L> {
     }
 }
 
-impl<L: Logger> ConcurrentOnTrigger<L> for GetFile<L> {
+impl ConcurrentOnTrigger for GetFile {
     fn on_trigger<P, S>(
         &self,
         _context: &mut P,

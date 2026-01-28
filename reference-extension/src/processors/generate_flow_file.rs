@@ -1,7 +1,4 @@
-use minifi_native::{
-    Concurrent, ConcurrentOnTrigger, LogLevel, Logger, MinifiError, OnTriggerResult,
-    ProcessContext, ProcessSession, Processor,
-};
+use minifi_native::{Concurrent, ConcurrentOnTrigger, DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, Processor};
 use rand::Rng;
 use rand::distr::Alphanumeric;
 use std::cmp::PartialEq;
@@ -28,8 +25,8 @@ struct ScheduledMembers {
 }
 
 #[derive(Debug)]
-pub(crate) struct GenerateFlowFile<L: Logger> {
-    logger: L,
+pub(crate) struct GenerateFlowFile {
+    logger: DefaultLogger,
     scheduled_members: Option<ScheduledMembers>,
 }
 
@@ -119,9 +116,9 @@ impl ScheduledMembers {
     }
 }
 
-impl<L: Logger> Processor<L> for GenerateFlowFile<L> {
+impl Processor for GenerateFlowFile {
     type Threading = Concurrent;
-    fn new(logger: L) -> Self {
+    fn new(logger: DefaultLogger) -> Self {
         Self {
             logger,
             scheduled_members: None,
@@ -175,7 +172,7 @@ impl<L: Logger> Processor<L> for GenerateFlowFile<L> {
     }
 }
 
-impl<L: Logger> ConcurrentOnTrigger<L> for GenerateFlowFile<L> {
+impl ConcurrentOnTrigger for GenerateFlowFile {
     fn on_trigger<P: ProcessContext, S: ProcessSession>(
         &self,
         context: &mut P,

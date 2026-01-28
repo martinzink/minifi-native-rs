@@ -1,6 +1,6 @@
 use crate::StandardPropertyValidator::*;
 use crate::api::flow_file::FlowFile;
-use crate::{ControllerService, Logger, MinifiError, Property};
+use crate::{ControllerService, MinifiError, Property};
 use std::str::FromStr;
 use std::time::Duration;
 

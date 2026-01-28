@@ -2,13 +2,13 @@ use minifi_native::{ControllerService, ControllerServiceContext, LogLevel, Logge
 use pgp::composed::Deserializable;
 
 #[derive(Debug)]
-pub(crate) struct PgpPublicKeyService<L: Logger> {
+pub(crate) struct PgpPublicKeyService {
     logger: L,
     public_key: Option<u64>
 }
 
-impl<L: Logger> ControllerService<L> for PgpPublicKeyService<L> {
-    fn new(logger: L) -> Self {
+impl ControllerService for PgpPublicKeyService {
+    fn new(logger: DefaultLogger) -> Self {
         PgpPublicKeyService{logger, public_key: None}
     }
 

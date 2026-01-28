@@ -48,15 +48,15 @@ impl ScheduledMembers {
 }
 
 #[derive(Debug)]
-pub(crate) struct EncryptContentPGP<L: Logger> {
+pub(crate) struct EncryptContentPGP {
     logger: L,
     scheduled_members: Option<ScheduledMembers>,
 }
 
-impl<L: Logger> Processor<L> for EncryptContentPGP<L> {
+impl Processor for EncryptContentPGP {
     type Threading = Concurrent;
 
-    fn new(logger: L) -> Self {
+    fn new(logger: DefaultLogger) -> Self {
         Self {
             logger,
             scheduled_members: None,
@@ -87,7 +87,7 @@ impl<L: Logger> Processor<L> for EncryptContentPGP<L> {
     }
 }
 
-impl<L: Logger> ConcurrentOnTrigger<L> for EncryptContentPGP<L> {
+impl ConcurrentOnTrigger for EncryptContentPGP {
     fn on_trigger<PC, PS>(
         &self,
         context: &mut PC,

@@ -1,12 +1,12 @@
 use crate::processors::log_attribute::properties::*;
 use crate::processors::log_attribute::{LogAttribute, relationships};
 use minifi_native::{
-    CffiLogger, ProcessorDefinition, ProcessorInputRequirement, RegisterableProcessor,
+    ProcessorDefinition, ProcessorInputRequirement, RegisterableProcessor,
 };
 
-impl RegisterableProcessor for LogAttribute<CffiLogger> {
+impl RegisterableProcessor for LogAttribute {
     fn get_definition() -> Box<dyn minifi_native::DynProcessorDefinition> {
-        Box::new(ProcessorDefinition::<LogAttribute<CffiLogger>>::new(
+        Box::new(ProcessorDefinition::<LogAttribute>::new(
             "rs::LogAttributeRs",
             "Logs attributes of flow files in the MiNiFi application log.",
             ProcessorInputRequirement::Required,

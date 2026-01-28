@@ -1,4 +1,4 @@
-use crate::{CffiLogger, DefaultLogger, LogLevel, Logger, MinifiError, MockLogger};
+use crate::{DefaultLogger, LogLevel, MinifiError};
 use crate::api::ControllerServiceContext;
 
 

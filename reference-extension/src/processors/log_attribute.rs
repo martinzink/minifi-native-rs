@@ -1,8 +1,5 @@
 use crate::processors::log_attribute::properties::{FLOW_FILES_TO_LOG, LOG_LEVEL, LOG_PAYLOAD};
-use minifi_native::{
-    ConcurrentOnTrigger, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext,
-    ProcessSession, Processor, Property,
-};
+use minifi_native::{ConcurrentOnTrigger, DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, Processor, Property};
 
 mod properties;
 mod relationships;
@@ -19,12 +16,12 @@ struct ScheduledMembers {
 }
 
 #[derive(Debug)]
-pub(crate) struct LogAttribute<L: Logger> {
-    logger: L,
+pub(crate) struct LogAttribute {
+    logger: DefaultLogger,
     scheduled_members: Option<ScheduledMembers>,
 }
 
-impl<L: Logger> LogAttribute<L> {
+impl LogAttribute {
     fn generate_log_message<PS>(&self, session: &mut PS, flow_file: &mut PS::FlowFile) -> String
     where
         PS: ProcessSession,
@@ -71,7 +68,7 @@ impl<L: Logger> LogAttribute<L> {
     }
 }
 
-impl<L: Logger> ConcurrentOnTrigger<L> for LogAttribute<L> {
+impl ConcurrentOnTrigger for LogAttribute {
     fn on_trigger<P, S>(
         &self,
         _context: &mut P,
@@ -115,9 +112,9 @@ impl<L: Logger> ConcurrentOnTrigger<L> for LogAttribute<L> {
     }
 }
 
-impl<L: Logger> Processor<L> for LogAttribute<L> {
+impl Processor for LogAttribute {
     type Threading = minifi_native::Concurrent;
-    fn new(logger: L) -> Self {
+    fn new(logger: DefaultLogger) -> Self {
         Self {
             logger,
             scheduled_members: None,

@@ -55,7 +55,7 @@ macro_rules! declare_minifi_extension {
                 $(
                     {
                         use $proc as ProcessorTemplate;
-                        processor_list.add::<ProcessorTemplate<minifi_native::CffiLogger>>();
+                        processor_list.add::<ProcessorTemplate>();
                     }
                 )*
 

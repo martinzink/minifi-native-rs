@@ -25,7 +25,7 @@ pub trait DispatchOnTrigger<M: ThreadingModel> {
 
 impl<T> DispatchOnTrigger<Concurrent> for T
 where
-    T: ConcurrentOnTrigger<CffiLogger>,
+    T: ConcurrentOnTrigger,
 {
     unsafe fn dispatch_on_trigger(
         processor_ptr: *mut c_void,
@@ -47,7 +47,7 @@ where
 
 impl<T> DispatchOnTrigger<Exclusive> for T
 where
-    T: ExclusiveOnTrigger<CffiLogger>,
+    T: ExclusiveOnTrigger,
 {
     unsafe fn dispatch_on_trigger(
         processor_ptr: *mut c_void,
@@ -69,7 +69,7 @@ where
 
 pub struct ProcessorDefinition<T>
 where
-    T: Processor<CffiLogger> + DispatchOnTrigger<T::Threading>,
+    T: Processor + DispatchOnTrigger<T::Threading>,
 {
     name: &'static str,
     description_text: &'static str,
@@ -86,7 +86,7 @@ where
 
 impl<T> ProcessorDefinition<T>
 where
-    T: Processor<CffiLogger> + DispatchOnTrigger<T::Threading>,
+    T: Processor + DispatchOnTrigger<T::Threading>,
 {
     pub fn new(
         name: &'static str,
@@ -218,7 +218,7 @@ pub trait DynProcessorDefinition {
 
 impl<T> DynProcessorDefinition for ProcessorDefinition<T>
 where
-    T: Processor<CffiLogger> + DispatchOnTrigger<T::Threading>,
+    T: Processor + DispatchOnTrigger<T::Threading>,
 {
     // unsafe because self must outlive the resulting MinifiProcessorClassDefinition
     unsafe fn class_description(&self) -> MinifiProcessorClassDefinition {

@@ -1,7 +1,11 @@
 use std::fmt::Debug;
 
 use strum_macros::{Display, EnumString, VariantNames};
-use crate::{CffiLogger, MockLogger};
+#[cfg(not(test))]
+use crate::{CffiLogger};
+
+#[cfg(test)]
+use crate::{MockLogger};
 
 #[derive(Debug, Clone, Copy, PartialEq, Display, EnumString, VariantNames)]
 #[strum(serialize_all = "PascalCase")]

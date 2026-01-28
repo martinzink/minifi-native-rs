@@ -1,6 +1,6 @@
 use crate::api::error_code::MinifiError;
 use crate::api::threading_model::{Concurrent, Exclusive, ThreadingModel};
-use crate::{LogLevel, Logger, ProcessContext, ProcessSession};
+use crate::{DefaultLogger, LogLevel, ProcessContext, ProcessSession};
 
 pub enum ProcessorInputRequirement {
     Required,
@@ -14,10 +14,10 @@ pub enum OnTriggerResult {
     Yield,
 }
 
-pub trait Processor<L: Logger>: Sized {
+pub trait Processor: Sized {
     type Threading: ThreadingModel;
 
-    fn new(logger: L) -> Self;
+    fn new(logger: DefaultLogger) -> Self;
     fn restore(&self) -> bool {
         false
     }
@@ -35,7 +35,7 @@ pub trait Processor<L: Logger>: Sized {
     }
 }
 
-pub trait ExclusiveOnTrigger<L: Logger>: Processor<L, Threading = Exclusive> {
+pub trait ExclusiveOnTrigger: Processor<Threading = Exclusive> {
     fn on_trigger<PC, PS>(
         &mut self,
         context: &mut PC,
@@ -46,7 +46,7 @@ pub trait ExclusiveOnTrigger<L: Logger>: Processor<L, Threading = Exclusive> {
         PS: ProcessSession<FlowFile = PC::FlowFile>;
 }
 
-pub trait ConcurrentOnTrigger<L: Logger>: Processor<L, Threading = Concurrent> {
+pub trait ConcurrentOnTrigger: Processor<Threading = Concurrent> {
     fn on_trigger<PC, PS>(
         &self,
         context: &mut PC,

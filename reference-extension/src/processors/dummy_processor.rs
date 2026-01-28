@@ -1,19 +1,19 @@
 mod properties;
 
-use minifi_native::{Concurrent, ConcurrentOnTrigger, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, Processor};
+use minifi_native::{Concurrent, ConcurrentOnTrigger, DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, Processor};
 use crate::controller_services::dummy_controller_service::DummyControllerService;
 use crate::processors::dummy_processor::properties::CONTROLLER_SERVICE;
 
 #[derive(Debug)]
-pub(crate) struct DummyProcessor<L: Logger> {
-    logger: L,
+pub(crate) struct DummyProcessor {
+    logger: DefaultLogger,
     dummy_controller_service_name: Option<String>
 }
 
-impl<L: Logger> Processor<L> for DummyProcessor<L> {
+impl Processor for DummyProcessor {
     type Threading = Concurrent;
 
-    fn new(logger: L) -> Self {
+    fn new(logger: DefaultLogger) -> Self {
         Self { logger,dummy_controller_service_name: None }
     }
 
@@ -27,7 +27,7 @@ impl<L: Logger> Processor<L> for DummyProcessor<L> {
     }
 }
 
-impl<L: Logger> ConcurrentOnTrigger<L> for DummyProcessor<L> {
+impl ConcurrentOnTrigger for DummyProcessor {
     fn on_trigger<PC, PS>(&self, context: &mut PC, _session: &mut PS) -> Result<OnTriggerResult, MinifiError>
     where
         PC: ProcessContext,

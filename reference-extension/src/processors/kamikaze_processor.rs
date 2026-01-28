@@ -1,10 +1,7 @@
 mod properties;
 mod relationships;
 
-use minifi_native::{
-    Concurrent, ConcurrentOnTrigger, LogLevel, Logger, MinifiError, OnTriggerResult,
-    ProcessContext, ProcessSession, Processor,
-};
+use minifi_native::{Concurrent, ConcurrentOnTrigger, DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, Processor};
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
 
 #[derive(Debug, Clone, Copy, PartialEq, Display, EnumString, VariantNames, IntoStaticStr)]
@@ -22,14 +19,14 @@ struct ScheduledMembers {
 }
 
 #[derive(Debug)]
-pub(crate) struct KamikazeProcessor<L: Logger> {
-    logger: L,
+pub(crate) struct KamikazeProcessor {
+    logger: DefaultLogger,
     scheduled_members: Option<ScheduledMembers>,
 }
 
-impl<L: Logger> Processor<L> for KamikazeProcessor<L> {
+impl Processor for KamikazeProcessor {
     type Threading = Concurrent;
-    fn new(logger: L) -> Self {
+    fn new(logger: DefaultLogger) -> Self {
         Self {
             logger,
             scheduled_members: None,
@@ -70,7 +67,7 @@ impl<L: Logger> Processor<L> for KamikazeProcessor<L> {
     }
 }
 
-impl<L: Logger> ConcurrentOnTrigger<L> for KamikazeProcessor<L> {
+impl ConcurrentOnTrigger for KamikazeProcessor {
     fn on_trigger<PC, PS>(
         &self,
         _context: &mut PC,

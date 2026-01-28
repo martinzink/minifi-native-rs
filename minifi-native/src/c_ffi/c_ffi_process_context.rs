@@ -1,7 +1,7 @@
 use super::c_ffi_flow_file::CffiFlowFile;
 use super::c_ffi_primitives::{ConvertMinifiStringView, FfiConversionError, StringView};
 use crate::api::ProcessContext;
-use crate::{ControllerService, Logger, MinifiError, Property};
+use crate::{ControllerService, MinifiError, Property};
 use minifi_native_sys::*;
 use std::ffi::c_void;
 
