@@ -8,13 +8,17 @@ mod processor;
 mod property;
 mod relationship;
 mod threading_model;
+mod controller_service_context;
+mod controller_service;
 
 pub use error_code::MinifiError;
 pub use flow_file::FlowFile;
-pub use logger::{LogLevel, Logger};
+pub use logger::{LogLevel, Logger, DefaultLogger};
 pub use output_attribute::OutputAttribute;
 pub use process_context::ProcessContext;
 pub use process_session::ProcessSession;
+pub use controller_service_context::ControllerServiceContext;
+pub use controller_service::ControllerService;
 pub use processor::{
     ConcurrentOnTrigger, ExclusiveOnTrigger, OnTriggerResult, Processor, ProcessorInputRequirement,
 };

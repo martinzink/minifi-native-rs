@@ -3,13 +3,17 @@ mod c_ffi;
 mod mock;
 
 pub use api::{
-    Concurrent, ConcurrentOnTrigger, Exclusive, ExclusiveOnTrigger, FlowFile, LogLevel, Logger,
+    Concurrent, ConcurrentOnTrigger, Exclusive, ExclusiveOnTrigger, FlowFile, LogLevel, Logger, DefaultLogger,
     MinifiError, OnTriggerResult, OutputAttribute, ProcessContext, ProcessSession, Processor,
-    ProcessorInputRequirement, Property, Relationship, StandardPropertyValidator,
+    ProcessorInputRequirement, Property, Relationship, StandardPropertyValidator, ControllerService, ControllerServiceContext,
 };
 pub use c_ffi::{
-    CffiLogger, CffiProcessorList, DynProcessorDefinition, ProcessorDefinition,
-    RegisterableProcessor, StaticStrAsMinifiCStr,
+    CffiLogger,
+    CffiProcessorList, CffiControllerServiceList,
+    ProcessorDefinition, ControllerServiceDefinition,
+    DynProcessorDefinition, DynControllerServiceDefinition,
+    RegisterableProcessor, RegisterableControllerService,
+    StaticStrAsMinifiCStr
 };
 pub use mock::{MockFlowFile, MockLogger, MockProcessContext, MockProcessSession};
 
@@ -32,7 +36,10 @@ pub static API_VERSION_STRING: &str = const_format::concatcp!(
 
 #[macro_export]
 macro_rules! declare_minifi_extension {
-    ([ $($proc:path),* $(,)? ]) => {
+    (
+        processors: [ $($proc:path),* $(,)? ],
+        controllers: [ $($ctrl:path),* $(,)? ]
+    ) => {
 
         #[unsafe(no_mangle)]
         #[allow(non_snake_case)]
@@ -52,6 +59,15 @@ macro_rules! declare_minifi_extension {
                     }
                 )*
 
+                let mut controller_list = minifi_native::CffiControllerServiceList::new();
+
+                $(
+                    {
+                        use $ctrl as ControllerServiceTemplate;
+                        controller_list.add::<ControllerServiceTemplate>();
+                    }
+                )*
+
                 let extension_create_info = minifi_native::sys::MinifiExtensionCreateInfo {
                     name: env!("CARGO_PKG_NAME").as_minifi_c_type(),
                     version: env!("CARGO_PKG_VERSION").as_minifi_c_type(),
@@ -59,6 +75,8 @@ macro_rules! declare_minifi_extension {
                     user_data: std::ptr::null_mut(),
                     processors_count: processor_list.get_processor_count(),
                     processors_ptr: processor_list.get_processor_ptr(),
+                    controller_services_count: controller_list.get_controller_service_count(),
+                    controller_services_ptr: controller_list.get_controller_service_ptr(),
                 };
 
                 minifi_native::sys::MinifiCreateExtension(minifi_native::API_VERSION_STRING.as_minifi_c_type(), &extension_create_info)

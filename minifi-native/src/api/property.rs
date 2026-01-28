@@ -10,6 +10,7 @@ pub enum StandardPropertyValidator {
     PortValidator,
 }
 
+#[derive(Debug)]
 pub struct Property {
     pub name: &'static str,
     pub description: &'static str,

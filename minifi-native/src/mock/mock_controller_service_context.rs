@@ -1,18 +1,15 @@
-use crate::api::ProcessContext;
-use crate::{ControllerService, Logger, MinifiError, MockFlowFile, Property};
+use crate::api::ControllerServiceContext;
+use crate::{MinifiError, Property};
 use std::collections::HashMap;
 
-pub struct MockProcessContext {
+pub struct MockControllerServiceContext {
     pub properties: HashMap<String, String>,
 }
 
-impl ProcessContext for MockProcessContext {
-    type FlowFile = MockFlowFile;
-
+impl ControllerServiceContext for MockControllerServiceContext {
     fn get_property(
         &self,
-        property: &Property,
-        _flow_file: Option<&Self::FlowFile>,
+        property: &Property
     ) -> Result<Option<String>, MinifiError> {
         if let Some(property) = self.properties.get(property.name) {
             Ok(Some(property.clone()))
@@ -26,16 +23,9 @@ impl ProcessContext for MockProcessContext {
             }
         }
     }
-
-    fn get_controller_service<Cs>(&self, _property: &Property) -> Result<Option<&Cs>, MinifiError>
-    where
-        Cs: ControllerService
-    {
-        Ok(None)
-    }
 }
 
-impl MockProcessContext {
+impl MockControllerServiceContext {
     pub fn new() -> Self {
         Self {
             properties: HashMap::new(),

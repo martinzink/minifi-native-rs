@@ -115,8 +115,6 @@ where
         }
     }
 
-    // --- Unsafe FFI callback implementations ---
-
     unsafe extern "C" fn create_processor(metadata: MinifiProcessorMetadata) -> *mut c_void {
         let logger = CffiLogger::new(metadata.logger);
         let processor = Box::new(T::new(logger));

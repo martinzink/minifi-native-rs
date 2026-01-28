@@ -1,7 +1,7 @@
 use super::c_ffi_flow_file::CffiFlowFile;
-use super::c_ffi_primitives::StringView;
+use super::c_ffi_primitives::{ConvertMinifiStringView, FfiConversionError, StringView};
 use crate::api::ProcessContext;
-use crate::{MinifiError, Property};
+use crate::{ControllerService, Logger, MinifiError, Property};
 use minifi_native_sys::*;
 use std::ffi::c_void;
 
@@ -20,7 +20,7 @@ impl<'a> CffiProcessContext<'a> {
     }
 }
 
-unsafe extern "C" fn property_callback(
+unsafe extern "C" fn get_property_callback(
     output_option: *mut c_void,
     property_c_value: MinifiStringView,
 ) {
@@ -42,6 +42,53 @@ unsafe extern "C" fn property_callback(
     }
 }
 
+#[derive(Debug)]
+struct ControllerServiceHelper {
+    result: Option<*mut c_void>,
+    controller_service_class_name: &'static str,
+    group_name: &'static str,
+    version_str: &'static str,
+}
+
+impl ControllerServiceHelper {
+    fn is_valid(&self, grp: &MinifiStringView, class: &MinifiStringView, version: &MinifiStringView) -> Result<bool, FfiConversionError> {
+        unsafe {
+            Ok(self.controller_service_class_name == class.as_str()? &&
+                self.group_name == grp.as_str()? &&
+                self.version_str == version.as_str()?)
+        }
+    }
+}
+
+unsafe extern "C" fn get_controller_service_callback(
+    controller_service_helper_ptr: *mut c_void,
+    controller_ptr: *mut c_void,
+    group_name: MinifiStringView,
+    class_name: MinifiStringView,
+    version: MinifiStringView,
+) {
+    unsafe {
+        let controller_service_helper = &mut *(controller_service_helper_ptr as *mut ControllerServiceHelper);
+
+        if controller_ptr.is_null() {
+            return;
+        }
+
+        let rusty_group_name = group_name.as_str();
+        let rusty_class_name = class_name.as_str();
+        let rusty_version = version.as_str();
+
+        println!("{:?}, {:?}, {:?}", rusty_group_name, rusty_class_name, rusty_version);
+
+        if !controller_service_helper.is_valid(&group_name, &class_name, &version).unwrap_or(false) {
+            println!("{:?}", controller_service_helper);
+            return;
+        }
+
+        controller_service_helper.result = Some(controller_ptr);
+    }
+}
+
 impl<'a> ProcessContext for CffiProcessContext<'a> {
     type FlowFile = CffiFlowFile;
     fn get_property(
@@ -59,7 +106,7 @@ impl<'a> ProcessContext for CffiProcessContext<'a> {
                 self.ptr,
                 property_name.as_raw(),
                 ff_ptr,
-                Some(property_callback),
+                Some(get_property_callback),
                 &mut result as *mut _ as *mut c_void,
             )
         };
@@ -71,6 +118,42 @@ impl<'a> ProcessContext for CffiProcessContext<'a> {
                 true => Err(MinifiError::MissingRequiredProperty(property.name)),
                 false => Ok(None),
             },
+        }
+    }
+
+    fn get_controller_service<Cs>(&self, property: &Property) -> Result<Option<&Cs>, MinifiError>
+    where
+        Cs: ControllerService,
+    {
+        if let Some(service_name) = self.get_property(property, None)? {
+            let str_view = StringView::new(service_name.as_str());
+            let mut helper = ControllerServiceHelper {
+                result: None,
+                controller_service_class_name: Cs::class_name(),
+                group_name: Cs::group_name(),
+                version_str: Cs::version(),
+            };
+            unsafe {
+                MinifiProcessContextGetControllerService(
+                    self.ptr,
+                    str_view.as_raw(),
+                    Some(get_controller_service_callback),
+                    &mut helper as *mut _ as *mut c_void,
+                );
+            }
+
+            match helper.result {
+                Some(result) => {
+                    let foo_ref: &Cs = unsafe {
+                        (result as *const Cs)
+                            .as_ref()
+                            .expect("C returned a null pointer")
+                    };
+                    Ok(Some(foo_ref)) },
+                None => Ok(None),
+            }
+        } else {
+            Ok(None)
         }
     }
 }

@@ -1,6 +1,6 @@
 use crate::StandardPropertyValidator::*;
 use crate::api::flow_file::FlowFile;
-use crate::{MinifiError, Property};
+use crate::{ControllerService, Logger, MinifiError, Property};
 use std::str::FromStr;
 use std::time::Duration;
 
@@ -74,4 +74,6 @@ pub trait ProcessContext {
             Ok(None)
         }
     }
+
+    fn get_controller_service<Cs>(&self, property: &Property) -> Result<Option<&Cs>, MinifiError> where Cs: ControllerService;
 }

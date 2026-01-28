@@ -1,6 +1,7 @@
 use std::fmt::Debug;
 
 use strum_macros::{Display, EnumString, VariantNames};
+use crate::{CffiLogger, MockLogger};
 
 #[derive(Debug, Clone, Copy, PartialEq, Display, EnumString, VariantNames)]
 #[strum(serialize_all = "PascalCase")]
@@ -36,3 +37,10 @@ pub trait Logger: Debug {
         self.log(LogLevel::Critical, message);
     }
 }
+
+
+#[cfg(not(test))]
+pub type DefaultLogger = CffiLogger;
+
+#[cfg(test)]
+pub type DefaultLogger = MockLogger;
