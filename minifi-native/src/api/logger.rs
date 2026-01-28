@@ -1,9 +1,14 @@
 use std::fmt::Debug;
 
+#[cfg(not(feature = "mock-logger"))]
+use crate::CffiLogger;
 use strum_macros::{Display, EnumString, VariantNames};
 
+#[cfg(feature = "mock-logger")]
+use crate::MockLogger;
+
 #[derive(Debug, Clone, Copy, PartialEq, Display, EnumString, VariantNames)]
-#[strum(serialize_all = "PascalCase")]
+#[strum(serialize_all = "PascalCase", const_into_str)]
 pub enum LogLevel {
     Trace,
     Debug,
@@ -36,3 +41,9 @@ pub trait Logger: Debug {
         self.log(LogLevel::Critical, message);
     }
 }
+
+#[cfg(not(feature = "mock-logger"))]
+pub type DefaultLogger = CffiLogger;
+
+#[cfg(feature = "mock-logger")]
+pub type DefaultLogger = MockLogger;

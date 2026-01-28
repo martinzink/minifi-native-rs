@@ -2,13 +2,13 @@ mod properties;
 mod relationships;
 
 use minifi_native::{
-    Concurrent, ConcurrentOnTrigger, LogLevel, Logger, MinifiError, OnTriggerResult,
-    ProcessContext, ProcessSession, Processor,
+    CalculateMetrics, ConstTrigger, Logger, MinifiError, OnTriggerResult, ProcessContext,
+    ProcessSession, Schedule,
 };
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
 
 #[derive(Debug, Clone, Copy, PartialEq, Display, EnumString, VariantNames, IntoStaticStr)]
-#[strum(serialize_all = "PascalCase")]
+#[strum(serialize_all = "PascalCase", const_into_str)]
 enum KamikazeBehaviour {
     ReturnErr,
     ReturnOk,
@@ -16,31 +16,16 @@ enum KamikazeBehaviour {
 }
 
 #[derive(Debug)]
-struct ScheduledMembers {
+pub(crate) struct KamikazeProcessor {
     on_trigger_behaviour: KamikazeBehaviour,
     read_behaviour: Option<KamikazeBehaviour>,
 }
 
-#[derive(Debug)]
-pub(crate) struct KamikazeProcessor<L: Logger> {
-    logger: L,
-    scheduled_members: Option<ScheduledMembers>,
-}
-
-impl<L: Logger> Processor<L> for KamikazeProcessor<L> {
-    type Threading = Concurrent;
-    fn new(logger: L) -> Self {
-        Self {
-            logger,
-            scheduled_members: None,
-        }
-    }
-
-    fn log(&self, log_level: LogLevel, message: &str) {
-        self.logger.log(log_level, message);
-    }
-
-    fn on_schedule<P: ProcessContext>(&mut self, context: &P) -> Result<(), MinifiError> {
+impl Schedule for KamikazeProcessor {
+    fn schedule<P: ProcessContext, L: Logger>(context: &P, _logger: &L) -> Result<Self, MinifiError>
+    where
+        Self: Sized,
+    {
         let on_trigger_behaviour = context
             .get_property(&properties::ON_TRIGGER_BEHAVIOUR, None)?
             .expect("required property")
@@ -56,58 +41,54 @@ impl<L: Logger> Processor<L> for KamikazeProcessor<L> {
 
         match on_schedule_behaviour {
             KamikazeBehaviour::ReturnErr => Err(MinifiError::UnknownError),
-            KamikazeBehaviour::ReturnOk => {
-                self.scheduled_members = Some(ScheduledMembers {
-                    on_trigger_behaviour,
-                    read_behaviour,
-                });
-                Ok(())
-            }
+            KamikazeBehaviour::ReturnOk => Ok(KamikazeProcessor {
+                on_trigger_behaviour,
+                read_behaviour,
+            }),
             KamikazeBehaviour::Panic => {
-                panic!("KamikazeProcessor panic")
+                panic!("KamikazeProcessor::on_schedule panic")
             }
         }
     }
 }
 
-impl<L: Logger> ConcurrentOnTrigger<L> for KamikazeProcessor<L> {
-    fn on_trigger<PC, PS>(
+impl ConstTrigger for KamikazeProcessor {
+    fn trigger<PC, PS, L>(
         &self,
         _context: &mut PC,
         session: &mut PS,
+        _logger: &L,
     ) -> Result<OnTriggerResult, MinifiError>
     where
         PC: ProcessContext,
         PS: ProcessSession<FlowFile = PC::FlowFile>,
+        L: Logger,
     {
-        let kamikaze_proc = self
-            .scheduled_members
-            .as_ref()
-            .expect("on_schedule should create GetFileImpl");
-
-        if let Some(read_behaviour) = kamikaze_proc.read_behaviour
+        if let Some(read_behaviour) = self.read_behaviour
             && let Some(flow_file) = session.get()
         {
             let _read = session.read_in_batches(&flow_file, 1, |_data| match read_behaviour {
                 KamikazeBehaviour::ReturnErr => Err(MinifiError::UnknownError),
                 KamikazeBehaviour::ReturnOk => Ok(()),
                 KamikazeBehaviour::Panic => {
-                    panic!("KamikazeProcessor panic")
+                    panic!("KamikazeProcessor::on_trigger panic")
                 }
             });
 
             session.transfer(flow_file, relationships::SUCCESS.name);
         }
 
-        match kamikaze_proc.on_trigger_behaviour {
+        match self.on_trigger_behaviour {
             KamikazeBehaviour::ReturnErr => Err(MinifiError::UnknownError),
             KamikazeBehaviour::ReturnOk => Ok(OnTriggerResult::Ok),
             KamikazeBehaviour::Panic => {
-                panic!("KamikazeProcessor panic")
+                panic!("KamikazeProcessor::on_trigger panic")
             }
         }
     }
 }
+
+impl CalculateMetrics for KamikazeProcessor {}
 
 #[cfg(not(test))]
 pub(crate) mod processor_definition;

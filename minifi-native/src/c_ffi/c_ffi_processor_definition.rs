@@ -1,21 +1,20 @@
 use std::ffi::c_void;
 use std::ptr;
 
-use super::c_ffi_logger::CffiLogger;
 use super::c_ffi_primitives::{StaticStrAsMinifiCStr, StringView};
 use super::c_ffi_process_context::CffiProcessContext;
 use super::c_ffi_process_session::CffiProcessSession;
-use crate::api::{Processor, ProcessorInputRequirement, ThreadingModel};
+use crate::api::{ProcessorInputRequirement, RawProcessor, RawThreadingModel};
 use crate::c_ffi::c_ffi_output_attribute::COutputAttributes;
 use crate::c_ffi::c_ffi_property::CProperties;
 use crate::{
-    Concurrent, ConcurrentOnTrigger, Exclusive, ExclusiveOnTrigger, LogLevel, OutputAttribute,
-    Property,
+    Concurrent, Exclusive, LogLevel, OutputAttribute, Property, RawMultiThreadedTrigger,
+    RawSingleThreadedTrigger,
 };
 use crate::{OnTriggerResult, Relationship};
 use minifi_native_sys::*;
 
-pub trait DispatchOnTrigger<M: ThreadingModel> {
+pub trait DispatchOnTrigger<M: RawThreadingModel> {
     unsafe fn dispatch_on_trigger(
         processor: *mut c_void,
         context: *mut MinifiProcessContext,
@@ -25,7 +24,7 @@ pub trait DispatchOnTrigger<M: ThreadingModel> {
 
 impl<T> DispatchOnTrigger<Concurrent> for T
 where
-    T: ConcurrentOnTrigger<CffiLogger>,
+    T: RawMultiThreadedTrigger,
 {
     unsafe fn dispatch_on_trigger(
         processor_ptr: *mut c_void,
@@ -47,7 +46,7 @@ where
 
 impl<T> DispatchOnTrigger<Exclusive> for T
 where
-    T: ExclusiveOnTrigger<CffiLogger>,
+    T: RawSingleThreadedTrigger,
 {
     unsafe fn dispatch_on_trigger(
         processor_ptr: *mut c_void,
@@ -67,9 +66,9 @@ where
     }
 }
 
-pub struct ProcessorDefinition<T>
+pub struct RawProcessorDefinition<T>
 where
-    T: Processor<CffiLogger> + DispatchOnTrigger<T::Threading>,
+    T: RawProcessor + DispatchOnTrigger<T::Threading>,
 {
     name: &'static str,
     description_text: &'static str,
@@ -84,9 +83,9 @@ where
     _phantom: std::marker::PhantomData<T>,
 }
 
-impl<T> ProcessorDefinition<T>
+impl<T> RawProcessorDefinition<T>
 where
-    T: Processor<CffiLogger> + DispatchOnTrigger<T::Threading>,
+    T: RawProcessor + DispatchOnTrigger<T::Threading>,
 {
     pub fn new(
         name: &'static str,
@@ -115,12 +114,16 @@ where
         }
     }
 
-    // --- Unsafe FFI callback implementations ---
-
+    #[cfg(not(feature = "mock-logger"))]
     unsafe extern "C" fn create_processor(metadata: MinifiProcessorMetadata) -> *mut c_void {
-        let logger = CffiLogger::new(metadata.logger);
+        let logger = super::c_ffi_logger::CffiLogger::new(metadata.logger);
         let processor = Box::new(T::new(logger));
         Box::into_raw(processor) as *mut c_void
+    }
+
+    #[cfg(feature = "mock-logger")]
+    unsafe extern "C" fn create_processor(_metadata: MinifiProcessorMetadata) -> *mut c_void {
+        panic!("mock-logger feature is on we should not create c processors")
     }
 
     unsafe extern "C" fn destroy_processor(processor_ptr: *mut c_void) {
@@ -213,14 +216,14 @@ where
     }
 }
 
-pub trait DynProcessorDefinition {
+pub trait DynRawProcessorDefinition {
     // unsafe because self must outlive the resulting MinifiProcessorClassDefinition
     unsafe fn class_description(&self) -> MinifiProcessorClassDefinition;
 }
 
-impl<T> DynProcessorDefinition for ProcessorDefinition<T>
+impl<T> DynRawProcessorDefinition for RawProcessorDefinition<T>
 where
-    T: Processor<CffiLogger> + DispatchOnTrigger<T::Threading>,
+    T: RawProcessor + DispatchOnTrigger<T::Threading>,
 {
     // unsafe because self must outlive the resulting MinifiProcessorClassDefinition
     unsafe fn class_description(&self) -> MinifiProcessorClassDefinition {
@@ -256,6 +259,6 @@ where
     }
 }
 
-pub trait RegisterableProcessor {
-    fn get_definition() -> Box<dyn DynProcessorDefinition>;
+pub trait RawRegisterableProcessor {
+    fn get_definition() -> Box<dyn DynRawProcessorDefinition>;
 }

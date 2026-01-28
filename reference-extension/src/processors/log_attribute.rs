@@ -1,14 +1,14 @@
 use crate::processors::log_attribute::properties::{FLOW_FILES_TO_LOG, LOG_LEVEL, LOG_PAYLOAD};
 use minifi_native::{
-    ConcurrentOnTrigger, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext,
-    ProcessSession, Processor, Property,
+    CalculateMetrics, ConstTrigger, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext,
+    ProcessSession, Property, Schedule,
 };
 
 mod properties;
 mod relationships;
 
 #[derive(Debug)]
-struct ScheduledMembers {
+pub(crate) struct LogAttribute {
     log_level: LogLevel,
     attributes_to_log: Option<Vec<String>>,
     attributes_to_ignore: Option<Vec<String>>,
@@ -18,43 +18,33 @@ struct ScheduledMembers {
     hex_encode_payload: bool,
 }
 
-#[derive(Debug)]
-pub(crate) struct LogAttribute<L: Logger> {
-    logger: L,
-    scheduled_members: Option<ScheduledMembers>,
-}
-
-impl<L: Logger> LogAttribute<L> {
+impl LogAttribute {
     fn generate_log_message<PS>(&self, session: &mut PS, flow_file: &mut PS::FlowFile) -> String
     where
         PS: ProcessSession,
     {
-        let log_attribute = self
-            .scheduled_members
-            .as_ref()
-            .expect("on_schedule should create GetFileImpl");
         let mut log_msg = String::with_capacity(1024);
         log_msg.push_str("Logging for flow file\n");
-        log_msg.push_str(log_attribute.dash_line.as_str());
+        log_msg.push_str(self.dash_line.as_str());
 
         log_msg.push_str("\nFlowFile Attributes Map Content");
         session.on_attributes(flow_file, |key, value| {
-            if let Some(attributes_to_ignore) = &log_attribute.attributes_to_ignore {
+            if let Some(attributes_to_ignore) = &self.attributes_to_ignore {
                 if attributes_to_ignore.iter().any(|ign| ign == key) {
                     return;
                 }
             }
-            if let Some(attributes_to_log) = &log_attribute.attributes_to_log {
+            if let Some(attributes_to_log) = &self.attributes_to_log {
                 if !attributes_to_log.iter().any(|ign| ign == key) {
                     return;
                 }
             }
             log_msg.push_str(format!("\nkey:{} value:{}", &key, &value).as_str());
         });
-        if log_attribute.log_payload {
+        if self.log_payload {
             log_msg.push_str("\nPayload:\n");
             if let Some(flow_file_payload) = session.read(flow_file) {
-                if log_attribute.hex_encode_payload {
+                if self.hex_encode_payload {
                     log_msg.push_str(&hex::encode(flow_file_payload));
                 } else {
                     log_msg.push_str(
@@ -66,71 +56,56 @@ impl<L: Logger> LogAttribute<L> {
             }
         }
         log_msg.push_str("\n");
-        log_msg.push_str(log_attribute.dash_line.as_str());
+        log_msg.push_str(self.dash_line.as_str());
         log_msg
     }
 }
 
-impl<L: Logger> ConcurrentOnTrigger<L> for LogAttribute<L> {
-    fn on_trigger<P, S>(
+impl ConstTrigger for LogAttribute {
+    fn trigger<PC, PS, L>(
         &self,
-        _context: &mut P,
-        session: &mut S,
+        _context: &mut PC,
+        session: &mut PS,
+        logger: &L,
     ) -> Result<OnTriggerResult, MinifiError>
     where
-        P: ProcessContext,
-        S: ProcessSession,
+        PC: ProcessContext,
+        PS: ProcessSession<FlowFile = PC::FlowFile>,
+        L: Logger,
     {
-        let log_attribute = self
-            .scheduled_members
-            .as_ref()
-            .expect("on_schedule should create GetFileImpl");
-        self.logger.trace(
+        logger.trace(
             format!(
                 "enter log attribute, attempting to retrieve {} flow files",
-                log_attribute.flow_files_to_log
+                self.flow_files_to_log
             )
             .as_str(),
         );
-        let max_flow_files_to_process = if log_attribute.flow_files_to_log == 0 {
+        let max_flow_files_to_process = if self.flow_files_to_log == 0 {
             usize::MAX
         } else {
-            log_attribute.flow_files_to_log
+            self.flow_files_to_log
         };
         let mut flow_files_processed = 0usize;
         for _ in 0..max_flow_files_to_process {
             if let Some(mut flow_file) = session.get() {
                 let log_msg = self.generate_log_message(session, &mut flow_file);
-                self.logger.log(log_attribute.log_level, log_msg.as_str());
+                logger.log(self.log_level, log_msg.as_str());
                 session.transfer(flow_file, relationships::SUCCESS.name);
                 flow_files_processed += 1;
             } else {
                 break;
             }
         }
-        self.logger
-            .debug(format!("Logged {} flow files", flow_files_processed).as_str());
+        logger.debug(format!("Logged {} flow files", flow_files_processed).as_str());
 
         Ok(OnTriggerResult::Ok)
     }
 }
 
-impl<L: Logger> Processor<L> for LogAttribute<L> {
-    type Threading = minifi_native::Concurrent;
-    fn new(logger: L) -> Self {
-        Self {
-            logger,
-            scheduled_members: None,
-        }
-    }
-
-    fn log(&self, log_level: LogLevel, message: &str) {
-        self.logger.log(log_level, message);
-    }
-
-    fn on_schedule<P>(&mut self, context: &P) -> Result<(), MinifiError>
+impl Schedule for LogAttribute {
+    fn schedule<P: ProcessContext, L: Logger>(context: &P, _logger: &L) -> Result<Self, MinifiError>
     where
-        P: ProcessContext,
+        Self: Sized,
     {
         let log_level = context
             .get_property(&LOG_LEVEL, None)?
@@ -169,7 +144,7 @@ impl<L: Logger> Processor<L> for LogAttribute<L> {
             .get_bool_property(&properties::HEX_ENCODE_PAYLOAD, None)?
             .expect("required property");
 
-        self.scheduled_members = Some(ScheduledMembers {
+        Ok(LogAttribute {
             log_level,
             attributes_to_log,
             attributes_to_ignore,
@@ -177,10 +152,11 @@ impl<L: Logger> Processor<L> for LogAttribute<L> {
             flow_files_to_log,
             dash_line,
             hex_encode_payload,
-        });
-        Ok(())
+        })
     }
 }
+
+impl CalculateMetrics for LogAttribute {}
 
 #[cfg(not(test))]
 pub(crate) mod processor_definition;

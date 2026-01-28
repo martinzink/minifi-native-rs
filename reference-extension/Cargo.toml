@@ -3,12 +3,6 @@ name = "rust-reference-extension"
 version = "0.1.0"
 edition = "2024"
 
-[profile.release]
-panic = "abort"
-
-[profile.dev]
-panic = "abort"
-
 [lib]
 crate-type = ["cdylib"]
 
@@ -22,5 +16,6 @@ hex = "0.4.3"
 strum_macros = "0.27.2"
 
 [dev-dependencies]
+minifi-native = { path = "../minifi-native", features = ["mock-logger"] }
 tempfile = "3.22.0"
 filetime = "0.2.26"

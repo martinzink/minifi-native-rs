@@ -1,6 +1,6 @@
 use minifi_native::{
-    Concurrent, ConcurrentOnTrigger, LogLevel, Logger, MinifiError, OnTriggerResult,
-    ProcessContext, ProcessSession, Processor,
+    CalculateMetrics, ConstTrigger, Logger, MinifiError, OnTriggerResult, ProcessContext,
+    ProcessSession, Schedule,
 };
 use rand::Rng;
 use rand::distr::Alphanumeric;
@@ -20,20 +20,57 @@ enum Mode {
 }
 
 #[derive(Debug)]
-struct ScheduledMembers {
+pub(crate) struct GenerateFlowFile {
     mode: Mode,
     batch_size: u64,
     file_size: u64,
     data_generated_during_on_schedule: Vec<u8>,
 }
 
-#[derive(Debug)]
-pub(crate) struct GenerateFlowFile<L: Logger> {
-    logger: L,
-    scheduled_members: Option<ScheduledMembers>,
+impl Schedule for GenerateFlowFile {
+    fn schedule<P: ProcessContext, L: Logger>(context: &P, _logger: &L) -> Result<Self, MinifiError>
+    where
+        Self: Sized,
+    {
+        let is_unique = context
+            .get_bool_property(&properties::UNIQUE_FLOW_FILES, None)?
+            .expect("Required property");
+        let is_text = context
+            .get_property(&properties::DATA_FORMAT, None)?
+            .expect("Required property")
+            .as_str()
+            == "Text";
+        let has_custom_text = context
+            .get_property(&properties::CUSTOM_TEXT, None)?
+            .is_some();
+
+        let file_size = context
+            .get_size_property(&properties::FILE_SIZE, None)?
+            .expect("Required property");
+        let batch_size = context
+            .get_u64_property(&properties::BATCH_SIZE, None)?
+            .expect("Required property");
+
+        let mode = Self::get_mode(is_unique, is_text, has_custom_text, file_size);
+        let data_generated_during_on_schedule =
+            if mode == Mode::NotUniqueText || mode == Mode::NotUniqueBytes {
+                let mut data = vec![0; file_size as usize];
+                Self::generate_data(&mut data, is_text);
+                data
+            } else {
+                vec![]
+            };
+
+        Ok(Self {
+            mode,
+            batch_size,
+            file_size,
+            data_generated_during_on_schedule,
+        })
+    }
 }
 
-impl ScheduledMembers {
+impl GenerateFlowFile {
     fn is_unique(&self) -> bool {
         match self.mode {
             Mode::UniqueBytes => true,
@@ -84,12 +121,19 @@ impl ScheduledMembers {
             rng.fill(data);
         }
     }
+}
 
-    fn on_trigger<P: ProcessContext, S: ProcessSession>(
+impl ConstTrigger for GenerateFlowFile {
+    fn trigger<PC, PS, L>(
         &self,
-        context: &mut P,
-        session: &mut S,
-    ) -> Result<OnTriggerResult, MinifiError> {
+        context: &mut PC,
+        session: &mut PS,
+        _logger: &L,
+    ) -> Result<OnTriggerResult, MinifiError>
+    where
+        PC: ProcessContext,
+        PS: ProcessSession<FlowFile = PC::FlowFile>,
+    {
         let non_unique_data_buffer: &[u8];
         let custom_text_for_batch: Option<String>;
 
@@ -119,77 +163,7 @@ impl ScheduledMembers {
     }
 }
 
-impl<L: Logger> Processor<L> for GenerateFlowFile<L> {
-    type Threading = Concurrent;
-    fn new(logger: L) -> Self {
-        Self {
-            logger,
-            scheduled_members: None,
-        }
-    }
-
-    fn log(&self, log_level: LogLevel, message: &str) {
-        self.logger.log(log_level, message);
-    }
-
-    fn on_schedule<P: ProcessContext>(&mut self, context: &P) -> Result<(), MinifiError> {
-        let is_unique = context
-            .get_bool_property(&properties::UNIQUE_FLOW_FILES, None)?
-            .expect("Required property");
-        let is_text = context
-            .get_property(&properties::DATA_FORMAT, None)?
-            .expect("Required property")
-            .as_str()
-            == "Text";
-        let has_custom_text = context
-            .get_property(&properties::CUSTOM_TEXT, None)?
-            .is_some();
-
-        let file_size = context
-            .get_size_property(&properties::FILE_SIZE, None)?
-            .expect("Required property");
-        let batch_size = context
-            .get_u64_property(&properties::BATCH_SIZE, None)?
-            .expect("Required property");
-
-        let mode = ScheduledMembers::get_mode(is_unique, is_text, has_custom_text, file_size);
-        let data_generated_during_on_schedule =
-            if mode == Mode::NotUniqueText || mode == Mode::NotUniqueBytes {
-                let mut data = vec![0; file_size as usize];
-                ScheduledMembers::generate_data(&mut data, is_text);
-                data
-            } else {
-                vec![]
-            };
-
-        self.scheduled_members = Some(ScheduledMembers {
-            mode,
-            batch_size,
-            file_size,
-            data_generated_during_on_schedule,
-        });
-
-        self.logger
-            .trace(format!("GenerateFlowFile is configured as {:?}", self).as_str());
-        Ok(())
-    }
-}
-
-impl<L: Logger> ConcurrentOnTrigger<L> for GenerateFlowFile<L> {
-    fn on_trigger<P: ProcessContext, S: ProcessSession>(
-        &self,
-        context: &mut P,
-        session: &mut S,
-    ) -> Result<OnTriggerResult, MinifiError> {
-        if let Some(ref generate_flow_file) = self.scheduled_members {
-            generate_flow_file.on_trigger(context, session)
-        } else {
-            Err(MinifiError::TriggerError(
-                "The processor hasnt been scheduled yet".to_string(),
-            ))
-        }
-    }
-}
+impl CalculateMetrics for GenerateFlowFile {}
 
 #[cfg(not(test))]
 pub(crate) mod processor_definition;

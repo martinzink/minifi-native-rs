@@ -1657,6 +1657,7 @@ version = "0.1.0"
 dependencies = [
  "minifi-native",
  "pgp",
+ "rand",
  "strum",
  "strum_macros",
 ]

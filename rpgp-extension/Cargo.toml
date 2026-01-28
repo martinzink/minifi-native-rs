@@ -1,13 +1,7 @@
 [package]
-name = "rpgp-extension"
+name = "minifi_pgp"
 version = "0.1.0"
 edition = "2024"
-
-[profile.release]
-panic = "abort"
-
-[profile.dev]
-panic = "abort"
 
 [lib]
 crate-type = ["cdylib"]
@@ -17,4 +11,7 @@ minifi-native = { path = "../minifi-native" }
 strum_macros = "0.27.2"
 strum = "0.27.2"
 pgp = "0.18.0"
+rand = "0.8.5"
 
+[dev-dependencies]
+minifi-native = { path = "../minifi-native", features = ["mock-logger"] }
