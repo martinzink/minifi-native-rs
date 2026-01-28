@@ -22,6 +22,7 @@ impl ControllerService for DummyControllerService {
     fn enable<P: ControllerServiceContext>(&mut self, context: &P) -> Result<(), MinifiError> {
         self.data = context.get_property(&DATA)?;
         self.logger.info(format!("DummyControllerService::enable {:?}", self).as_str());
+
         Ok(())
     }
 
@@ -42,10 +43,13 @@ impl ControllerService for DummyControllerService {
 }
 
 impl DummyControllerService {
-    fn get_data(&self) -> Option<&str> {
+    pub fn get_data(&self) -> Option<&str> {
         self.data.as_deref()
     }
 }
 
 #[cfg(not(test))]
 mod controller_service_definition;
+
+#[cfg(test)]
+mod tests;

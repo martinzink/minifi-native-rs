@@ -1,9 +1,9 @@
-use minifi_native::{ControllerService, ControllerServiceContext, LogLevel, Logger, MinifiError};
+use minifi_native::{ControllerService, ControllerServiceContext, DefaultLogger, LogLevel, Logger, MinifiError};
 use pgp::composed::Deserializable;
 
 #[derive(Debug)]
 pub(crate) struct PgpPublicKeyService {
-    logger: L,
+    logger: DefaultLogger,
     public_key: Option<u64>
 }
 
@@ -18,5 +18,21 @@ impl ControllerService for PgpPublicKeyService {
 
     fn enable<P: ControllerServiceContext>(&mut self, context: &P) -> Result<(), MinifiError> {
         Ok(())
+    }
+
+    fn disable(&mut self) {
+        todo!()
+    }
+
+    fn class_name() -> &'static str {
+        todo!()
+    }
+
+    fn group_name() -> &'static str {
+        todo!()
+    }
+
+    fn version() -> &'static str {
+        todo!()
     }
 }

@@ -1,7 +1,6 @@
 use std::ffi::c_void;
 use std::ptr;
 
-use super::c_ffi_logger::CffiLogger;
 use super::c_ffi_primitives::{StaticStrAsMinifiCStr, StringView};
 use super::c_ffi_process_context::CffiProcessContext;
 use super::c_ffi_process_session::CffiProcessSession;
@@ -115,10 +114,16 @@ where
         }
     }
 
+    #[cfg(not(feature = "mock-logger"))]
     unsafe extern "C" fn create_processor(metadata: MinifiProcessorMetadata) -> *mut c_void {
-        let logger = CffiLogger::new(metadata.logger);
+        let logger = super::c_ffi_logger::CffiLogger::new(metadata.logger);
         let processor = Box::new(T::new(logger));
         Box::into_raw(processor) as *mut c_void
+    }
+
+    #[cfg(feature = "mock-logger")]
+    unsafe extern "C" fn create_processor(_metadata: MinifiProcessorMetadata) -> *mut c_void {
+        panic!("mock-logger feature is on we should not create c processors")
     }
 
     unsafe extern "C" fn destroy_processor(processor_ptr: *mut c_void) {

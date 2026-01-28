@@ -1,10 +1,10 @@
 use std::fmt::Debug;
 
 use strum_macros::{Display, EnumString, VariantNames};
-#[cfg(not(test))]
+#[cfg(not(feature = "mock-logger"))]
 use crate::{CffiLogger};
 
-#[cfg(test)]
+#[cfg(feature = "mock-logger")]
 use crate::{MockLogger};
 
 #[derive(Debug, Clone, Copy, PartialEq, Display, EnumString, VariantNames)]
@@ -43,8 +43,8 @@ pub trait Logger: Debug {
 }
 
 
-#[cfg(not(test))]
+#[cfg(not(feature = "mock-logger"))]
 pub type DefaultLogger = CffiLogger;
 
-#[cfg(test)]
+#[cfg(feature = "mock-logger")]
 pub type DefaultLogger = MockLogger;

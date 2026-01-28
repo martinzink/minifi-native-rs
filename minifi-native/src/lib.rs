@@ -15,7 +15,7 @@ pub use c_ffi::{
     RegisterableProcessor, RegisterableControllerService,
     StaticStrAsMinifiCStr
 };
-pub use mock::{MockFlowFile, MockLogger, MockProcessContext, MockProcessSession};
+pub use mock::{MockFlowFile, MockLogger, MockProcessContext, MockControllerServiceContext, MockProcessSession};
 
 use minifi_native_sys::{MINIFI_API_MAJOR_VERSION, MINIFI_API_MINOR_VERSION, MINIFI_API_PATCH_VERSION};
 pub use minifi_native_sys as sys;

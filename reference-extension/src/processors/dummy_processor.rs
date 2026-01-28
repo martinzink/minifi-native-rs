@@ -1,4 +1,5 @@
 mod properties;
+mod relationships;
 
 use minifi_native::{Concurrent, ConcurrentOnTrigger, DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, Processor};
 use crate::controller_services::dummy_controller_service::DummyControllerService;
@@ -33,13 +34,19 @@ impl ConcurrentOnTrigger for DummyProcessor {
         PC: ProcessContext,
         PS: ProcessSession<FlowFile=PC::FlowFile>
     {
-        println!("DummyProcessor::on_trigger {:?}", self);
-        let cs = context.get_controller_service::<DummyControllerService>(&CONTROLLER_SERVICE)?;
-        println!("{:?}", cs);
+        match context.get_controller_service::<DummyControllerService>(&CONTROLLER_SERVICE)? {
+            None => {
+                self.logger.info("Couldnt not get information about DummyControllerService");
+            }
+            Some(dummy_controller) => {
+                self.logger.info(format!("The data in the DummyControllerService is {:?}", dummy_controller.get_data()).as_str());
+            }
+        }
         Ok(OnTriggerResult::Ok)
     }
 }
 
 #[cfg(not(test))]
 pub(crate) mod processor_definition;
-mod relationships;
+#[cfg(test)]
+mod test;

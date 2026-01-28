@@ -1,7 +1,4 @@
-use minifi_native::{
-    Concurrent, ConcurrentOnTrigger, LogLevel, Logger, MinifiError, OnTriggerResult,
-    ProcessContext, ProcessSession, Processor,
-};
+use minifi_native::{Concurrent, ConcurrentOnTrigger, DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, Processor};
 
 mod processor_definition;
 mod properties;
@@ -39,7 +36,7 @@ impl ScheduledMembers {
         session: &mut S,
     ) -> Result<OnTriggerResult, MinifiError> {
         if let Some(flow_file) = session.get() {
-            
+
             Ok(OnTriggerResult::Ok)
         } else {
             Ok(OnTriggerResult::Yield)
@@ -49,7 +46,7 @@ impl ScheduledMembers {
 
 #[derive(Debug)]
 pub(crate) struct EncryptContentPGP {
-    logger: L,
+    logger: DefaultLogger,
     scheduled_members: Option<ScheduledMembers>,
 }
 

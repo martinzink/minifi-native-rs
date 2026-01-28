@@ -34,7 +34,7 @@ unsafe extern "C" fn get_property_callback(
 
         let value_slice = std::slice::from_raw_parts(
             property_c_value.data as *const u8,
-            property_c_value.length as usize,
+            property_c_value.length,
         );
         if let Ok(string_value) = String::from_utf8(value_slice.to_vec()) {
             *result_target = Some(string_value);
@@ -53,7 +53,7 @@ struct ControllerServiceHelper {
 impl ControllerServiceHelper {
     fn is_valid(&self, grp: &MinifiStringView, class: &MinifiStringView, version: &MinifiStringView) -> Result<bool, FfiConversionError> {
         unsafe {
-            Ok(self.controller_service_class_name == class.as_str()? &&
+            Ok(self.controller_service_class_name.ends_with(class.as_str()?) &&
                 self.group_name == grp.as_str()? &&
                 self.version_str == version.as_str()?)
         }
@@ -74,14 +74,7 @@ unsafe extern "C" fn get_controller_service_callback(
             return;
         }
 
-        let rusty_group_name = group_name.as_str();
-        let rusty_class_name = class_name.as_str();
-        let rusty_version = version.as_str();
-
-        println!("{:?}, {:?}, {:?}", rusty_group_name, rusty_class_name, rusty_version);
-
         if !controller_service_helper.is_valid(&group_name, &class_name, &version).unwrap_or(false) {
-            println!("{:?}", controller_service_helper);
             return;
         }
 

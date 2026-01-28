@@ -22,5 +22,6 @@ hex = "0.4.3"
 strum_macros = "0.27.2"
 
 [dev-dependencies]
+minifi-native = { path = "../minifi-native", features = ["mock-logger"] }
 tempfile = "3.22.0"
 filetime = "0.2.26"

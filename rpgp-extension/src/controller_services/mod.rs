@@ -1,1 +1,1 @@
-mod pgp_public_key_service;
+pub(crate) mod pgp_public_key_service;
