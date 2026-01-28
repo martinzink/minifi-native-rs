@@ -1,7 +1,10 @@
 mod properties;
 mod relationships;
 
-use minifi_native::{Concurrent, ConcurrentOnTrigger, DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, Processor};
+use minifi_native::{
+    Concurrent, ConcurrentOnTrigger, DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult,
+    ProcessContext, ProcessSession, Processor,
+};
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
 
 #[derive(Debug, Clone, Copy, PartialEq, Display, EnumString, VariantNames, IntoStaticStr)]

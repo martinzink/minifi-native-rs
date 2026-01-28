@@ -3,22 +3,24 @@ mod c_ffi;
 mod mock;
 
 pub use api::{
-    Concurrent, ConcurrentOnTrigger, Exclusive, ExclusiveOnTrigger, FlowFile, LogLevel, Logger, DefaultLogger,
-    MinifiError, OnTriggerResult, OutputAttribute, ProcessContext, ProcessSession, Processor,
-    ProcessorInputRequirement, Property, Relationship, StandardPropertyValidator, ControllerService, ControllerServiceContext,
+    Concurrent, ConcurrentOnTrigger, ControllerService, ControllerServiceContext, DefaultLogger,
+    Exclusive, ExclusiveOnTrigger, FlowFile, LogLevel, Logger, MinifiError, OnTriggerResult,
+    OutputAttribute, ProcessContext, ProcessSession, Processor, ProcessorInputRequirement,
+    Property, Relationship, StandardPropertyValidator,
 };
 pub use c_ffi::{
-    CffiLogger,
-    CffiProcessorList, CffiControllerServiceList,
-    ProcessorDefinition, ControllerServiceDefinition,
-    DynProcessorDefinition, DynControllerServiceDefinition,
-    RegisterableProcessor, RegisterableControllerService,
-    StaticStrAsMinifiCStr
+    CffiControllerServiceList, CffiLogger, CffiProcessorList, ControllerServiceDefinition,
+    DynControllerServiceDefinition, DynProcessorDefinition, ProcessorDefinition,
+    RegisterableControllerService, RegisterableProcessor, StaticStrAsMinifiCStr,
 };
-pub use mock::{MockFlowFile, MockLogger, MockProcessContext, MockControllerServiceContext, MockProcessSession};
+pub use mock::{
+    MockControllerServiceContext, MockFlowFile, MockLogger, MockProcessContext, MockProcessSession,
+};
 
-use minifi_native_sys::{MINIFI_API_MAJOR_VERSION, MINIFI_API_MINOR_VERSION, MINIFI_API_PATCH_VERSION};
 pub use minifi_native_sys as sys;
+use minifi_native_sys::{
+    MINIFI_API_MAJOR_VERSION, MINIFI_API_MINOR_VERSION, MINIFI_API_PATCH_VERSION,
+};
 
 #[unsafe(no_mangle)]
 #[cfg_attr(target_os = "linux", unsafe(link_section = ".rodata"))]

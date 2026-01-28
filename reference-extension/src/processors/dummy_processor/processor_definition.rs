@@ -1,9 +1,7 @@
+use super::DummyProcessor;
 use super::properties::*;
-use super::{DummyProcessor};
-use minifi_native::{
-    ProcessorDefinition, ProcessorInputRequirement, RegisterableProcessor,
-};
 use crate::processors::dummy_processor::relationships::SUCCESS;
+use minifi_native::{ProcessorDefinition, ProcessorInputRequirement, RegisterableProcessor};
 
 impl RegisterableProcessor for DummyProcessor {
     fn get_definition() -> Box<dyn minifi_native::DynProcessorDefinition> {
@@ -15,9 +13,7 @@ impl RegisterableProcessor for DummyProcessor {
             false,
             &[],
             &[SUCCESS],
-            &[
-                CONTROLLER_SERVICE
-            ],
+            &[CONTROLLER_SERVICE],
         ))
     }
 }

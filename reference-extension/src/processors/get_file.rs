@@ -5,7 +5,10 @@ use crate::processors::get_file::properties::{
     BATCH_SIZE, DIRECTORY, IGNORE_HIDDEN_FILES, KEEP_SOURCE_FILE, MAX_AGE, MAX_SIZE, MIN_AGE,
     MIN_SIZE, RECURSE,
 };
-use minifi_native::{Concurrent, ConcurrentOnTrigger, DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, Processor};
+use minifi_native::{
+    Concurrent, ConcurrentOnTrigger, DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult,
+    ProcessContext, ProcessSession, Processor,
+};
 use std::collections::VecDeque;
 use std::error;
 use std::path::PathBuf;

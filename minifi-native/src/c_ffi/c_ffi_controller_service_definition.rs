@@ -1,9 +1,12 @@
-use std::ffi::c_void;
-use minifi_native_sys::{MinifiControllerServiceCallbacks, MinifiControllerServiceClassDefinition, MinifiControllerServiceContext, MinifiControllerServiceMetadata, MinifiStatus};
 use crate::api::ControllerService;
+use crate::c_ffi::c_ffi_controller_service_context::CffiControllerServiceContext;
 use crate::c_ffi::c_ffi_property::CProperties;
 use crate::{LogLevel, Property, StaticStrAsMinifiCStr};
-use crate::c_ffi::c_ffi_controller_service_context::CffiControllerServiceContext;
+use minifi_native_sys::{
+    MinifiControllerServiceCallbacks, MinifiControllerServiceClassDefinition,
+    MinifiControllerServiceContext, MinifiControllerServiceMetadata, MinifiStatus,
+};
+use std::ffi::c_void;
 
 pub struct ControllerServiceDefinition<T>
 where
@@ -17,7 +20,10 @@ where
     _phantom: std::marker::PhantomData<T>,
 }
 
-impl<T> ControllerServiceDefinition<T> where T: ControllerService {
+impl<T> ControllerServiceDefinition<T>
+where
+    T: ControllerService,
+{
     pub fn new(
         name: &'static str,
         description_text: &'static str,
@@ -34,14 +40,18 @@ impl<T> ControllerServiceDefinition<T> where T: ControllerService {
     }
 
     #[cfg(not(feature = "mock-logger"))]
-    unsafe extern "C" fn create_controller_service(metadata: MinifiControllerServiceMetadata) -> *mut c_void {
+    unsafe extern "C" fn create_controller_service(
+        metadata: MinifiControllerServiceMetadata,
+    ) -> *mut c_void {
         let logger = super::c_ffi_logger::CffiLogger::new(metadata.logger);
         let controller_service = Box::new(T::new(logger));
         Box::into_raw(controller_service) as *mut c_void
     }
 
     #[cfg(feature = "mock-logger")]
-    unsafe extern "C" fn create_controller_service(_metadata: MinifiControllerServiceMetadata) -> *mut c_void {
+    unsafe extern "C" fn create_controller_service(
+        _metadata: MinifiControllerServiceMetadata,
+    ) -> *mut c_void {
         panic!("mock-logger feature is on we should not create c controller services")
     }
 
@@ -53,7 +63,10 @@ impl<T> ControllerServiceDefinition<T> where T: ControllerService {
         }
     }
 
-    unsafe extern "C" fn enable_controller_service(controller_service_ptr: *mut c_void, context_ptr: *mut MinifiControllerServiceContext) -> MinifiStatus {
+    unsafe extern "C" fn enable_controller_service(
+        controller_service_ptr: *mut c_void,
+        context_ptr: *mut MinifiControllerServiceContext,
+    ) -> MinifiStatus {
         unsafe {
             let controller_service = &mut *(controller_service_ptr as *mut T);
             let context = CffiControllerServiceContext::new(context_ptr);
@@ -80,7 +93,10 @@ pub trait DynControllerServiceDefinition {
     unsafe fn class_description(&self) -> MinifiControllerServiceClassDefinition;
 }
 
-impl<T> DynControllerServiceDefinition for ControllerServiceDefinition<T> where T: ControllerService {
+impl<T> DynControllerServiceDefinition for ControllerServiceDefinition<T>
+where
+    T: ControllerService,
+{
     unsafe fn class_description(&self) -> MinifiControllerServiceClassDefinition {
         unsafe {
             MinifiControllerServiceClassDefinition {

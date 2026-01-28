@@ -7,10 +7,7 @@ pub struct MockControllerServiceContext {
 }
 
 impl ControllerServiceContext for MockControllerServiceContext {
-    fn get_property(
-        &self,
-        property: &Property
-    ) -> Result<Option<String>, MinifiError> {
+    fn get_property(&self, property: &Property) -> Result<Option<String>, MinifiError> {
         if let Some(property) = self.properties.get(property.name) {
             Ok(Some(property.clone()))
         } else {

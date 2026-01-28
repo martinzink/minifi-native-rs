@@ -1,21 +1,27 @@
 mod properties;
 mod relationships;
 
-use minifi_native::{Concurrent, ConcurrentOnTrigger, DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, Processor};
 use crate::controller_services::dummy_controller_service::DummyControllerService;
 use crate::processors::dummy_processor::properties::CONTROLLER_SERVICE;
+use minifi_native::{
+    Concurrent, ConcurrentOnTrigger, DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult,
+    ProcessContext, ProcessSession, Processor,
+};
 
 #[derive(Debug)]
 pub(crate) struct DummyProcessor {
     logger: DefaultLogger,
-    dummy_controller_service_name: Option<String>
+    dummy_controller_service_name: Option<String>,
 }
 
 impl Processor for DummyProcessor {
     type Threading = Concurrent;
 
     fn new(logger: DefaultLogger) -> Self {
-        Self { logger,dummy_controller_service_name: None }
+        Self {
+            logger,
+            dummy_controller_service_name: None,
+        }
     }
 
     fn log(&self, log_level: LogLevel, message: &str) {
@@ -29,17 +35,28 @@ impl Processor for DummyProcessor {
 }
 
 impl ConcurrentOnTrigger for DummyProcessor {
-    fn on_trigger<PC, PS>(&self, context: &mut PC, _session: &mut PS) -> Result<OnTriggerResult, MinifiError>
+    fn on_trigger<PC, PS>(
+        &self,
+        context: &mut PC,
+        _session: &mut PS,
+    ) -> Result<OnTriggerResult, MinifiError>
     where
         PC: ProcessContext,
-        PS: ProcessSession<FlowFile=PC::FlowFile>
+        PS: ProcessSession<FlowFile = PC::FlowFile>,
     {
         match context.get_controller_service::<DummyControllerService>(&CONTROLLER_SERVICE)? {
             None => {
-                self.logger.info("Couldnt not get information about DummyControllerService");
+                self.logger
+                    .info("Couldnt not get information about DummyControllerService");
             }
             Some(dummy_controller) => {
-                self.logger.info(format!("The data in the DummyControllerService is {:?}", dummy_controller.get_data()).as_str());
+                self.logger.info(
+                    format!(
+                        "The data in the DummyControllerService is {:?}",
+                        dummy_controller.get_data()
+                    )
+                    .as_str(),
+                );
             }
         }
         Ok(OnTriggerResult::Ok)

@@ -1,4 +1,7 @@
-use minifi_native::{Concurrent, ConcurrentOnTrigger, DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, Processor};
+use minifi_native::{
+    Concurrent, ConcurrentOnTrigger, DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult,
+    ProcessContext, ProcessSession, Processor,
+};
 use rand::Rng;
 use rand::distr::Alphanumeric;
 use std::cmp::PartialEq;

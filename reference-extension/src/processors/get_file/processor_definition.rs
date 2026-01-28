@@ -3,9 +3,7 @@ use crate::processors::get_file::output_attributes::{
 };
 use crate::processors::get_file::properties::*;
 use crate::processors::get_file::{GetFile, relationships};
-use minifi_native::{
-    ProcessorDefinition, ProcessorInputRequirement, RegisterableProcessor,
-};
+use minifi_native::{ProcessorDefinition, ProcessorInputRequirement, RegisterableProcessor};
 
 impl RegisterableProcessor for GetFile {
     fn get_definition() -> Box<dyn minifi_native::DynProcessorDefinition> {

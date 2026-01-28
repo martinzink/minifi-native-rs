@@ -1,8 +1,11 @@
-use std::ffi::c_void;
-use minifi_native_sys::{MinifiControllerServiceContext, MinifiControllerServiceContextGetProperty, MinifiStatus_MINIFI_STATUS_SUCCESS, MinifiStringView};
-use crate::{MinifiError, Property};
 use crate::api::ControllerServiceContext;
 use crate::c_ffi::c_ffi_primitives::StringView;
+use crate::{MinifiError, Property};
+use minifi_native_sys::{
+    MinifiControllerServiceContext, MinifiControllerServiceContextGetProperty,
+    MinifiStatus_MINIFI_STATUS_SUCCESS, MinifiStringView,
+};
+use std::ffi::c_void;
 
 pub struct CffiControllerServiceContext<'a> {
     ptr: *mut MinifiControllerServiceContext,
@@ -41,10 +44,7 @@ unsafe extern "C" fn property_callback(
 }
 
 impl<'a> ControllerServiceContext for CffiControllerServiceContext<'a> {
-    fn get_property(
-        &self,
-        property: &Property,
-    ) -> Result<Option<String>, MinifiError> {
+    fn get_property(&self, property: &Property) -> Result<Option<String>, MinifiError> {
         let mut result: Option<String> = None;
         let property_name: StringView = StringView::new(property.name);
 

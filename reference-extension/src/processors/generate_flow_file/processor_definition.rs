@@ -1,8 +1,6 @@
 use super::properties::*;
 use super::{GenerateFlowFile, relationships};
-use minifi_native::{
-    ProcessorDefinition, ProcessorInputRequirement, RegisterableProcessor,
-};
+use minifi_native::{ProcessorDefinition, ProcessorInputRequirement, RegisterableProcessor};
 
 impl RegisterableProcessor for GenerateFlowFile {
     fn get_definition() -> Box<dyn minifi_native::DynProcessorDefinition> {

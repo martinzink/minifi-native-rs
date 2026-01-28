@@ -32,10 +32,8 @@ unsafe extern "C" fn get_property_callback(
             return;
         }
 
-        let value_slice = std::slice::from_raw_parts(
-            property_c_value.data as *const u8,
-            property_c_value.length,
-        );
+        let value_slice =
+            std::slice::from_raw_parts(property_c_value.data as *const u8, property_c_value.length);
         if let Ok(string_value) = String::from_utf8(value_slice.to_vec()) {
             *result_target = Some(string_value);
         }
@@ -51,11 +49,18 @@ struct ControllerServiceHelper {
 }
 
 impl ControllerServiceHelper {
-    fn is_valid(&self, grp: &MinifiStringView, class: &MinifiStringView, version: &MinifiStringView) -> Result<bool, FfiConversionError> {
+    fn is_valid(
+        &self,
+        grp: &MinifiStringView,
+        class: &MinifiStringView,
+        version: &MinifiStringView,
+    ) -> Result<bool, FfiConversionError> {
         unsafe {
-            Ok(self.controller_service_class_name.ends_with(class.as_str()?) &&
-                self.group_name == grp.as_str()? &&
-                self.version_str == version.as_str()?)
+            Ok(self
+                .controller_service_class_name
+                .ends_with(class.as_str()?)
+                && self.group_name == grp.as_str()?
+                && self.version_str == version.as_str()?)
         }
     }
 }
@@ -68,13 +73,17 @@ unsafe extern "C" fn get_controller_service_callback(
     version: MinifiStringView,
 ) {
     unsafe {
-        let controller_service_helper = &mut *(controller_service_helper_ptr as *mut ControllerServiceHelper);
+        let controller_service_helper =
+            &mut *(controller_service_helper_ptr as *mut ControllerServiceHelper);
 
         if controller_ptr.is_null() {
             return;
         }
 
-        if !controller_service_helper.is_valid(&group_name, &class_name, &version).unwrap_or(false) {
+        if !controller_service_helper
+            .is_valid(&group_name, &class_name, &version)
+            .unwrap_or(false)
+        {
             return;
         }
 
@@ -142,7 +151,8 @@ impl<'a> ProcessContext for CffiProcessContext<'a> {
                             .as_ref()
                             .expect("C returned a null pointer")
                     };
-                    Ok(Some(foo_ref)) },
+                    Ok(Some(foo_ref))
+                }
                 None => Ok(None),
             }
         } else {

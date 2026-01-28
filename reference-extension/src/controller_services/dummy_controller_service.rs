@@ -1,18 +1,19 @@
 mod properties;
 
-use minifi_native::{ControllerService, ControllerServiceContext, DefaultLogger, LogLevel, Logger, MinifiError};
 use crate::controller_services::dummy_controller_service::properties::DATA;
-
+use minifi_native::{
+    ControllerService, ControllerServiceContext, DefaultLogger, LogLevel, Logger, MinifiError,
+};
 
 #[derive(Debug)]
 pub(crate) struct DummyControllerService {
     logger: DefaultLogger,
-    data: Option<String>
+    data: Option<String>,
 }
 
 impl ControllerService for DummyControllerService {
     fn new(logger: DefaultLogger) -> Self {
-        DummyControllerService{logger, data: None}
+        DummyControllerService { logger, data: None }
     }
 
     fn log(&self, log_level: LogLevel, message: &str) {
@@ -21,13 +22,15 @@ impl ControllerService for DummyControllerService {
 
     fn enable<P: ControllerServiceContext>(&mut self, context: &P) -> Result<(), MinifiError> {
         self.data = context.get_property(&DATA)?;
-        self.logger.info(format!("DummyControllerService::enable {:?}", self).as_str());
+        self.logger
+            .info(format!("DummyControllerService::enable {:?}", self).as_str());
 
         Ok(())
     }
 
     fn disable(&mut self) {
-        self.logger.info(format!("DummyControllerService::disable {:?}", self).as_str());
+        self.logger
+            .info(format!("DummyControllerService::disable {:?}", self).as_str());
     }
 
     fn class_name() -> &'static str {
