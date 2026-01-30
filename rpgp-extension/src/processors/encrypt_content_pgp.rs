@@ -1,4 +1,7 @@
-use minifi_native::{DefaultLogger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, Schedulable, ConstTriggerable, MetricsProvider};
+use minifi_native::{
+    ConstTriggerable, DefaultLogger, MetricsProvider, MinifiError, OnTriggerResult, ProcessContext,
+    ProcessSession, Schedulable,
+};
 use pgp::composed::{ArmorOptions, MessageBuilder, SignedPublicKey};
 use pgp::types::StringToKey;
 
@@ -10,8 +13,8 @@ use crate::controller_services::pgp_public_key_service::PgpPublicKeyService;
 use crate::processors::encrypt_content_pgp::properties::{
     PASSPHRASE, PUBLIC_KEY_SEARCH, PUBLIC_KEY_SERVICE,
 };
-use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
 use crate::processors::encrypt_content_pgp::relationships::{FAILURE, SUCCESS};
+use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
 
 #[derive(Debug, Clone, Copy, PartialEq, Display, EnumString, VariantNames, IntoStaticStr)]
 #[strum(serialize_all = "UPPERCASE")]
@@ -49,38 +52,41 @@ impl EncryptContentPGP {
         }
 
         match self.file_encoding {
-            FileEncoding::Ascii => {
-                builder.to_armored_string(rand::thread_rng(), ArmorOptions::default()).map(|s| s.as_bytes().to_vec())
-            }
-            FileEncoding::Binary => {
-                builder.to_vec(rand::thread_rng())
-            }
+            FileEncoding::Ascii => builder
+                .to_armored_string(rand::thread_rng(), ArmorOptions::default())
+                .map(|s| s.as_bytes().to_vec()),
+            FileEncoding::Binary => builder.to_vec(rand::thread_rng()),
         }
     }
 }
 
 impl Schedulable for EncryptContentPGP {
-    fn schedule<P: ProcessContext>(context: &P, _logger: &DefaultLogger) -> Result<Self, MinifiError>
+    fn schedule<P: ProcessContext>(
+        context: &P,
+        _logger: &DefaultLogger,
+    ) -> Result<Self, MinifiError>
     where
-        Self: Sized
+        Self: Sized,
     {
         let file_encoding = context
             .get_property(&properties::FILE_ENCODING, None)?
             .expect("required property")
             .parse::<FileEncoding>()?;
 
-        Ok(EncryptContentPGP {
-            file_encoding,
-        })
-
+        Ok(EncryptContentPGP { file_encoding })
     }
 }
 
 impl ConstTriggerable for EncryptContentPGP {
-    fn trigger<PC, PS>(&self, context: &mut PC, session: &mut PS, _logger: &DefaultLogger) -> Result<OnTriggerResult, MinifiError>
+    fn trigger<PC, PS>(
+        &self,
+        context: &mut PC,
+        session: &mut PS,
+        _logger: &DefaultLogger,
+    ) -> Result<OnTriggerResult, MinifiError>
     where
         PC: ProcessContext,
-        PS: ProcessSession<FlowFile=PC::FlowFile>
+        PS: ProcessSession<FlowFile = PC::FlowFile>,
     {
         if let Some(mut flow_file) = session.get() {
             let public_key = if let (Some(pub_key_search), Some(public_key_service)) = (
@@ -96,7 +102,9 @@ impl ConstTriggerable for EncryptContentPGP {
             if public_key.is_none() && password.is_none() {
                 session.transfer(flow_file, FAILURE.name);
             } else if let Some(content) = session.read(&flow_file) {
-                if let Ok(encrypted_content) = self.encrypt_message(content, public_key, password.as_deref()) {
+                if let Ok(encrypted_content) =
+                    self.encrypt_message(content, public_key, password.as_deref())
+                {
                     session.write(&mut flow_file, &encrypted_content);
                     session.transfer(flow_file, SUCCESS.name);
                 } else {

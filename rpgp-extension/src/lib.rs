@@ -1,5 +1,5 @@
-mod processors;
 mod controller_services;
+mod processors;
 
 #[cfg(not(test))]
 minifi_native::declare_minifi_extension!(processors: [

@@ -1,4 +1,4 @@
-use super::{PgpPublicKeyService};
+use super::PgpPublicKeyService;
 use super::properties::*;
 use minifi_native::{
     ControllerService, ControllerServiceDefinition, RegisterableControllerService,
