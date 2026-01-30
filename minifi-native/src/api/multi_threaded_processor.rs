@@ -1,10 +1,11 @@
-use crate::{Concurrent, RawMultiThreadedTrigger, DefaultLogger, DynProcessorDefinition, LogLevel, Logger, MinifiError, ConstTriggerable, Schedulable, OnTriggerResult, ProcessContext, ProcessSession, RawProcessor, RegisterableProcessor};
+use crate::{Concurrent, RawMultiThreadedTrigger, DefaultLogger, DynProcessorDefinition, LogLevel, Logger, MinifiError, ConstTriggerable, Schedulable, OnTriggerResult, ProcessContext, ProcessSession, RawProcessor, RawRegisterableProcessor};
 use crate::api::processor::HasProcessorDefinition;
+use crate::api::processor_traits::MetricsProvider;
 
 #[derive(Debug)]
 pub struct MultiThreadedProcessor<Implementation>
 where
-    Implementation: Schedulable + ConstTriggerable + HasProcessorDefinition,
+    Implementation: Schedulable + ConstTriggerable + HasProcessorDefinition + MetricsProvider
 {
     logger: DefaultLogger,
     scheduled_impl: Option<Implementation>,
@@ -12,7 +13,7 @@ where
 
 impl<Implementation> RawProcessor for MultiThreadedProcessor<Implementation>
 where
-    Implementation: Schedulable + ConstTriggerable + HasProcessorDefinition,
+    Implementation: Schedulable + ConstTriggerable + HasProcessorDefinition + MetricsProvider
 {
     type Threading = Concurrent;
 
@@ -31,11 +32,23 @@ where
         self.scheduled_impl = Some(Implementation::schedule(context, &self.logger)?);
         Ok(())
     }
+
+    fn on_unschedule(&mut self) {
+        if let Some(ref mut scheduled_impl) = self.scheduled_impl {
+            scheduled_impl.unschedule()
+        } else {
+            panic!("unscheduling not scheduled processor");
+        }
+    }
+
+    fn calculate_metrics(&self) -> Vec<(String, f64)> {
+        vec![]
+    }
 }
 
 impl<Implementation> RawMultiThreadedTrigger for MultiThreadedProcessor<Implementation>
 where
-    Implementation: Schedulable + ConstTriggerable + HasProcessorDefinition,
+    Implementation: Schedulable + ConstTriggerable + HasProcessorDefinition + MetricsProvider
 {
     fn on_trigger<PC, PS>(
         &self,
@@ -56,9 +69,9 @@ where
     }
 }
 
-impl<Implementation> RegisterableProcessor for MultiThreadedProcessor<Implementation>
+impl<Implementation> RawRegisterableProcessor for MultiThreadedProcessor<Implementation>
 where
-    Implementation: Schedulable + ConstTriggerable + HasProcessorDefinition,
+    Implementation: Schedulable + ConstTriggerable + HasProcessorDefinition + MetricsProvider,
 {
     fn get_definition() -> Box<dyn DynProcessorDefinition> {
         Implementation::get_definition()

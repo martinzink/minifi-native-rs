@@ -1,4 +1,3 @@
-use std::path::PathBuf;
 use minifi_native::MinifiError::{ControllerServiceError};
 use minifi_native::{ControllerService, MockControllerServiceContext, MockLogger};
 use crate::test_utils::get_test_key_path;

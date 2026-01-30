@@ -1,7 +1,4 @@
-use minifi_native::{
-    RawMultiThreadedTrigger, DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult,
-    ProcessContext, ProcessSession, RawProcessor,
-};
+use minifi_native::{DefaultLogger, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, MutTriggerable, Schedulable, MetricsProvider};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
@@ -60,27 +57,16 @@ impl PutFileUnixPermissions {
 }
 
 #[derive(Debug)]
-struct ScheduledMembers {
+pub(crate) struct PutFile {
     conflict_resolution_strategy: ConflictResolutionStrategy,
     try_make_dirs: bool,
     maximum_file_count: Option<u64>,
     unix_permissions: PutFileUnixPermissions,
 }
 
-#[derive(Debug)]
-pub(crate) struct PutFile {
-    logger: DefaultLogger,
-    scheduled_members: Option<ScheduledMembers>,
-}
-
 impl PutFile {
     pub(crate) fn directory_is_full(&self, p0: &Path) -> bool {
-        let put_file = self
-            .scheduled_members
-            .as_ref()
-            .expect("on_schedule should create GetFileImpl");
-
-        if let Some(max_file_count) = put_file.maximum_file_count
+        if let Some(max_file_count) = self.maximum_file_count
             && let Some(parent) = p0.parent()
         {
             parent.exists() && WalkDir::new(parent).into_iter().count() >= max_file_count as usize
@@ -109,15 +95,10 @@ impl PutFile {
     }
 
     fn prepare_destination(&self, destination: &Path) -> std::io::Result<()> {
-        let put_file = self
-            .scheduled_members
-            .as_ref()
-            .expect("on_schedule should create GetFileImpl");
-
         if let Some(parent) = destination.parent() {
-            if put_file.try_make_dirs {
+            if self.try_make_dirs {
                 std::fs::create_dir_all(parent)?;
-                put_file
+                self
                     .unix_permissions
                     .set_directory_permissions(parent)?;
             }
@@ -128,6 +109,7 @@ impl PutFile {
     fn put_file<C, S>(
         &self,
         session: &mut S,
+        logger: &DefaultLogger,
         destination: &Path,
         ff: &S::FlowFile,
     ) -> Result<(), MinifiError>
@@ -135,24 +117,19 @@ impl PutFile {
         C: ProcessContext,
         S: ProcessSession<FlowFile = C::FlowFile>,
     {
-        let put_file = self
-            .scheduled_members
-            .as_ref()
-            .expect("on_schedule should create GetFileImpl");
-
         match self.prepare_destination(destination) {
             Ok(_) => {}
             Err(err) => {
-                self.logger
+                logger
                     .warn(format!("Failed to prepare destination due to {:?}", err).as_str());
             }
         }
         let mut file = std::fs::File::create(destination)
             .map_err(|e| MinifiError::TriggerError(e.to_string()))?;
-        match put_file.unix_permissions.set_file_permissions(destination) {
+        match self.unix_permissions.set_file_permissions(destination) {
             Ok(_) => {}
             Err(err) => {
-                self.logger
+                logger
                     .warn(format!("Failed to set file permissions due to {:?}", err).as_str());
             }
         }
@@ -193,22 +170,8 @@ impl PutFile {
     }
 }
 
-impl RawProcessor for PutFile {
-    type Threading = minifi_native::Concurrent;
-    fn new(logger: DefaultLogger) -> Self {
-        Self {
-            logger,
-            scheduled_members: None,
-        }
-    }
-
-    fn log(&self, log_level: LogLevel, message: &str) {
-        self.logger.log(log_level, message);
-    }
-
-    fn on_schedule<P: ProcessContext>(&mut self, context: &P) -> Result<(), MinifiError> {
-        self.logger
-            .trace(format!("on_schedule: {:?}", self).as_str());
+impl Schedulable for PutFile {
+    fn schedule<P: ProcessContext>(context: &P, _logger: &DefaultLogger) -> Result<Self, MinifiError> {
         let conflict_resolution_strategy = context
             .get_property(&properties::CONFLICT_RESOLUTION, None)?
             .expect("required property")
@@ -220,54 +183,44 @@ impl RawProcessor for PutFile {
 
         let maximum_file_count = context.get_u64_property(&properties::MAX_FILE_COUNT, None)?;
 
-        let unix_permissions = PutFile::parse_unix_permissions(context)?;
+        let unix_permissions = Self::parse_unix_permissions(context)?;
 
-        self.scheduled_members = Some(ScheduledMembers {
+        Ok(PutFile {
             conflict_resolution_strategy,
             try_make_dirs,
             maximum_file_count,
             unix_permissions,
-        });
-        Ok(())
+        })
     }
 }
 
-impl RawMultiThreadedTrigger for PutFile {
-    fn on_trigger<C, S>(
-        &self,
-        context: &mut C,
-        session: &mut S,
-    ) -> Result<OnTriggerResult, MinifiError>
+impl MutTriggerable for PutFile {
+    fn trigger<PC, PS>(&mut self, context: &mut PC, session: &mut PS, logger: &DefaultLogger) -> Result<OnTriggerResult, MinifiError>
     where
-        C: ProcessContext,
-        S: ProcessSession<FlowFile = C::FlowFile>,
+        PC: ProcessContext,
+        PS: ProcessSession<FlowFile=PC::FlowFile>,
     {
-        let put_file = self
-            .scheduled_members
-            .as_ref()
-            .expect("on_schedule should create GetFileImpl");
-
-        self.logger
+        logger
             .trace(format!("on_trigger: {:?}", self).as_str());
         let Some(mut ff) = session.get() else {
             return Ok(OnTriggerResult::Yield);
         };
 
-        let Ok(destination_path) = Self::get_destination_path::<C, S>(context, session, &mut ff)
+        let Ok(destination_path) = Self::get_destination_path::<PC, PS>(context, session, &mut ff)
         else {
-            self.logger.warn("Invalid destination path");
+            logger.warn("Invalid destination path");
             session.transfer(ff, relationships::FAILURE.name);
             return Ok(OnTriggerResult::Yield);
         };
 
         if self.directory_is_full(&destination_path) {
-            self.logger.warn("Directory is full");
+            logger.warn("Directory is full");
             session.transfer(ff, relationships::FAILURE.name);
             return Ok(OnTriggerResult::Yield);
         }
 
         if destination_path.exists() {
-            match put_file.conflict_resolution_strategy {
+            match self.conflict_resolution_strategy {
                 ConflictResolutionStrategy::Fail => {
                     session.transfer(ff, relationships::FAILURE.name);
                     return Ok(OnTriggerResult::Ok);
@@ -282,13 +235,13 @@ impl RawMultiThreadedTrigger for PutFile {
             }
         }
 
-        match self.put_file::<C, S>(session, &destination_path, &ff) {
+        match self.put_file::<PC, PS>(session, logger, &destination_path, &ff) {
             Ok(_) => {
                 session.transfer(ff, relationships::SUCCESS.name);
                 Ok(OnTriggerResult::Ok)
             }
             Err(e) => {
-                self.logger
+                logger
                     .warn(format!("Failed to put file due to {:?}", e).as_str());
                 session.transfer(ff, relationships::FAILURE.name);
                 Ok(OnTriggerResult::Ok)
@@ -296,6 +249,8 @@ impl RawMultiThreadedTrigger for PutFile {
         }
     }
 }
+
+impl MetricsProvider for PutFile {}
 
 #[cfg(not(test))]
 pub(crate) mod processor_definition;

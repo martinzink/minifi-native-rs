@@ -259,6 +259,6 @@ where
     }
 }
 
-pub trait RegisterableProcessor {
+pub trait RawRegisterableProcessor {
     fn get_definition() -> Box<dyn DynProcessorDefinition>;
 }

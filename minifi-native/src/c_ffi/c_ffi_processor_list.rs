@@ -1,4 +1,4 @@
-use crate::RegisterableProcessor;
+use crate::RawRegisterableProcessor;
 use crate::c_ffi::c_ffi_processor_definition::DynProcessorDefinition;
 use minifi_native_sys::MinifiProcessorClassDefinition;
 
@@ -15,7 +15,7 @@ impl CffiProcessorList {
         }
     }
 
-    pub fn add<T: RegisterableProcessor>(&mut self) {
+    pub fn add<T: RawRegisterableProcessor>(&mut self) {
         self.add_processor_definition(T::get_definition())
     }
 

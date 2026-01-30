@@ -1,7 +1,5 @@
 use super::*;
-use minifi_native::{
-    ProcessorDefinition, ProcessorInputRequirement, Property, RegisterableProcessor,
-};
+use minifi_native::{HasProcessorDefinition, ProcessorDefinition, ProcessorInputRequirement, Property, SingleThreadedProcessor};
 
 #[cfg(windows)]
 fn get_properties() -> &'static [Property] {
@@ -25,9 +23,9 @@ fn get_properties() -> &'static [Property] {
     ]
 }
 
-impl RegisterableProcessor for PutFile {
+impl HasProcessorDefinition for PutFile {
     fn get_definition() -> Box<dyn minifi_native::DynProcessorDefinition> {
-        Box::new(ProcessorDefinition::<PutFile>::new(
+        Box::new(ProcessorDefinition::<SingleThreadedProcessor<PutFile>>::new(
             "rs::PutFileRs",
             "Writes the contents of a FlowFile to the local file system.",
             ProcessorInputRequirement::Required,

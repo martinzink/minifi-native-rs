@@ -1,4 +1,4 @@
-use minifi_native::{Concurrent, RawMultiThreadedTrigger, DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, RawProcessor, Schedulable, ConstTriggerable};
+use minifi_native::{DefaultLogger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, Schedulable, ConstTriggerable, MetricsProvider};
 use rand::Rng;
 use rand::distr::Alphanumeric;
 use std::cmp::PartialEq;
@@ -25,7 +25,7 @@ pub(crate) struct GenerateFlowFile {
 }
 
 impl Schedulable for GenerateFlowFile {
-    fn schedule<P: ProcessContext>(context: &P, logger: &DefaultLogger) -> Result<Self, MinifiError>
+    fn schedule<P: ProcessContext>(context: &P, _logger: &DefaultLogger) -> Result<Self, MinifiError>
     where
         Self: Sized
     {
@@ -121,7 +121,7 @@ impl GenerateFlowFile {
 }
 
 impl ConstTriggerable for GenerateFlowFile {
-    fn trigger<PC, PS>(&self, context: &mut PC, session: &mut PS, logger: &DefaultLogger) -> Result<OnTriggerResult, MinifiError>
+    fn trigger<PC, PS>(&self, context: &mut PC, session: &mut PS, _logger: &DefaultLogger) -> Result<OnTriggerResult, MinifiError>
     where
         PC: ProcessContext,
         PS: ProcessSession<FlowFile=PC::FlowFile>
@@ -154,6 +154,8 @@ impl ConstTriggerable for GenerateFlowFile {
         Ok(OnTriggerResult::Ok)
     }
 }
+
+impl MetricsProvider for GenerateFlowFile{}
 
 #[cfg(not(test))]
 pub(crate) mod processor_definition;

@@ -1,7 +1,4 @@
-use minifi_native::{
-    Concurrent, RawMultiThreadedTrigger, DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult,
-    ProcessContext, ProcessSession, RawProcessor,
-};
+use minifi_native::{DefaultLogger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, Schedulable, ConstTriggerable, MetricsProvider};
 use pgp::composed::{ArmorOptions, MessageBuilder, SignedPublicKey};
 use pgp::types::StringToKey;
 
@@ -24,11 +21,11 @@ enum FileEncoding {
 }
 
 #[derive(Debug)]
-struct ScheduledMembers {
+pub(crate) struct EncryptContentPGP {
     file_encoding: FileEncoding,
 }
 
-impl ScheduledMembers {
+impl EncryptContentPGP {
     fn encrypt_message(
         &self,
         message: Vec<u8>,
@@ -60,12 +57,31 @@ impl ScheduledMembers {
             }
         }
     }
+}
 
-    fn on_trigger<P: ProcessContext, S: ProcessSession<FlowFile = P::FlowFile>>(
-        &self,
-        context: &mut P,
-        session: &mut S,
-    ) -> Result<OnTriggerResult, MinifiError> {
+impl Schedulable for EncryptContentPGP {
+    fn schedule<P: ProcessContext>(context: &P, _logger: &DefaultLogger) -> Result<Self, MinifiError>
+    where
+        Self: Sized
+    {
+        let file_encoding = context
+            .get_property(&properties::FILE_ENCODING, None)?
+            .expect("required property")
+            .parse::<FileEncoding>()?;
+
+        Ok(EncryptContentPGP {
+            file_encoding,
+        })
+
+    }
+}
+
+impl ConstTriggerable for EncryptContentPGP {
+    fn trigger<PC, PS>(&self, context: &mut PC, session: &mut PS, _logger: &DefaultLogger) -> Result<OnTriggerResult, MinifiError>
+    where
+        PC: ProcessContext,
+        PS: ProcessSession<FlowFile=PC::FlowFile>
+    {
         if let Some(mut flow_file) = session.get() {
             let public_key = if let (Some(pub_key_search), Some(public_key_service)) = (
                 context.get_property(&PUBLIC_KEY_SEARCH, Some(&flow_file))?,
@@ -95,59 +111,7 @@ impl ScheduledMembers {
     }
 }
 
-#[derive(Debug)]
-pub(crate) struct EncryptContentPGP {
-    logger: DefaultLogger,
-    scheduled_members: Option<ScheduledMembers>,
-}
-
-impl RawProcessor for EncryptContentPGP {
-    type Threading = Concurrent;
-
-    fn new(logger: DefaultLogger) -> Self {
-        Self {
-            logger,
-            scheduled_members: None,
-        }
-    }
-
-    fn log(&self, log_level: LogLevel, message: &str) {
-        self.logger.log(log_level, message);
-    }
-
-    fn on_schedule<P: ProcessContext>(&mut self, context: &P) -> Result<(), MinifiError> {
-        let file_encoding = context
-            .get_property(&properties::FILE_ENCODING, None)?
-            .expect("required property")
-            .parse::<FileEncoding>()?;
-
-        self.scheduled_members = Some(ScheduledMembers {
-            file_encoding,
-        });
-
-        Ok(())
-    }
-}
-
-impl RawMultiThreadedTrigger for EncryptContentPGP {
-    fn on_trigger<PC, PS>(
-        &self,
-        context: &mut PC,
-        session: &mut PS,
-    ) -> Result<OnTriggerResult, MinifiError>
-    where
-        PC: ProcessContext,
-        PS: ProcessSession<FlowFile = PC::FlowFile>,
-    {
-        if let Some(ref s) = self.scheduled_members {
-            s.on_trigger(context, session)
-        } else {
-            Err(MinifiError::TriggerError(
-                "The processor hasn't been scheduled yet".to_string(),
-            ))
-        }
-    }
-}
+impl MetricsProvider for EncryptContentPGP {}
 
 #[cfg(test)]
 mod tests;

@@ -1,6 +1,6 @@
 use super::properties::*;
 use super::{relationships, GenerateFlowFile};
-use minifi_native::{MultiThreadedProcessor, ProcessorDefinition, ProcessorInputRequirement, HasProcessorDefinition, RegisterableProcessor};
+use minifi_native::{MultiThreadedProcessor, ProcessorDefinition, ProcessorInputRequirement, HasProcessorDefinition };
 
 impl HasProcessorDefinition for GenerateFlowFile {
     fn get_definition() -> Box<dyn minifi_native::DynProcessorDefinition> {

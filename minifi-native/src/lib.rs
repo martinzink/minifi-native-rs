@@ -6,12 +6,13 @@ pub use api::{
     Concurrent, RawMultiThreadedTrigger, ControllerService, ControllerServiceContext, DefaultLogger,
     Exclusive, RawSingleThreadedTrigger, FlowFile, LogLevel, Logger, MinifiError, OnTriggerResult,
     OutputAttribute, ProcessContext, ProcessSession, RawProcessor, ProcessorInputRequirement,
-    Property, Relationship, StandardPropertyValidator, Schedulable, ConstTriggerable, MutTriggerable, MultiThreadedProcessor, HasProcessorDefinition
+    Property, Relationship, StandardPropertyValidator, Schedulable, ConstTriggerable, MutTriggerable, MetricsProvider, MultiThreadedProcessor,
+    HasProcessorDefinition, SingleThreadedProcessor,
 };
 pub use c_ffi::{
     CffiControllerServiceList, CffiLogger, CffiProcessorList, ControllerServiceDefinition,
     DynControllerServiceDefinition, DynProcessorDefinition, ProcessorDefinition,
-    RegisterableControllerService, RegisterableProcessor, StaticStrAsMinifiCStr,
+    RegisterableControllerService, RawRegisterableProcessor, StaticStrAsMinifiCStr,
 };
 pub use mock::{
     MockControllerServiceContext, MockFlowFile, MockLogger, MockProcessContext, MockProcessSession,

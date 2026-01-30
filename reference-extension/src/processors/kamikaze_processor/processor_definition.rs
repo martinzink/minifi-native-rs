@@ -1,9 +1,9 @@
 use super::*;
-use minifi_native::{ProcessorDefinition, ProcessorInputRequirement, RegisterableProcessor};
+use minifi_native::{HasProcessorDefinition, MultiThreadedProcessor, ProcessorDefinition, ProcessorInputRequirement};
 
-impl RegisterableProcessor for KamikazeProcessor {
+impl HasProcessorDefinition for KamikazeProcessor {
     fn get_definition() -> Box<dyn minifi_native::DynProcessorDefinition> {
-        Box::new(ProcessorDefinition::<KamikazeProcessor>::new(
+        Box::new(ProcessorDefinition::<MultiThreadedProcessor<KamikazeProcessor>>::new(
             "rs::KamikazeProcessorRs",
             "This processor can fail or panic in on_trigger and on_schedule calls based on configuration. Only for testing purposes.",
             ProcessorInputRequirement::Allowed,

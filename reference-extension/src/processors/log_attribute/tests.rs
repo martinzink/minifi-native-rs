@@ -3,10 +3,7 @@ use minifi_native::{MockFlowFile, MockLogger, MockProcessContext, MockProcessSes
 
 #[test]
 fn schedule_succeeds_with_default_values() {
-    let mut processor = LogAttribute::new(MockLogger::new());
-    let context = MockProcessContext::new();
-
-    assert_eq!(processor.on_schedule(&context), Ok(()));
+    assert!(LogAttribute::schedule(&MockProcessContext::new(), &MockLogger::new()).is_ok());
 }
 
 fn tester(
@@ -15,24 +12,23 @@ fn tester(
     properties: Box<[(&str, &str)]>,
     expected_log_msg: String,
 ) {
-    let mut processor = LogAttribute::new(MockLogger::new());
+    let logger = MockLogger::new();
     let mut context = MockProcessContext::new();
     for (k, v) in properties {
         context.properties.insert(k.to_string(), v.to_string());
     }
 
-    processor
-        .on_schedule(&mut context)
-        .expect("The on_schedule should succeed");
+    let mut processor = LogAttribute::schedule(&context, &logger).unwrap();
+
     let mut session = MockProcessSession::new();
     for flow_file in input_flow_files {
         session.input_flow_files.push(flow_file);
     }
     processor
-        .on_trigger(&mut context, &mut session)
+        .trigger(&mut context, &mut session, &logger)
         .expect("The on_trigger should succeed");
 
-    let logs = processor.logger.logs.lock().unwrap();
+    let logs = logger.logs.lock().unwrap();
     assert_eq!(logs[1], (log_level, expected_log_msg));
 }
 

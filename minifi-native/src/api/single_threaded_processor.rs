@@ -1,10 +1,11 @@
-use crate::{RawMultiThreadedTrigger, DefaultLogger, DynProcessorDefinition, LogLevel, Logger, MinifiError, MutTriggerable, Schedulable, OnTriggerResult, ProcessContext, ProcessSession, RawProcessor, RegisterableProcessor, Exclusive, RawSingleThreadedTrigger};
+use crate::{DefaultLogger, DynProcessorDefinition, LogLevel, Logger, MinifiError, MutTriggerable, Schedulable, OnTriggerResult, ProcessContext, ProcessSession, RawProcessor, RawRegisterableProcessor, Exclusive, RawSingleThreadedTrigger};
 use crate::api::processor::HasProcessorDefinition;
+use crate::api::processor_traits::MetricsProvider;
 
 #[derive(Debug)]
 pub struct SingleThreadedProcessor<Implementation>
 where
-    Implementation: Schedulable + MutTriggerable + HasProcessorDefinition,
+    Implementation: Schedulable + MutTriggerable + HasProcessorDefinition + MetricsProvider,
 {
     logger: DefaultLogger,
     scheduled_impl: Option<Implementation>,
@@ -12,7 +13,7 @@ where
 
 impl<Implementation> RawProcessor for SingleThreadedProcessor<Implementation>
 where
-    Implementation: Schedulable + MutTriggerable + HasProcessorDefinition,
+    Implementation: Schedulable + MutTriggerable + HasProcessorDefinition + MetricsProvider,
 {
     type Threading = Exclusive;
 
@@ -31,11 +32,19 @@ where
         self.scheduled_impl = Some(Implementation::schedule(context, &self.logger)?);
         Ok(())
     }
+
+    fn on_unschedule(&mut self) {
+        if let Some(ref mut scheduled_impl) = self.scheduled_impl {
+            scheduled_impl.unschedule()
+        } else {
+            panic!("unscheduling not scheduled processor");
+        }
+    }
 }
 
 impl<Implementation> RawSingleThreadedTrigger for SingleThreadedProcessor<Implementation>
 where
-    Implementation: Schedulable + MutTriggerable + HasProcessorDefinition,
+    Implementation: Schedulable + MutTriggerable + HasProcessorDefinition + MetricsProvider
 {
     fn on_trigger<PC, PS>(
         &mut self,
@@ -56,9 +65,9 @@ where
     }
 }
 
-impl<Implementation> RegisterableProcessor for SingleThreadedProcessor<Implementation>
+impl<Implementation> RawRegisterableProcessor for SingleThreadedProcessor<Implementation>
 where
-    Implementation: Schedulable + MutTriggerable + HasProcessorDefinition,
+    Implementation: Schedulable + MutTriggerable + HasProcessorDefinition + MetricsProvider
 {
     fn get_definition() -> Box<dyn DynProcessorDefinition> {
         Implementation::get_definition()

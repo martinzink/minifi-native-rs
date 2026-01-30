@@ -1,10 +1,7 @@
 mod properties;
 mod relationships;
 
-use minifi_native::{
-    Concurrent, RawMultiThreadedTrigger, DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult,
-    ProcessContext, ProcessSession, RawProcessor,
-};
+use minifi_native::{DefaultLogger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, Schedulable, ConstTriggerable, MetricsProvider};
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
 
 #[derive(Debug, Clone, Copy, PartialEq, Display, EnumString, VariantNames, IntoStaticStr)]
@@ -16,31 +13,16 @@ enum KamikazeBehaviour {
 }
 
 #[derive(Debug)]
-struct ScheduledMembers {
+pub(crate) struct KamikazeProcessor {
     on_trigger_behaviour: KamikazeBehaviour,
     read_behaviour: Option<KamikazeBehaviour>,
 }
 
-#[derive(Debug)]
-pub(crate) struct KamikazeProcessor {
-    logger: DefaultLogger,
-    scheduled_members: Option<ScheduledMembers>,
-}
-
-impl RawProcessor for KamikazeProcessor {
-    type Threading = Concurrent;
-    fn new(logger: DefaultLogger) -> Self {
-        Self {
-            logger,
-            scheduled_members: None,
-        }
-    }
-
-    fn log(&self, log_level: LogLevel, message: &str) {
-        self.logger.log(log_level, message);
-    }
-
-    fn on_schedule<P: ProcessContext>(&mut self, context: &P) -> Result<(), MinifiError> {
+impl Schedulable for KamikazeProcessor {
+    fn schedule<P: ProcessContext>(context: &P, _logger: &DefaultLogger) -> Result<Self, MinifiError>
+    where
+        Self: Sized
+    {
         let on_trigger_behaviour = context
             .get_property(&properties::ON_TRIGGER_BEHAVIOUR, None)?
             .expect("required property")
@@ -57,11 +39,10 @@ impl RawProcessor for KamikazeProcessor {
         match on_schedule_behaviour {
             KamikazeBehaviour::ReturnErr => Err(MinifiError::UnknownError),
             KamikazeBehaviour::ReturnOk => {
-                self.scheduled_members = Some(ScheduledMembers {
+                Ok(KamikazeProcessor {
                     on_trigger_behaviour,
                     read_behaviour,
-                });
-                Ok(())
+                })
             }
             KamikazeBehaviour::Panic => {
                 panic!("KamikazeProcessor panic")
@@ -70,22 +51,13 @@ impl RawProcessor for KamikazeProcessor {
     }
 }
 
-impl RawMultiThreadedTrigger for KamikazeProcessor {
-    fn on_trigger<PC, PS>(
-        &self,
-        _context: &mut PC,
-        session: &mut PS,
-    ) -> Result<OnTriggerResult, MinifiError>
+impl ConstTriggerable for KamikazeProcessor {
+    fn trigger<PC, PS>(&self, _context: &mut PC, session: &mut PS, _logger: &DefaultLogger) -> Result<OnTriggerResult, MinifiError>
     where
         PC: ProcessContext,
-        PS: ProcessSession<FlowFile = PC::FlowFile>,
+        PS: ProcessSession<FlowFile=PC::FlowFile>
     {
-        let kamikaze_proc = self
-            .scheduled_members
-            .as_ref()
-            .expect("on_schedule should create GetFileImpl");
-
-        if let Some(read_behaviour) = kamikaze_proc.read_behaviour
+        if let Some(read_behaviour) = self.read_behaviour
             && let Some(flow_file) = session.get()
         {
             let _read = session.read_in_batches(&flow_file, 1, |_data| match read_behaviour {
@@ -99,15 +71,16 @@ impl RawMultiThreadedTrigger for KamikazeProcessor {
             session.transfer(flow_file, relationships::SUCCESS.name);
         }
 
-        match kamikaze_proc.on_trigger_behaviour {
+        match self.on_trigger_behaviour {
             KamikazeBehaviour::ReturnErr => Err(MinifiError::UnknownError),
             KamikazeBehaviour::ReturnOk => Ok(OnTriggerResult::Ok),
             KamikazeBehaviour::Panic => {
                 panic!("KamikazeProcessor panic")
             }
-        }
-    }
+        }    }
 }
+
+impl MetricsProvider for KamikazeProcessor {}
 
 #[cfg(not(test))]
 pub(crate) mod processor_definition;

@@ -4,15 +4,12 @@ use minifi_native::{MockFlowFile, MockLogger, MockProcessContext, MockProcessSes
 
 #[test]
 fn schedule_succeeds_with_default_values() {
-    let mut processor = PutFile::new(MockLogger::new());
-    let context = MockProcessContext::new();
+    assert!(PutFile::schedule(&MockProcessContext::new(), &MockLogger::new()).is_ok());
 
-    assert_eq!(processor.on_schedule(&context), Ok(()));
 }
 
 #[test]
 fn simple_put_file_test() {
-    let mut put_file = PutFile::new(MockLogger::new());
     let mut context = MockProcessContext::new();
     let temp_dir = tempfile::tempdir().expect("temp dir is required for testing PutFile");
     let put_file_dir = temp_dir.path().join("subdir");
@@ -21,7 +18,7 @@ fn simple_put_file_test() {
         "Directory".to_string(),
         put_file_dir.to_str().unwrap().to_string(),
     );
-    assert_eq!(put_file.on_schedule(&context), Ok(()));
+    let mut put_file = PutFile::schedule(&context, &MockLogger::new()).expect("Should succeed");
 
     let mut session = MockProcessSession::new();
     let mut flow_file = MockFlowFile::new();
@@ -32,7 +29,7 @@ fn simple_put_file_test() {
     session.input_flow_files.push(flow_file);
 
     assert_eq!(
-        put_file.on_trigger(&mut context, &mut session),
+        put_file.trigger(&mut context, &mut session, &MockLogger::new()),
         Ok(OnTriggerResult::Ok)
     );
 
@@ -46,7 +43,6 @@ fn simple_put_file_test() {
 
 #[test]
 fn put_file_without_create_dirs() {
-    let mut put_file = PutFile::new(MockLogger::new());
     let mut context = MockProcessContext::new();
     let temp_dir = tempfile::tempdir().expect("temp dir is required for testing PutFile");
 
@@ -62,7 +58,7 @@ fn put_file_without_create_dirs() {
         "false".to_string(),
     );
 
-    assert_eq!(put_file.on_schedule(&context), Ok(()));
+    let mut put_file = PutFile::schedule(&context, &MockLogger::new()).expect("Should succeed");
 
     let mut session = MockProcessSession::new();
     let mut flow_file = MockFlowFile::new();
@@ -73,7 +69,7 @@ fn put_file_without_create_dirs() {
     session.input_flow_files.push(flow_file);
 
     assert_eq!(
-        put_file.on_trigger(&mut context, &mut session),
+        put_file.trigger(&mut context, &mut session, &MockLogger::new()),
         Ok(OnTriggerResult::Ok)
     );
 
@@ -88,7 +84,6 @@ fn put_file_without_create_dirs() {
 #[test]
 fn put_file_test_permissions() {
     use std::os::unix::fs::PermissionsExt;
-    let mut put_file = PutFile::new(MockLogger::new());
     let mut context = MockProcessContext::new();
     let temp_dir = tempfile::tempdir().expect("temp dir is required for testing PutFile");
     let put_file_dir = temp_dir.path().join("subdir");
@@ -105,7 +100,7 @@ fn put_file_test_permissions() {
     context
         .properties
         .insert("Permissions".to_string(), "0777".to_string());
-    assert_eq!(put_file.on_schedule(&context), Ok(()));
+    let mut put_file = PutFile::schedule(&context, &MockLogger::new()).expect("Should succeed");
 
     let mut session = MockProcessSession::new();
     let mut flow_file = MockFlowFile::new();
@@ -116,7 +111,7 @@ fn put_file_test_permissions() {
     session.input_flow_files.push(flow_file);
 
     assert_eq!(
-        put_file.on_trigger(&mut context, &mut session),
+        put_file.trigger(&mut context, &mut session, &MockLogger::new()),
         Ok(OnTriggerResult::Ok)
     );
 

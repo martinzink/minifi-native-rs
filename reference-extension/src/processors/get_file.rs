@@ -5,10 +5,7 @@ use crate::processors::get_file::properties::{
     BATCH_SIZE, DIRECTORY, IGNORE_HIDDEN_FILES, KEEP_SOURCE_FILE, MAX_AGE, MAX_SIZE, MIN_AGE,
     MIN_SIZE, RECURSE,
 };
-use minifi_native::{
-    Concurrent, RawMultiThreadedTrigger, DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult,
-    ProcessContext, ProcessSession, RawProcessor,
-};
+use minifi_native::{DefaultLogger, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, Schedulable, ConstTriggerable, MetricsProvider};
 use std::collections::VecDeque;
 use std::error;
 use std::path::PathBuf;
@@ -41,7 +38,7 @@ impl DirectoryListing {
 }
 
 #[derive(Debug)]
-struct ScheduledMembers {
+pub(crate) struct GetFile {
     recursive: bool,
     keep_source_file: bool,
     input_directory: PathBuf,
@@ -56,28 +53,14 @@ struct ScheduledMembers {
     metrics: Mutex<GetFileMetrics>,
 }
 
-#[derive(Debug)]
-pub(crate) struct GetFile {
-    logger: DefaultLogger,
-    scheduled_members: Option<ScheduledMembers>,
-}
-
 impl GetFile {
     fn is_listing_empty(&self) -> bool {
-        let get_file = self
-            .scheduled_members
-            .as_ref()
-            .expect("on_schedule should create GetFileImpl");
-        let directory_listing = get_file.directory_listing.lock().unwrap();
+        let directory_listing = self.directory_listing.lock().unwrap();
         directory_listing.paths.is_empty()
     }
 
     fn poll_listing(&self, batch_size: u64) -> VecDeque<PathBuf> {
-        let get_file = self
-            .scheduled_members
-            .as_ref()
-            .expect("on_schedule should create GetFileImpl");
-        let mut directory_listings = get_file.directory_listing.lock().unwrap();
+        let mut directory_listings = self.directory_listing.lock().unwrap();
 
         let mut res = VecDeque::new();
         for _ in 0..batch_size {
@@ -92,31 +75,23 @@ impl GetFile {
     }
 
     fn should_poll(&self) -> bool {
-        let get_file = self
-            .scheduled_members
-            .as_ref()
-            .expect("on_schedule should create GetFileImpl");
-        if get_file.poll_interval.is_none() {
+        if self.poll_interval.is_none() {
             return true;
         }
-        let directory_listings = get_file.directory_listing.lock().unwrap();
+        let directory_listings = self.directory_listing.lock().unwrap();
 
         if directory_listings.last_polling_time.is_none() {
             return true;
         }
         Instant::now() - directory_listings.last_polling_time.unwrap()
-            > get_file.poll_interval.unwrap()
+            > self.poll_interval.unwrap()
     }
 
     fn perform_listing(&self) {
-        let get_file = self
-            .scheduled_members
-            .as_ref()
-            .expect("on_schedule should create GetFileImpl");
-        let mut directory_listings = get_file.directory_listing.lock().unwrap();
-        let mut walker = WalkDir::new(&get_file.input_directory);
+        let mut directory_listings = self.directory_listing.lock().unwrap();
+        let mut walker = WalkDir::new(&self.input_directory);
 
-        if !get_file.recursive {
+        if !self.recursive {
             walker = walker.max_depth(1);
         }
 
@@ -130,18 +105,13 @@ impl GetFile {
                 bytes_added += file_size;
             }
         }
-        let mut metrics = get_file.metrics.lock().unwrap();
+        let mut metrics = self.metrics.lock().unwrap();
         metrics.accepted_files += files_added;
         metrics.input_bytes += bytes_added;
         directory_listings.last_polling_time = Some(Instant::now());
     }
 
     fn entry_matches_criteria(&self, dir_entry: &DirEntry) -> Result<bool, Box<dyn error::Error>> {
-        let get_file = self
-            .scheduled_members
-            .as_ref()
-            .expect("on_schedule should create GetFileImpl");
-
         let metadata = dir_entry.metadata()?;
         if !metadata.is_file() {
             return Ok(false);
@@ -149,16 +119,16 @@ impl GetFile {
         let age = SystemTime::now().duration_since(metadata.modified()?)?;
         let size = metadata.len();
 
-        if get_file.min_age.is_some() && age < get_file.min_age.unwrap() {
+        if self.min_age.is_some() && age < self.min_age.unwrap() {
             return Ok(false);
         }
-        if get_file.max_age.is_some() && age > get_file.max_age.unwrap() {
+        if self.max_age.is_some() && age > self.max_age.unwrap() {
             return Ok(false);
         }
-        if get_file.min_size.is_some() && size < get_file.min_size.unwrap() {
+        if self.min_size.is_some() && size < self.min_size.unwrap() {
             return Ok(false);
         }
-        if get_file.max_size.is_some() && size > get_file.max_size.unwrap() {
+        if self.max_size.is_some() && size > self.max_size.unwrap() {
             return Ok(false);
         }
 
@@ -169,23 +139,18 @@ impl GetFile {
                 .map_or(false, |f| f.starts_with('.'))
         }
 
-        if get_file.ignore_hidden_files && is_hidden(dir_entry.path().to_path_buf()) {
+        if self.ignore_hidden_files && is_hidden(dir_entry.path().to_path_buf()) {
             return Ok(false);
         }
 
         Ok(true)
     }
 
-    fn get_single_file<PS>(&self, session: &mut PS, path: PathBuf)
+    fn get_single_file<PS>(&self, session: &mut PS, logger: &DefaultLogger, path: PathBuf)
     where
         PS: ProcessSession,
     {
-        let get_file = self
-            .scheduled_members
-            .as_ref()
-            .expect("on_schedule should create GetFileImpl");
-
-        self.logger
+        logger
             .info(format!("GetFile process {:?}", &path).as_str());
         let mut ff = session
             .create()
@@ -194,7 +159,7 @@ impl GetFile {
         if let Some(file_name) = path.file_name().and_then(|f| f.to_str()) {
             session.set_attribute(&mut ff, FILENAME_OUTPUT_ATTRIBUTE.name, file_name);
         } else {
-            self.logger
+            logger
                 .warn(format!("Couldnt get filename of {:?}", path).as_str());
         }
         session.set_attribute(
@@ -206,11 +171,11 @@ impl GetFile {
 
         let contents = std::fs::read_to_string(&path).expect("Failed to read file");
         session.write(&mut ff, contents.as_bytes()); // TODO(return value)
-        if !get_file.keep_source_file {
+        if !self.keep_source_file {
             match std::fs::remove_file(&path) {
                 Ok(_) => {}
                 Err(err) => {
-                    self.logger
+                    logger
                         .warn(format!("Failed to remove source file {:?}", err).as_str());
                 }
             }
@@ -219,23 +184,10 @@ impl GetFile {
     }
 }
 
-impl RawProcessor for GetFile {
-    type Threading = Concurrent;
-
-    fn new(logger: DefaultLogger) -> Self {
-        Self {
-            logger,
-            scheduled_members: None,
-        }
-    }
-
-    fn log(&self, log_level: LogLevel, message: &str) {
-        self.logger.log(log_level, message);
-    }
-
-    fn on_schedule<P>(&mut self, context: &P) -> Result<(), MinifiError>
+impl Schedulable for GetFile {
+    fn schedule<P: ProcessContext>(context: &P, _logger: &DefaultLogger) -> Result<Self, MinifiError>
     where
-        P: ProcessContext,
+        Self: Sized
     {
         let input_directory: PathBuf = context
             .get_property(&DIRECTORY, None)?
@@ -268,7 +220,7 @@ impl RawProcessor for GetFile {
             .get_bool_property(&IGNORE_HIDDEN_FILES, None)?
             .expect("required property");
 
-        self.scheduled_members = Some(ScheduledMembers {
+        Ok(GetFile {
             recursive,
             keep_source_file,
             input_directory,
@@ -284,49 +236,26 @@ impl RawProcessor for GetFile {
                 accepted_files: 0,
                 input_bytes: 0,
             }),
-        });
-
-        Ok(())
-    }
-
-    fn calculate_metrics(&self) -> Vec<(String, f64)> {
-        let get_file = self
-            .scheduled_members
-            .as_ref()
-            .expect("on_schedule should create GetFileImpl");
-        let metrics = get_file.metrics.lock().unwrap();
-        vec![
-            ("accepted_files".to_string(), metrics.accepted_files as f64),
-            ("input_bytes".to_string(), metrics.input_bytes as f64),
-        ]
+        })
     }
 }
 
-impl RawMultiThreadedTrigger for GetFile {
-    fn on_trigger<P, S>(
-        &self,
-        _context: &mut P,
-        session: &mut S,
-    ) -> Result<OnTriggerResult, MinifiError>
+impl ConstTriggerable for GetFile {
+    fn trigger<PC, PS>(&self, _context: &mut PC, session: &mut PS, logger: &DefaultLogger) -> Result<OnTriggerResult, MinifiError>
     where
-        P: ProcessContext,
-        S: ProcessSession,
+        PC: ProcessContext,
+        PS: ProcessSession<FlowFile=PC::FlowFile>
     {
-        let get_file = self
-            .scheduled_members
-            .as_ref()
-            .expect("on_schedule should create GetFileImpl");
-
-        self.logger
+        logger
             .trace(format!("on_trigger: {:?}", self).as_str());
         {
             let is_dir_empty_before_poll = self.is_listing_empty();
-            self.logger.debug(
+            logger.debug(
                 format!(
                     "Listing is {} before polling directory",
                     is_dir_empty_before_poll
                 )
-                .as_str(),
+                    .as_str(),
             );
             if is_dir_empty_before_poll {
                 if self.should_poll() {
@@ -336,24 +265,35 @@ impl RawMultiThreadedTrigger for GetFile {
         }
         {
             let is_dir_empty_after_poll = self.is_listing_empty();
-            self.logger.debug(
+            logger.debug(
                 format!(
                     "Listing is {} after polling directory",
                     is_dir_empty_after_poll
                 )
-                .as_str(),
+                    .as_str(),
             );
             if is_dir_empty_after_poll {
                 return Ok(OnTriggerResult::Ok);
             }
         }
 
-        let files = self.poll_listing(get_file.batch_size);
+        let files = self.poll_listing(self.batch_size);
         for file in files {
-            self.get_single_file(session, file);
+            self.get_single_file(session, logger, file);
         }
         Ok(OnTriggerResult::Ok)
     }
+}
+
+impl MetricsProvider for GetFile {
+    fn calculate_metrics(&self) -> Vec<(String, f64)> {
+        let metrics = self.metrics.lock().unwrap();
+        vec![
+            ("accepted_files".to_string(), metrics.accepted_files as f64),
+            ("input_bytes".to_string(), metrics.input_bytes as f64),
+        ]
+    }
+
 }
 
 #[cfg(not(test))]

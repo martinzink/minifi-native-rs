@@ -20,5 +20,5 @@ pub use c_ffi_logger::CffiLogger;
 pub use c_ffi_primitives::StaticStrAsMinifiCStr;
 pub use c_ffi_processor_definition::DynProcessorDefinition;
 pub use c_ffi_processor_definition::ProcessorDefinition;
-pub use c_ffi_processor_definition::RegisterableProcessor;
+pub use c_ffi_processor_definition::RawRegisterableProcessor;
 pub use c_ffi_processor_list::CffiProcessorList;
