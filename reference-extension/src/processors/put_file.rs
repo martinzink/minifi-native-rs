@@ -1,5 +1,5 @@
 use minifi_native::{
-    ConcurrentOnTrigger, DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult,
+    RawMultiThreadedTrigger, DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult,
     ProcessContext, ProcessSession, RawProcessor,
 };
 use std::io::Write;
@@ -232,7 +232,7 @@ impl RawProcessor for PutFile {
     }
 }
 
-impl ConcurrentOnTrigger for PutFile {
+impl RawMultiThreadedTrigger for PutFile {
     fn on_trigger<C, S>(
         &self,
         context: &mut C,

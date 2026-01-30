@@ -8,7 +8,7 @@ use crate::api::{RawProcessor, ProcessorInputRequirement, ThreadingModel};
 use crate::c_ffi::c_ffi_output_attribute::COutputAttributes;
 use crate::c_ffi::c_ffi_property::CProperties;
 use crate::{
-    Concurrent, ConcurrentOnTrigger, Exclusive, ExclusiveOnTrigger, LogLevel, OutputAttribute,
+    Concurrent, RawMultiThreadedTrigger, Exclusive, RawSingleThreadedTrigger, LogLevel, OutputAttribute,
     Property,
 };
 use crate::{OnTriggerResult, Relationship};
@@ -24,7 +24,7 @@ pub trait DispatchOnTrigger<M: ThreadingModel> {
 
 impl<T> DispatchOnTrigger<Concurrent> for T
 where
-    T: ConcurrentOnTrigger,
+    T: RawMultiThreadedTrigger,
 {
     unsafe fn dispatch_on_trigger(
         processor_ptr: *mut c_void,
@@ -46,7 +46,7 @@ where
 
 impl<T> DispatchOnTrigger<Exclusive> for T
 where
-    T: ExclusiveOnTrigger,
+    T: RawSingleThreadedTrigger,
 {
     unsafe fn dispatch_on_trigger(
         processor_ptr: *mut c_void,

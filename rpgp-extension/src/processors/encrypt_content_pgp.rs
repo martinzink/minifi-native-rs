@@ -1,5 +1,5 @@
 use minifi_native::{
-    Concurrent, ConcurrentOnTrigger, DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult,
+    Concurrent, RawMultiThreadedTrigger, DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult,
     ProcessContext, ProcessSession, RawProcessor,
 };
 use pgp::composed::{ArmorOptions, MessageBuilder, SignedPublicKey};
@@ -129,7 +129,7 @@ impl RawProcessor for EncryptContentPGP {
     }
 }
 
-impl ConcurrentOnTrigger for EncryptContentPGP {
+impl RawMultiThreadedTrigger for EncryptContentPGP {
     fn on_trigger<PC, PS>(
         &self,
         context: &mut PC,

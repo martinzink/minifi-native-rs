@@ -3,10 +3,10 @@ mod c_ffi;
 mod mock;
 
 pub use api::{
-    Concurrent, ConcurrentOnTrigger, ControllerService, ControllerServiceContext, DefaultLogger,
-    Exclusive, ExclusiveOnTrigger, FlowFile, LogLevel, Logger, MinifiError, OnTriggerResult,
+    Concurrent, RawMultiThreadedTrigger, ControllerService, ControllerServiceContext, DefaultLogger,
+    Exclusive, RawSingleThreadedTrigger, FlowFile, LogLevel, Logger, MinifiError, OnTriggerResult,
     OutputAttribute, ProcessContext, ProcessSession, RawProcessor, ProcessorInputRequirement,
-    Property, Relationship, StandardPropertyValidator, NextGenProcessor, NextConcurrentOnTrigger, NextExclusiveOnTrigger, MultiThreadedProcessor, Registerable
+    Property, Relationship, StandardPropertyValidator, Schedulable, ConstTriggerable, MutTriggerable, MultiThreadedProcessor, HasProcessorDefinition
 };
 pub use c_ffi::{
     CffiControllerServiceList, CffiLogger, CffiProcessorList, ControllerServiceDefinition,

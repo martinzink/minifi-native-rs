@@ -1,10 +1,10 @@
-use crate::{Concurrent, ConcurrentOnTrigger, DefaultLogger, DynProcessorDefinition, LogLevel, Logger, MinifiError, NextConcurrentOnTrigger, NextGenProcessor, OnTriggerResult, ProcessContext, ProcessSession, RawProcessor, RegisterableProcessor};
-use crate::api::processor::Registerable;
+use crate::{Concurrent, RawMultiThreadedTrigger, DefaultLogger, DynProcessorDefinition, LogLevel, Logger, MinifiError, ConstTriggerable, Schedulable, OnTriggerResult, ProcessContext, ProcessSession, RawProcessor, RegisterableProcessor};
+use crate::api::processor::HasProcessorDefinition;
 
 #[derive(Debug)]
 pub struct MultiThreadedProcessor<Implementation>
 where
-    Implementation: NextGenProcessor<Threading = Concurrent>,
+    Implementation: Schedulable + ConstTriggerable + HasProcessorDefinition,
 {
     logger: DefaultLogger,
     scheduled_impl: Option<Implementation>,
@@ -12,7 +12,7 @@ where
 
 impl<Implementation> RawProcessor for MultiThreadedProcessor<Implementation>
 where
-    Implementation: NextGenProcessor<Threading = Concurrent>,
+    Implementation: Schedulable + ConstTriggerable + HasProcessorDefinition,
 {
     type Threading = Concurrent;
 
@@ -33,9 +33,9 @@ where
     }
 }
 
-impl<Implementation> ConcurrentOnTrigger for MultiThreadedProcessor<Implementation>
+impl<Implementation> RawMultiThreadedTrigger for MultiThreadedProcessor<Implementation>
 where
-    Implementation: NextGenProcessor<Threading = Concurrent> + NextConcurrentOnTrigger,
+    Implementation: Schedulable + ConstTriggerable + HasProcessorDefinition,
 {
     fn on_trigger<PC, PS>(
         &self,
@@ -57,7 +57,9 @@ where
 }
 
 impl<Implementation> RegisterableProcessor for MultiThreadedProcessor<Implementation>
-where Implementation: Registerable + NextGenProcessor<Threading = Concurrent> {
+where
+    Implementation: Schedulable + ConstTriggerable + HasProcessorDefinition,
+{
     fn get_definition() -> Box<dyn DynProcessorDefinition> {
         Implementation::get_definition()
     }

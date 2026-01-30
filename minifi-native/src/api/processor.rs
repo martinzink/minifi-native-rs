@@ -35,7 +35,7 @@ pub trait RawProcessor: Sized {
     }
 }
 
-pub trait ExclusiveOnTrigger: RawProcessor<Threading = Exclusive> {
+pub trait RawSingleThreadedTrigger: RawProcessor<Threading = Exclusive> {
     fn on_trigger<PC, PS>(
         &mut self,
         context: &mut PC,
@@ -46,7 +46,7 @@ pub trait ExclusiveOnTrigger: RawProcessor<Threading = Exclusive> {
         PS: ProcessSession<FlowFile = PC::FlowFile>;
 }
 
-pub trait ConcurrentOnTrigger: RawProcessor<Threading = Concurrent> {
+pub trait RawMultiThreadedTrigger: RawProcessor<Threading = Concurrent> {
     fn on_trigger<PC, PS>(
         &self,
         context: &mut PC,
@@ -57,12 +57,11 @@ pub trait ConcurrentOnTrigger: RawProcessor<Threading = Concurrent> {
         PS: ProcessSession<FlowFile = PC::FlowFile>;
 }
 
-pub trait NextGenProcessor {
-    type Threading: ThreadingModel;
+pub trait Schedulable {
     fn schedule<P: ProcessContext>(context: &P, logger: &DefaultLogger) -> Result<Self, MinifiError> where Self: Sized;
 }
 
-pub trait NextExclusiveOnTrigger {
+pub trait MutTriggerable {
     fn trigger<PC, PS>(
         &mut self,
         context: &mut PC,
@@ -74,7 +73,7 @@ pub trait NextExclusiveOnTrigger {
         PS: ProcessSession<FlowFile = PC::FlowFile>;
 }
 
-pub trait NextConcurrentOnTrigger {
+pub trait ConstTriggerable {
     fn trigger<PC, PS>(
         &self,
         context: &mut PC,
@@ -86,7 +85,7 @@ pub trait NextConcurrentOnTrigger {
         PS: ProcessSession<FlowFile = PC::FlowFile>;
 }
 
-pub trait Registerable {
+pub trait HasProcessorDefinition {
     fn get_definition() -> Box<dyn DynProcessorDefinition>;
 }
 

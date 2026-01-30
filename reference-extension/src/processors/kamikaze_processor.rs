@@ -2,7 +2,7 @@ mod properties;
 mod relationships;
 
 use minifi_native::{
-    Concurrent, ConcurrentOnTrigger, DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult,
+    Concurrent, RawMultiThreadedTrigger, DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult,
     ProcessContext, ProcessSession, RawProcessor,
 };
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
@@ -70,7 +70,7 @@ impl RawProcessor for KamikazeProcessor {
     }
 }
 
-impl ConcurrentOnTrigger for KamikazeProcessor {
+impl RawMultiThreadedTrigger for KamikazeProcessor {
     fn on_trigger<PC, PS>(
         &self,
         _context: &mut PC,

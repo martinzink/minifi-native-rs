@@ -4,7 +4,7 @@ mod relationships;
 use crate::controller_services::dummy_controller_service::DummyControllerService;
 use crate::processors::dummy_processor::properties::CONTROLLER_SERVICE;
 use minifi_native::{
-    Concurrent, ConcurrentOnTrigger, DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult,
+    Concurrent, RawMultiThreadedTrigger, DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult,
     ProcessContext, ProcessSession, RawProcessor,
 };
 
@@ -34,7 +34,7 @@ impl RawProcessor for DummyProcessor {
     }
 }
 
-impl ConcurrentOnTrigger for DummyProcessor {
+impl RawMultiThreadedTrigger for DummyProcessor {
     fn on_trigger<PC, PS>(
         &self,
         context: &mut PC,

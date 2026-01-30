@@ -6,7 +6,7 @@ use crate::processors::get_file::properties::{
     MIN_SIZE, RECURSE,
 };
 use minifi_native::{
-    Concurrent, ConcurrentOnTrigger, DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult,
+    Concurrent, RawMultiThreadedTrigger, DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult,
     ProcessContext, ProcessSession, RawProcessor,
 };
 use std::collections::VecDeque;
@@ -302,7 +302,7 @@ impl RawProcessor for GetFile {
     }
 }
 
-impl ConcurrentOnTrigger for GetFile {
+impl RawMultiThreadedTrigger for GetFile {
     fn on_trigger<P, S>(
         &self,
         _context: &mut P,
