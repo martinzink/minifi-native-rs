@@ -1,6 +1,6 @@
 use crate::api::error_code::MinifiError;
 use crate::api::threading_model::{Concurrent, Exclusive, ThreadingModel};
-use crate::{DefaultLogger, LogLevel, ProcessContext, ProcessSession};
+use crate::{DefaultLogger, DynProcessorDefinition, LogLevel, ProcessContext, ProcessSession};
 
 pub enum ProcessorInputRequirement {
     Required,
@@ -57,6 +57,36 @@ pub trait ConcurrentOnTrigger: RawProcessor<Threading = Concurrent> {
         PS: ProcessSession<FlowFile = PC::FlowFile>;
 }
 
-pub trait Schedulable {
-    fn on_schedule<P: ProcessContext>(&mut self, context: &P) -> Result<(), MinifiError>;
+pub trait NextGenProcessor {
+    type Threading: ThreadingModel;
+    fn schedule<P: ProcessContext>(context: &P, logger: &DefaultLogger) -> Result<Self, MinifiError> where Self: Sized;
 }
+
+pub trait NextExclusiveOnTrigger {
+    fn trigger<PC, PS>(
+        &mut self,
+        context: &mut PC,
+        session: &mut PS,
+        logger: &DefaultLogger
+    ) -> Result<OnTriggerResult, MinifiError>
+    where
+        PC: ProcessContext,
+        PS: ProcessSession<FlowFile = PC::FlowFile>;
+}
+
+pub trait NextConcurrentOnTrigger {
+    fn trigger<PC, PS>(
+        &self,
+        context: &mut PC,
+        session: &mut PS,
+        logger: &DefaultLogger
+    ) -> Result<OnTriggerResult, MinifiError>
+    where
+        PC: ProcessContext,
+        PS: ProcessSession<FlowFile = PC::FlowFile>;
+}
+
+pub trait Registerable {
+    fn get_definition() -> Box<dyn DynProcessorDefinition>;
+}
+

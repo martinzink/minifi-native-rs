@@ -6,7 +6,7 @@ pub use api::{
     Concurrent, ConcurrentOnTrigger, ControllerService, ControllerServiceContext, DefaultLogger,
     Exclusive, ExclusiveOnTrigger, FlowFile, LogLevel, Logger, MinifiError, OnTriggerResult,
     OutputAttribute, ProcessContext, ProcessSession, RawProcessor, ProcessorInputRequirement,
-    Property, Relationship, StandardPropertyValidator,
+    Property, Relationship, StandardPropertyValidator, NextGenProcessor, NextConcurrentOnTrigger, NextExclusiveOnTrigger, MultiThreadedProcessor, Registerable
 };
 pub use c_ffi::{
     CffiControllerServiceList, CffiLogger, CffiProcessorList, ControllerServiceDefinition,
@@ -56,8 +56,7 @@ macro_rules! declare_minifi_extension {
 
                 $(
                     {
-                        use $proc as ProcessorTemplate;
-                        processor_list.add::<ProcessorTemplate>();
+                        processor_list.add::<$proc>();
                     }
                 )*
 
@@ -65,8 +64,7 @@ macro_rules! declare_minifi_extension {
 
                 $(
                     {
-                        use $ctrl as ControllerServiceTemplate;
-                        controller_list.add::<ControllerServiceTemplate>();
+                        controller_list.add::<$ctrl>();
                     }
                 )*
 

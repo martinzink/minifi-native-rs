@@ -4,6 +4,7 @@ mod processors;
 #[cfg(not(test))]
 minifi_native::declare_minifi_extension!(
 processors: [
+    minifi_native::MultiThreadedProcessor::<processors::generate_flow_file::NextGenGenerateFlowFile>,
     processors::generate_flow_file::GenerateFlowFile,
     processors::get_file::GetFile,
     processors::kamikaze_processor::KamikazeProcessor,
