@@ -1,6 +1,6 @@
 use minifi_native::{
     Concurrent, ConcurrentOnTrigger, DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult,
-    ProcessContext, ProcessSession, Processor,
+    ProcessContext, ProcessSession, RawProcessor,
 };
 use rand::Rng;
 use rand::distr::Alphanumeric;
@@ -119,7 +119,7 @@ impl ScheduledMembers {
     }
 }
 
-impl Processor for GenerateFlowFile {
+impl RawProcessor for GenerateFlowFile {
     type Threading = Concurrent;
     fn new(logger: DefaultLogger) -> Self {
         Self {

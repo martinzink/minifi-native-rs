@@ -27,6 +27,7 @@ pub enum ParseError {
 pub enum MinifiError {
     UnknownError,
     MissingRequiredProperty(&'static str),
+    ControllerServiceError(&'static str),
     InvalidValidator,
     Parse(ParseError),
     ScheduleError(String),

@@ -7,3 +7,6 @@ minifi_native::declare_minifi_extension!(processors: [
 ], controllers: [
     controller_services::pgp_public_key_service::PgpPublicKeyService
 ]);
+
+#[cfg(test)]
+mod test_utils;

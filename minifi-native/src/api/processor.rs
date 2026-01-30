@@ -14,7 +14,7 @@ pub enum OnTriggerResult {
     Yield,
 }
 
-pub trait Processor: Sized {
+pub trait RawProcessor: Sized {
     type Threading: ThreadingModel;
 
     fn new(logger: DefaultLogger) -> Self;
@@ -35,7 +35,7 @@ pub trait Processor: Sized {
     }
 }
 
-pub trait ExclusiveOnTrigger: Processor<Threading = Exclusive> {
+pub trait ExclusiveOnTrigger: RawProcessor<Threading = Exclusive> {
     fn on_trigger<PC, PS>(
         &mut self,
         context: &mut PC,
@@ -46,7 +46,7 @@ pub trait ExclusiveOnTrigger: Processor<Threading = Exclusive> {
         PS: ProcessSession<FlowFile = PC::FlowFile>;
 }
 
-pub trait ConcurrentOnTrigger: Processor<Threading = Concurrent> {
+pub trait ConcurrentOnTrigger: RawProcessor<Threading = Concurrent> {
     fn on_trigger<PC, PS>(
         &self,
         context: &mut PC,
@@ -55,4 +55,8 @@ pub trait ConcurrentOnTrigger: Processor<Threading = Concurrent> {
     where
         PC: ProcessContext,
         PS: ProcessSession<FlowFile = PC::FlowFile>;
+}
+
+pub trait Schedulable {
+    fn on_schedule<P: ProcessContext>(&mut self, context: &P) -> Result<(), MinifiError>;
 }

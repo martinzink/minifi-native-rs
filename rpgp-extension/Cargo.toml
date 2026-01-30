@@ -17,4 +17,7 @@ minifi-native = { path = "../minifi-native" }
 strum_macros = "0.27.2"
 strum = "0.27.2"
 pgp = "0.18.0"
+rand = "0.8.5"
 
+[dev-dependencies]
+minifi-native = { path = "../minifi-native", features = ["mock-logger"] }

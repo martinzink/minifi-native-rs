@@ -1,0 +1,11 @@
+[workspace]
+
+members = [
+    "minifi-native-sys",
+    "minifi-native",
+    "reference-extension",
+    "rpgp-extension"
+]
+
+# (Optional) Solve common dependency versions for the whole workspace
+resolver = "2"

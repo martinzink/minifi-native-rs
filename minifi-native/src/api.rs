@@ -20,7 +20,7 @@ pub use output_attribute::OutputAttribute;
 pub use process_context::ProcessContext;
 pub use process_session::ProcessSession;
 pub use processor::{
-    ConcurrentOnTrigger, ExclusiveOnTrigger, OnTriggerResult, Processor, ProcessorInputRequirement,
+    ConcurrentOnTrigger, ExclusiveOnTrigger, OnTriggerResult, RawProcessor, ProcessorInputRequirement,
 };
 pub use property::{Property, StandardPropertyValidator};
 pub use relationship::Relationship;

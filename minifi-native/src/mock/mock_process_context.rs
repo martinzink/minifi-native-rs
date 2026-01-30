@@ -4,6 +4,7 @@ use std::collections::HashMap;
 
 pub struct MockProcessContext {
     pub properties: HashMap<String, String>,
+    //pub controller_services: HashMap<String, Box<dyn ControllerService>>
 }
 
 impl ProcessContext for MockProcessContext {
@@ -39,6 +40,7 @@ impl MockProcessContext {
     pub fn new() -> Self {
         Self {
             properties: HashMap::new(),
+            //controller_services: HashMap::new()
         }
     }
 }

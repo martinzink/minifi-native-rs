@@ -1,6 +1,6 @@
 use super::{EncryptContentPGP, relationships, properties};
 use minifi_native::{
-    CffiLogger, ProcessorDefinition, ProcessorInputRequirement, RegisterableProcessor,
+    ProcessorDefinition, ProcessorInputRequirement, RegisterableProcessor,
 };
 
 impl RegisterableProcessor for EncryptContentPGP {
@@ -13,7 +13,7 @@ impl RegisterableProcessor for EncryptContentPGP {
             false,
             &[],
             &[relationships::SUCCESS, relationships::FAILURE],
-            &[properties::FILE_ENCODING, properties::PASSPHRASE, properties::PUBLIC_KEY_SEARCH, properties::SYMMETRIC_KEY_ALGORITHM
+            &[properties::FILE_ENCODING, properties::PASSPHRASE, properties::PUBLIC_KEY_SEARCH
             ],
         ))
     }

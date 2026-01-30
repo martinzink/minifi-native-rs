@@ -1,6 +1,6 @@
 use minifi_native::{Property, StandardPropertyValidator};
 use strum::VariantNames;
-use crate::processors::encrypt_content_pgp::{FileEncoding, SymmetricKeyAlgorithm};
+use crate::processors::encrypt_content_pgp::{FileEncoding};
 
 pub(crate) const FILE_ENCODING: Property = Property {
     name: "File Encoding",
@@ -38,7 +38,7 @@ pub(crate) const PUBLIC_KEY_SEARCH: Property = Property {
     allowed_type: "",
 };
 
-/*pub(crate) const PUBLIC_KEY_SERVICE: Property = Property {
+pub(crate) const PUBLIC_KEY_SERVICE: Property = Property {
     name: "Public Key Service",
     description: "PGP Public Key Service for encrypting data with Public Key Encryption",
     is_required: false,
@@ -47,19 +47,5 @@ pub(crate) const PUBLIC_KEY_SEARCH: Property = Property {
     default_value: None,
     validator: StandardPropertyValidator::AlwaysValidValidator,
     allowed_values: &[],
-    allowed_type: "",
-};*/
-
-pub(crate) const SYMMETRIC_KEY_ALGORITHM: Property = Property {
-    name: "Symmetric-Key Algorithm",
-    description: "Symmetric-Key Algorithm for encryption",
-    is_required: true,
-    is_sensitive: false,
-    supports_expr_lang: false,
-    default_value: Some("AES_256"),  // todo from enum
-    validator: StandardPropertyValidator::AlwaysValidValidator,
-    allowed_values: &SymmetricKeyAlgorithm::VARIANTS,
-    allowed_type: "",
+    allowed_type: "PgpPublicKeyService", // TODO(mzink) cannot call non-const associated function in constants
 };
-
-

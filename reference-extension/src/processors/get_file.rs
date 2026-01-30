@@ -7,7 +7,7 @@ use crate::processors::get_file::properties::{
 };
 use minifi_native::{
     Concurrent, ConcurrentOnTrigger, DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult,
-    ProcessContext, ProcessSession, Processor,
+    ProcessContext, ProcessSession, RawProcessor,
 };
 use std::collections::VecDeque;
 use std::error;
@@ -219,7 +219,7 @@ impl GetFile {
     }
 }
 
-impl Processor for GetFile {
+impl RawProcessor for GetFile {
     type Threading = Concurrent;
 
     fn new(logger: DefaultLogger) -> Self {

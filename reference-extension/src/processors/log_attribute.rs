@@ -1,7 +1,7 @@
 use crate::processors::log_attribute::properties::{FLOW_FILES_TO_LOG, LOG_LEVEL, LOG_PAYLOAD};
 use minifi_native::{
     ConcurrentOnTrigger, DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult,
-    ProcessContext, ProcessSession, Processor, Property,
+    ProcessContext, ProcessSession, RawProcessor, Property,
 };
 
 mod properties;
@@ -115,7 +115,7 @@ impl ConcurrentOnTrigger for LogAttribute {
     }
 }
 
-impl Processor for LogAttribute {
+impl RawProcessor for LogAttribute {
     type Threading = minifi_native::Concurrent;
     fn new(logger: DefaultLogger) -> Self {
         Self {

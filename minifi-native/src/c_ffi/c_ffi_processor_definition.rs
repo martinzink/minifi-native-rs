@@ -4,7 +4,7 @@ use std::ptr;
 use super::c_ffi_primitives::{StaticStrAsMinifiCStr, StringView};
 use super::c_ffi_process_context::CffiProcessContext;
 use super::c_ffi_process_session::CffiProcessSession;
-use crate::api::{Processor, ProcessorInputRequirement, ThreadingModel};
+use crate::api::{RawProcessor, ProcessorInputRequirement, ThreadingModel};
 use crate::c_ffi::c_ffi_output_attribute::COutputAttributes;
 use crate::c_ffi::c_ffi_property::CProperties;
 use crate::{
@@ -68,7 +68,7 @@ where
 
 pub struct ProcessorDefinition<T>
 where
-    T: Processor + DispatchOnTrigger<T::Threading>,
+    T: RawProcessor + DispatchOnTrigger<T::Threading>,
 {
     name: &'static str,
     description_text: &'static str,
@@ -85,7 +85,7 @@ where
 
 impl<T> ProcessorDefinition<T>
 where
-    T: Processor + DispatchOnTrigger<T::Threading>,
+    T: RawProcessor + DispatchOnTrigger<T::Threading>,
 {
     pub fn new(
         name: &'static str,
@@ -223,7 +223,7 @@ pub trait DynProcessorDefinition {
 
 impl<T> DynProcessorDefinition for ProcessorDefinition<T>
 where
-    T: Processor + DispatchOnTrigger<T::Threading>,
+    T: RawProcessor + DispatchOnTrigger<T::Threading>,
 {
     // unsafe because self must outlive the resulting MinifiProcessorClassDefinition
     unsafe fn class_description(&self) -> MinifiProcessorClassDefinition {

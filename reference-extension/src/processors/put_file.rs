@@ -1,6 +1,6 @@
 use minifi_native::{
     ConcurrentOnTrigger, DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult,
-    ProcessContext, ProcessSession, Processor,
+    ProcessContext, ProcessSession, RawProcessor,
 };
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -193,7 +193,7 @@ impl PutFile {
     }
 }
 
-impl Processor for PutFile {
+impl RawProcessor for PutFile {
     type Threading = minifi_native::Concurrent;
     fn new(logger: DefaultLogger) -> Self {
         Self {

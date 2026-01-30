@@ -5,7 +5,7 @@ use crate::controller_services::dummy_controller_service::DummyControllerService
 use crate::processors::dummy_processor::properties::CONTROLLER_SERVICE;
 use minifi_native::{
     Concurrent, ConcurrentOnTrigger, DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult,
-    ProcessContext, ProcessSession, Processor,
+    ProcessContext, ProcessSession, RawProcessor,
 };
 
 #[derive(Debug)]
@@ -14,7 +14,7 @@ pub(crate) struct DummyProcessor {
     dummy_controller_service_name: Option<String>,
 }
 
-impl Processor for DummyProcessor {
+impl RawProcessor for DummyProcessor {
     type Threading = Concurrent;
 
     fn new(logger: DefaultLogger) -> Self {

@@ -1,6 +1,6 @@
 use crate::processors::dummy_processor::DummyProcessor;
 use minifi_native::MinifiError::MissingRequiredProperty;
-use minifi_native::{MockLogger, MockProcessContext, Processor};
+use minifi_native::{MockLogger, MockProcessContext, RawProcessor};
 
 #[test]
 fn on_schedule_fails_without_controller_service() {

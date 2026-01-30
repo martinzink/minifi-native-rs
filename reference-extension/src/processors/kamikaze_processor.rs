@@ -3,7 +3,7 @@ mod relationships;
 
 use minifi_native::{
     Concurrent, ConcurrentOnTrigger, DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult,
-    ProcessContext, ProcessSession, Processor,
+    ProcessContext, ProcessSession, RawProcessor,
 };
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
 
@@ -27,7 +27,7 @@ pub(crate) struct KamikazeProcessor {
     scheduled_members: Option<ScheduledMembers>,
 }
 
-impl Processor for KamikazeProcessor {
+impl RawProcessor for KamikazeProcessor {
     type Threading = Concurrent;
     fn new(logger: DefaultLogger) -> Self {
         Self {
