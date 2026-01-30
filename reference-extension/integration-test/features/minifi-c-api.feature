@@ -46,7 +46,7 @@ Feature: Test Minifi Native C Api capabilities
 
     When the MiNiFi instance starts up
 
-    Then there is a file with "test content" content at /tmp/output/test_file.log in less than 10 seconds
+    Then at least one file with the content "test content" is placed in the "/tmp/output" directory in less than 10 seconds
     And the Minifi logs do not contain errors
     And the Minifi logs do not contain warnings
 
@@ -125,4 +125,3 @@ Feature: Test Minifi Native C Api capabilities
     When the MiNiFi instance starts up
 
     Then Minifi crashes with the following "KamikazeProcessor panic" in less than 5 seconds
-

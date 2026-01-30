@@ -6,15 +6,15 @@ use crate::test_utils;
 fn schedules_but_fails_to_encrypt_with_defaults() {
     let mut context = MockProcessContext::new();
 
-    let processor = EncryptContentPGP::schedule(&context, &MockLogger::new());
-    assert!(processor.is_ok());
+    let processor = EncryptContentPGP::schedule(&context, &MockLogger::new()).unwrap();
     let mut session = MockProcessSession::new();
+    assert_eq!(processor.trigger(&mut context, &mut session, &MockLogger::new()), Ok(OnTriggerResult::Yield));
 
     let mut input_ff = MockFlowFile::new();
     input_ff.content = "foo".as_bytes().to_vec();
     session.input_flow_files.push(input_ff);
 
-    assert_eq!(processor.unwrap().trigger(&mut context, &mut session, &MockLogger::new()), Ok(OnTriggerResult::Yield));
+    assert_eq!(processor.trigger(&mut context, &mut session, &MockLogger::new()), Ok(OnTriggerResult::Ok));
     assert!(session.input_flow_files.is_empty());
     assert_eq!(session.transferred_flow_files.len(), 1);
     assert_eq!(session.transferred_flow_files[0].relationship, FAILURE.name);

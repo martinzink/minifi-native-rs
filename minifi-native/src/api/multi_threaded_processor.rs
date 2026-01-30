@@ -1,4 +1,5 @@
-use crate::{Concurrent, RawMultiThreadedTrigger, DefaultLogger, DynProcessorDefinition, LogLevel, Logger, MinifiError, ConstTriggerable, Schedulable, OnTriggerResult, ProcessContext, ProcessSession, RawProcessor, RawRegisterableProcessor};
+use crate::api::RawProcessor;
+use crate::{Concurrent, RawMultiThreadedTrigger, DefaultLogger, DynProcessorDefinition, LogLevel, Logger, MinifiError, ConstTriggerable, Schedulable, OnTriggerResult, ProcessContext, ProcessSession, RawRegisterableProcessor};
 use crate::api::processor::HasProcessorDefinition;
 use crate::api::processor_traits::MetricsProvider;
 
