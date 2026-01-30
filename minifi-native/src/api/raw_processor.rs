@@ -20,19 +20,19 @@ pub trait RawProcessor: Sized {
     fn new(logger: DefaultLogger) -> Self;
     fn restore(&self) -> bool {
         false
-    }  // TODO(mzink)
+    } // TODO(mzink)
     fn get_trigger_when_empty(&self) -> bool {
         false
-    }  // TODO(mzink)
+    } // TODO(mzink)
     fn is_work_available(&self) -> bool {
         false
-    }  // TODO(mzink)
+    } // TODO(mzink)
     fn log(&self, log_level: LogLevel, message: &str);
     fn on_schedule<P: ProcessContext>(&mut self, context: &P) -> Result<(), MinifiError>;
     fn on_unschedule(&mut self) {}
     fn calculate_metrics(&self) -> Vec<(String, f64)> {
         vec![]
-    }  // TODO(mzink) remove default impl
+    } // TODO(mzink) remove default impl
 }
 
 pub trait RawSingleThreadedTrigger: RawProcessor<Threading = Exclusive> {
@@ -60,4 +60,3 @@ pub trait RawMultiThreadedTrigger: RawProcessor<Threading = Concurrent> {
 pub trait HasProcessorDefinition {
     fn get_definition() -> Box<dyn DynProcessorDefinition>;
 }
-

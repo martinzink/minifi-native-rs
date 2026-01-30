@@ -1,12 +1,16 @@
 use crate::api::RawProcessor;
-use crate::{Concurrent, RawMultiThreadedTrigger, DefaultLogger, DynProcessorDefinition, LogLevel, Logger, MinifiError, ConstTriggerable, Schedulable, OnTriggerResult, ProcessContext, ProcessSession, RawRegisterableProcessor};
-use crate::api::processor::HasProcessorDefinition;
 use crate::api::processor_traits::MetricsProvider;
+use crate::api::raw_processor::HasProcessorDefinition;
+use crate::{
+    Concurrent, ConstTriggerable, DefaultLogger, DynProcessorDefinition, LogLevel, Logger,
+    MinifiError, OnTriggerResult, ProcessContext, ProcessSession, RawMultiThreadedTrigger,
+    RawRegisterableProcessor, Schedulable,
+};
 
 #[derive(Debug)]
 pub struct MultiThreadedProcessor<Implementation>
 where
-    Implementation: Schedulable + ConstTriggerable + HasProcessorDefinition + MetricsProvider
+    Implementation: Schedulable + ConstTriggerable + HasProcessorDefinition + MetricsProvider,
 {
     logger: DefaultLogger,
     scheduled_impl: Option<Implementation>,
@@ -14,7 +18,7 @@ where
 
 impl<Implementation> RawProcessor for MultiThreadedProcessor<Implementation>
 where
-    Implementation: Schedulable + ConstTriggerable + HasProcessorDefinition + MetricsProvider
+    Implementation: Schedulable + ConstTriggerable + HasProcessorDefinition + MetricsProvider,
 {
     type Threading = Concurrent;
 
@@ -49,7 +53,7 @@ where
 
 impl<Implementation> RawMultiThreadedTrigger for MultiThreadedProcessor<Implementation>
 where
-    Implementation: Schedulable + ConstTriggerable + HasProcessorDefinition + MetricsProvider
+    Implementation: Schedulable + ConstTriggerable + HasProcessorDefinition + MetricsProvider,
 {
     fn on_trigger<PC, PS>(
         &self,

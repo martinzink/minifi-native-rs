@@ -4,12 +4,12 @@ use std::ptr;
 use super::c_ffi_primitives::{StaticStrAsMinifiCStr, StringView};
 use super::c_ffi_process_context::CffiProcessContext;
 use super::c_ffi_process_session::CffiProcessSession;
-use crate::api::{RawProcessor, ProcessorInputRequirement, ThreadingModel};
+use crate::api::{ProcessorInputRequirement, RawProcessor, ThreadingModel};
 use crate::c_ffi::c_ffi_output_attribute::COutputAttributes;
 use crate::c_ffi::c_ffi_property::CProperties;
 use crate::{
-    Concurrent, RawMultiThreadedTrigger, Exclusive, RawSingleThreadedTrigger, LogLevel, OutputAttribute,
-    Property,
+    Concurrent, Exclusive, LogLevel, OutputAttribute, Property, RawMultiThreadedTrigger,
+    RawSingleThreadedTrigger,
 };
 use crate::{OnTriggerResult, Relationship};
 use minifi_native_sys::*;
