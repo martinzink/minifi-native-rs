@@ -1,7 +1,10 @@
 mod properties;
 mod relationships;
 
-use minifi_native::{DefaultLogger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, Schedulable, ConstTriggerable, MetricsProvider};
+use minifi_native::{
+    ConstTriggerable, DefaultLogger, MetricsProvider, MinifiError, OnTriggerResult, ProcessContext,
+    ProcessSession, Schedulable,
+};
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
 
 #[derive(Debug, Clone, Copy, PartialEq, Display, EnumString, VariantNames, IntoStaticStr)]
@@ -19,9 +22,12 @@ pub(crate) struct KamikazeProcessor {
 }
 
 impl Schedulable for KamikazeProcessor {
-    fn schedule<P: ProcessContext>(context: &P, _logger: &DefaultLogger) -> Result<Self, MinifiError>
+    fn schedule<P: ProcessContext>(
+        context: &P,
+        _logger: &DefaultLogger,
+    ) -> Result<Self, MinifiError>
     where
-        Self: Sized
+        Self: Sized,
     {
         let on_trigger_behaviour = context
             .get_property(&properties::ON_TRIGGER_BEHAVIOUR, None)?
@@ -38,12 +44,10 @@ impl Schedulable for KamikazeProcessor {
 
         match on_schedule_behaviour {
             KamikazeBehaviour::ReturnErr => Err(MinifiError::UnknownError),
-            KamikazeBehaviour::ReturnOk => {
-                Ok(KamikazeProcessor {
-                    on_trigger_behaviour,
-                    read_behaviour,
-                })
-            }
+            KamikazeBehaviour::ReturnOk => Ok(KamikazeProcessor {
+                on_trigger_behaviour,
+                read_behaviour,
+            }),
             KamikazeBehaviour::Panic => {
                 panic!("KamikazeProcessor panic")
             }
@@ -52,10 +56,15 @@ impl Schedulable for KamikazeProcessor {
 }
 
 impl ConstTriggerable for KamikazeProcessor {
-    fn trigger<PC, PS>(&self, _context: &mut PC, session: &mut PS, _logger: &DefaultLogger) -> Result<OnTriggerResult, MinifiError>
+    fn trigger<PC, PS>(
+        &self,
+        _context: &mut PC,
+        session: &mut PS,
+        _logger: &DefaultLogger,
+    ) -> Result<OnTriggerResult, MinifiError>
     where
         PC: ProcessContext,
-        PS: ProcessSession<FlowFile=PC::FlowFile>
+        PS: ProcessSession<FlowFile = PC::FlowFile>,
     {
         if let Some(read_behaviour) = self.read_behaviour
             && let Some(flow_file) = session.get()
@@ -77,7 +86,8 @@ impl ConstTriggerable for KamikazeProcessor {
             KamikazeBehaviour::Panic => {
                 panic!("KamikazeProcessor panic")
             }
-        }    }
+        }
+    }
 }
 
 impl MetricsProvider for KamikazeProcessor {}

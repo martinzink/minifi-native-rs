@@ -1,4 +1,7 @@
-use minifi_native::{DefaultLogger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, Schedulable, ConstTriggerable, MetricsProvider};
+use minifi_native::{
+    ConstTriggerable, DefaultLogger, MetricsProvider, MinifiError, OnTriggerResult, ProcessContext,
+    ProcessSession, Schedulable,
+};
 use rand::Rng;
 use rand::distr::Alphanumeric;
 use std::cmp::PartialEq;
@@ -25,9 +28,12 @@ pub(crate) struct GenerateFlowFile {
 }
 
 impl Schedulable for GenerateFlowFile {
-    fn schedule<P: ProcessContext>(context: &P, _logger: &DefaultLogger) -> Result<Self, MinifiError>
+    fn schedule<P: ProcessContext>(
+        context: &P,
+        _logger: &DefaultLogger,
+    ) -> Result<Self, MinifiError>
     where
-        Self: Sized
+        Self: Sized,
     {
         let is_unique = context
             .get_bool_property(&properties::UNIQUE_FLOW_FILES, None)?
@@ -58,7 +64,7 @@ impl Schedulable for GenerateFlowFile {
                 vec![]
             };
 
-        Ok(Self{
+        Ok(Self {
             mode,
             batch_size,
             file_size,
@@ -121,10 +127,15 @@ impl GenerateFlowFile {
 }
 
 impl ConstTriggerable for GenerateFlowFile {
-    fn trigger<PC, PS>(&self, context: &mut PC, session: &mut PS, _logger: &DefaultLogger) -> Result<OnTriggerResult, MinifiError>
+    fn trigger<PC, PS>(
+        &self,
+        context: &mut PC,
+        session: &mut PS,
+        _logger: &DefaultLogger,
+    ) -> Result<OnTriggerResult, MinifiError>
     where
         PC: ProcessContext,
-        PS: ProcessSession<FlowFile=PC::FlowFile>
+        PS: ProcessSession<FlowFile = PC::FlowFile>,
     {
         let non_unique_data_buffer: &[u8];
         let custom_text_for_batch: Option<String>;
@@ -155,7 +166,7 @@ impl ConstTriggerable for GenerateFlowFile {
     }
 }
 
-impl MetricsProvider for GenerateFlowFile{}
+impl MetricsProvider for GenerateFlowFile {}
 
 #[cfg(not(test))]
 pub(crate) mod processor_definition;

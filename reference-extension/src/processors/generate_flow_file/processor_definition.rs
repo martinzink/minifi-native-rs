@@ -1,10 +1,14 @@
 use super::properties::*;
-use super::{relationships, GenerateFlowFile};
-use minifi_native::{MultiThreadedProcessor, ProcessorDefinition, ProcessorInputRequirement, HasProcessorDefinition };
+use super::{GenerateFlowFile, relationships};
+use minifi_native::{
+    HasProcessorDefinition, MultiThreadedProcessor, ProcessorDefinition, ProcessorInputRequirement,
+};
 
 impl HasProcessorDefinition for GenerateFlowFile {
     fn get_definition() -> Box<dyn minifi_native::DynProcessorDefinition> {
-        Box::new(ProcessorDefinition::<MultiThreadedProcessor<GenerateFlowFile>>::new(
+        Box::new(ProcessorDefinition::<
+            MultiThreadedProcessor<GenerateFlowFile>,
+        >::new(
             "rs::GenerateFlowFileRs",
             "This processor creates FlowFiles with random data or custom content. GenerateFlowFile is useful for load testing, configuration, and simulation.",
             ProcessorInputRequirement::Forbidden,

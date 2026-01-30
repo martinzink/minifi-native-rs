@@ -5,7 +5,6 @@ use minifi_native::{MockFlowFile, MockLogger, MockProcessContext, MockProcessSes
 #[test]
 fn schedule_succeeds_with_default_values() {
     assert!(PutFile::schedule(&MockProcessContext::new(), &MockLogger::new()).is_ok());
-
 }
 
 #[test]

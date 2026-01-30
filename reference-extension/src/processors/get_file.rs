@@ -5,7 +5,10 @@ use crate::processors::get_file::properties::{
     BATCH_SIZE, DIRECTORY, IGNORE_HIDDEN_FILES, KEEP_SOURCE_FILE, MAX_AGE, MAX_SIZE, MIN_AGE,
     MIN_SIZE, RECURSE,
 };
-use minifi_native::{DefaultLogger, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, Schedulable, ConstTriggerable, MetricsProvider};
+use minifi_native::{
+    ConstTriggerable, DefaultLogger, Logger, MetricsProvider, MinifiError, OnTriggerResult,
+    ProcessContext, ProcessSession, Schedulable,
+};
 use std::collections::VecDeque;
 use std::error;
 use std::path::PathBuf;
@@ -83,8 +86,7 @@ impl GetFile {
         if directory_listings.last_polling_time.is_none() {
             return true;
         }
-        Instant::now() - directory_listings.last_polling_time.unwrap()
-            > self.poll_interval.unwrap()
+        Instant::now() - directory_listings.last_polling_time.unwrap() > self.poll_interval.unwrap()
     }
 
     fn perform_listing(&self) {
@@ -150,8 +152,7 @@ impl GetFile {
     where
         PS: ProcessSession,
     {
-        logger
-            .info(format!("GetFile process {:?}", &path).as_str());
+        logger.info(format!("GetFile process {:?}", &path).as_str());
         let mut ff = session
             .create()
             .expect("Successful FlowFile creation is expected");
@@ -159,8 +160,7 @@ impl GetFile {
         if let Some(file_name) = path.file_name().and_then(|f| f.to_str()) {
             session.set_attribute(&mut ff, FILENAME_OUTPUT_ATTRIBUTE.name, file_name);
         } else {
-            logger
-                .warn(format!("Couldnt get filename of {:?}", path).as_str());
+            logger.warn(format!("Couldnt get filename of {:?}", path).as_str());
         }
         session.set_attribute(
             &mut ff,
@@ -175,8 +175,7 @@ impl GetFile {
             match std::fs::remove_file(&path) {
                 Ok(_) => {}
                 Err(err) => {
-                    logger
-                        .warn(format!("Failed to remove source file {:?}", err).as_str());
+                    logger.warn(format!("Failed to remove source file {:?}", err).as_str());
                 }
             }
         }
@@ -185,9 +184,12 @@ impl GetFile {
 }
 
 impl Schedulable for GetFile {
-    fn schedule<P: ProcessContext>(context: &P, _logger: &DefaultLogger) -> Result<Self, MinifiError>
+    fn schedule<P: ProcessContext>(
+        context: &P,
+        _logger: &DefaultLogger,
+    ) -> Result<Self, MinifiError>
     where
-        Self: Sized
+        Self: Sized,
     {
         let input_directory: PathBuf = context
             .get_property(&DIRECTORY, None)?
@@ -241,13 +243,17 @@ impl Schedulable for GetFile {
 }
 
 impl ConstTriggerable for GetFile {
-    fn trigger<PC, PS>(&self, _context: &mut PC, session: &mut PS, logger: &DefaultLogger) -> Result<OnTriggerResult, MinifiError>
+    fn trigger<PC, PS>(
+        &self,
+        _context: &mut PC,
+        session: &mut PS,
+        logger: &DefaultLogger,
+    ) -> Result<OnTriggerResult, MinifiError>
     where
         PC: ProcessContext,
-        PS: ProcessSession<FlowFile=PC::FlowFile>
+        PS: ProcessSession<FlowFile = PC::FlowFile>,
     {
-        logger
-            .trace(format!("on_trigger: {:?}", self).as_str());
+        logger.trace(format!("on_trigger: {:?}", self).as_str());
         {
             let is_dir_empty_before_poll = self.is_listing_empty();
             logger.debug(
@@ -255,7 +261,7 @@ impl ConstTriggerable for GetFile {
                     "Listing is {} before polling directory",
                     is_dir_empty_before_poll
                 )
-                    .as_str(),
+                .as_str(),
             );
             if is_dir_empty_before_poll {
                 if self.should_poll() {
@@ -270,7 +276,7 @@ impl ConstTriggerable for GetFile {
                     "Listing is {} after polling directory",
                     is_dir_empty_after_poll
                 )
-                    .as_str(),
+                .as_str(),
             );
             if is_dir_empty_after_poll {
                 return Ok(OnTriggerResult::Ok);
@@ -293,7 +299,6 @@ impl MetricsProvider for GetFile {
             ("input_bytes".to_string(), metrics.input_bytes as f64),
         ]
     }
-
 }
 
 #[cfg(not(test))]

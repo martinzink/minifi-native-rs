@@ -1,5 +1,8 @@
 use crate::processors::log_attribute::properties::{FLOW_FILES_TO_LOG, LOG_LEVEL, LOG_PAYLOAD};
-use minifi_native::{DefaultLogger, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, Property, ConstTriggerable, Schedulable, MetricsProvider};
+use minifi_native::{
+    ConstTriggerable, DefaultLogger, LogLevel, Logger, MetricsProvider, MinifiError,
+    OnTriggerResult, ProcessContext, ProcessSession, Property, Schedulable,
+};
 
 mod properties;
 mod relationships;
@@ -59,17 +62,22 @@ impl LogAttribute {
 }
 
 impl ConstTriggerable for LogAttribute {
-    fn trigger<PC, PS>(&self, _context: &mut PC, session: &mut PS, logger: &DefaultLogger) -> Result<OnTriggerResult, MinifiError>
+    fn trigger<PC, PS>(
+        &self,
+        _context: &mut PC,
+        session: &mut PS,
+        logger: &DefaultLogger,
+    ) -> Result<OnTriggerResult, MinifiError>
     where
         PC: ProcessContext,
-        PS: ProcessSession<FlowFile=PC::FlowFile>
+        PS: ProcessSession<FlowFile = PC::FlowFile>,
     {
         logger.trace(
             format!(
                 "enter log attribute, attempting to retrieve {} flow files",
                 self.flow_files_to_log
             )
-                .as_str(),
+            .as_str(),
         );
         let max_flow_files_to_process = if self.flow_files_to_log == 0 {
             usize::MAX
@@ -87,15 +95,17 @@ impl ConstTriggerable for LogAttribute {
                 break;
             }
         }
-        logger
-            .debug(format!("Logged {} flow files", flow_files_processed).as_str());
+        logger.debug(format!("Logged {} flow files", flow_files_processed).as_str());
 
         Ok(OnTriggerResult::Ok)
     }
 }
 
 impl Schedulable for LogAttribute {
-    fn schedule<P: ProcessContext>(context: &P, _logger: &DefaultLogger) -> Result<Self, MinifiError>
+    fn schedule<P: ProcessContext>(
+        context: &P,
+        _logger: &DefaultLogger,
+    ) -> Result<Self, MinifiError>
     where
         Self: Sized,
     {

@@ -7,8 +7,11 @@ use tempfile::TempDir;
 #[test]
 fn schedule_fails_without_input_dir() {
     assert_eq!(
-        GetFile::schedule(&MockProcessContext::new(), &MockLogger::new()).err().unwrap(),
-        MinifiError::MissingRequiredProperty("Input Directory"));
+        GetFile::schedule(&MockProcessContext::new(), &MockLogger::new())
+            .err()
+            .unwrap(),
+        MinifiError::MissingRequiredProperty("Input Directory")
+    );
 }
 
 #[test]
@@ -19,12 +22,12 @@ fn schedule_fails_with_invalid_input_dir() {
         "/invalid_directory".to_string(),
     );
     assert_eq!(
-        GetFile::schedule(&context, &MockLogger::new()).err().unwrap(),
-        MinifiError::ScheduleError(
-            "\"/invalid_directory\" is not a valid directory".to_string()
-        ));
+        GetFile::schedule(&context, &MockLogger::new())
+            .err()
+            .unwrap(),
+        MinifiError::ScheduleError("\"/invalid_directory\" is not a valid directory".to_string())
+    );
 }
-
 
 #[test]
 fn simple_get_file_test() {
@@ -37,11 +40,15 @@ fn simple_get_file_test() {
         "Input Directory".to_string(),
         temp_dir.path().to_str().unwrap().to_string(),
     );
-    
+
     let get_file = GetFile::schedule(&context, &MockLogger::new()).unwrap();
 
     let mut session = MockProcessSession::new();
-    assert!(get_file.trigger(&mut context, &mut session, &MockLogger::new()).is_ok());
+    assert!(
+        get_file
+            .trigger(&mut context, &mut session, &MockLogger::new())
+            .is_ok()
+    );
     assert_eq!(session.transferred_flow_files.len(), 1);
 }
 
@@ -78,7 +85,11 @@ fn complex_dir_without_filters() {
 
     let mut session = MockProcessSession::new();
     let get_file = GetFile::schedule(&context, &MockLogger::new()).unwrap();
-    assert!(get_file.trigger(&mut context, &mut session, &MockLogger::new()).is_ok());
+    assert!(
+        get_file
+            .trigger(&mut context, &mut session, &MockLogger::new())
+            .is_ok()
+    );
     assert_eq!(session.transferred_flow_files.len(), 4);
 }
 
@@ -104,7 +115,11 @@ fn test_complex_dir_with_filter(
 
     let mut session = MockProcessSession::new();
     let get_file = GetFile::schedule(&context, &MockLogger::new()).unwrap();
-    assert!(get_file.trigger(&mut context, &mut session, &MockLogger::new()).is_ok());
+    assert!(
+        get_file
+            .trigger(&mut context, &mut session, &MockLogger::new())
+            .is_ok()
+    );
     assert_eq!(session.transferred_flow_files.len(), 2);
     assert!(session.transferred_flow_files.iter().all(|transfer| {
         transfer.relationship == SUCCESS.name
@@ -158,6 +173,10 @@ fn test_hidden_files_and_batch_size() {
 
     let mut session = MockProcessSession::new();
     let get_file = GetFile::schedule(&context, &MockLogger::new()).unwrap();
-    assert!(get_file.trigger(&mut context, &mut session, &MockLogger::new()).is_ok());
+    assert!(
+        get_file
+            .trigger(&mut context, &mut session, &MockLogger::new())
+            .is_ok()
+    );
     assert_eq!(session.transferred_flow_files.len(), 2);
 }

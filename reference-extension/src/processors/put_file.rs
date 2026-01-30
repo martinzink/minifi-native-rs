@@ -1,4 +1,7 @@
-use minifi_native::{DefaultLogger, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, MutTriggerable, Schedulable, MetricsProvider};
+use minifi_native::{
+    DefaultLogger, Logger, MetricsProvider, MinifiError, MutTriggerable, OnTriggerResult,
+    ProcessContext, ProcessSession, Schedulable,
+};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
@@ -98,9 +101,7 @@ impl PutFile {
         if let Some(parent) = destination.parent() {
             if self.try_make_dirs {
                 std::fs::create_dir_all(parent)?;
-                self
-                    .unix_permissions
-                    .set_directory_permissions(parent)?;
+                self.unix_permissions.set_directory_permissions(parent)?;
             }
         }
         Ok(())
@@ -120,8 +121,7 @@ impl PutFile {
         match self.prepare_destination(destination) {
             Ok(_) => {}
             Err(err) => {
-                logger
-                    .warn(format!("Failed to prepare destination due to {:?}", err).as_str());
+                logger.warn(format!("Failed to prepare destination due to {:?}", err).as_str());
             }
         }
         let mut file = std::fs::File::create(destination)
@@ -129,8 +129,7 @@ impl PutFile {
         match self.unix_permissions.set_file_permissions(destination) {
             Ok(_) => {}
             Err(err) => {
-                logger
-                    .warn(format!("Failed to set file permissions due to {:?}", err).as_str());
+                logger.warn(format!("Failed to set file permissions due to {:?}", err).as_str());
             }
         }
 
@@ -171,7 +170,10 @@ impl PutFile {
 }
 
 impl Schedulable for PutFile {
-    fn schedule<P: ProcessContext>(context: &P, _logger: &DefaultLogger) -> Result<Self, MinifiError> {
+    fn schedule<P: ProcessContext>(
+        context: &P,
+        _logger: &DefaultLogger,
+    ) -> Result<Self, MinifiError> {
         let conflict_resolution_strategy = context
             .get_property(&properties::CONFLICT_RESOLUTION, None)?
             .expect("required property")
@@ -195,13 +197,17 @@ impl Schedulable for PutFile {
 }
 
 impl MutTriggerable for PutFile {
-    fn trigger<PC, PS>(&mut self, context: &mut PC, session: &mut PS, logger: &DefaultLogger) -> Result<OnTriggerResult, MinifiError>
+    fn trigger<PC, PS>(
+        &mut self,
+        context: &mut PC,
+        session: &mut PS,
+        logger: &DefaultLogger,
+    ) -> Result<OnTriggerResult, MinifiError>
     where
         PC: ProcessContext,
-        PS: ProcessSession<FlowFile=PC::FlowFile>,
+        PS: ProcessSession<FlowFile = PC::FlowFile>,
     {
-        logger
-            .trace(format!("on_trigger: {:?}", self).as_str());
+        logger.trace(format!("on_trigger: {:?}", self).as_str());
         let Some(mut ff) = session.get() else {
             return Ok(OnTriggerResult::Yield);
         };
@@ -241,8 +247,7 @@ impl MutTriggerable for PutFile {
                 Ok(OnTriggerResult::Ok)
             }
             Err(e) => {
-                logger
-                    .warn(format!("Failed to put file due to {:?}", e).as_str());
+                logger.warn(format!("Failed to put file due to {:?}", e).as_str());
                 session.transfer(ff, relationships::FAILURE.name);
                 Ok(OnTriggerResult::Ok)
             }
