@@ -1,6 +1,6 @@
 use crate::processors::log_attribute::properties::{FLOW_FILES_TO_LOG, LOG_LEVEL, LOG_PAYLOAD};
 use minifi_native::{
-    ConstTriggerable, DefaultLogger, LogLevel, Logger, MetricsProvider, MinifiError,
+    ConstTriggerable, LogLevel, Logger, MetricsProvider, MinifiError,
     OnTriggerResult, ProcessContext, ProcessSession, Property, Schedulable,
 };
 
@@ -62,15 +62,16 @@ impl LogAttribute {
 }
 
 impl ConstTriggerable for LogAttribute {
-    fn trigger<PC, PS>(
+    fn trigger<PC, PS, L>(
         &self,
         _context: &mut PC,
         session: &mut PS,
-        logger: &DefaultLogger,
+        logger: &L,
     ) -> Result<OnTriggerResult, MinifiError>
     where
         PC: ProcessContext,
         PS: ProcessSession<FlowFile = PC::FlowFile>,
+        L: Logger,
     {
         logger.trace(
             format!(
@@ -102,9 +103,9 @@ impl ConstTriggerable for LogAttribute {
 }
 
 impl Schedulable for LogAttribute {
-    fn schedule<P: ProcessContext>(
+    fn schedule<P: ProcessContext, L: Logger>(
         context: &P,
-        _logger: &DefaultLogger,
+        _logger: &L,
     ) -> Result<Self, MinifiError>
     where
         Self: Sized,

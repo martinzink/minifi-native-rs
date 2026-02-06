@@ -6,7 +6,7 @@ use crate::processors::get_file::properties::{
     MIN_SIZE, RECURSE,
 };
 use minifi_native::{
-    ConstTriggerable, DefaultLogger, Logger, MetricsProvider, MinifiError, OnTriggerResult,
+    ConstTriggerable, Logger, MetricsProvider, MinifiError, OnTriggerResult,
     ProcessContext, ProcessSession, Schedulable,
 };
 use std::collections::VecDeque;
@@ -148,9 +148,7 @@ impl GetFile {
         Ok(true)
     }
 
-    fn get_single_file<PS>(&self, session: &mut PS, logger: &DefaultLogger, path: PathBuf)
-    where
-        PS: ProcessSession,
+    fn get_single_file<PS: ProcessSession, L: Logger>(&self, session: &mut PS, logger: &L, path: PathBuf)
     {
         logger.info(format!("GetFile process {:?}", &path).as_str());
         let mut ff = session
@@ -184,9 +182,9 @@ impl GetFile {
 }
 
 impl Schedulable for GetFile {
-    fn schedule<P: ProcessContext>(
+    fn schedule<P: ProcessContext, L: Logger>(
         context: &P,
-        _logger: &DefaultLogger,
+        _logger: &L,
     ) -> Result<Self, MinifiError>
     where
         Self: Sized,
@@ -243,15 +241,16 @@ impl Schedulable for GetFile {
 }
 
 impl ConstTriggerable for GetFile {
-    fn trigger<PC, PS>(
+    fn trigger<PC, PS, L>(
         &self,
         _context: &mut PC,
         session: &mut PS,
-        logger: &DefaultLogger,
+        logger: &L,
     ) -> Result<OnTriggerResult, MinifiError>
     where
         PC: ProcessContext,
         PS: ProcessSession<FlowFile = PC::FlowFile>,
+        L: Logger,
     {
         logger.trace(format!("on_trigger: {:?}", self).as_str());
         {

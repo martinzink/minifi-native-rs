@@ -1,10 +1,7 @@
 mod properties;
 mod relationships;
 
-use minifi_native::{
-    ConstTriggerable, DefaultLogger, MetricsProvider, MinifiError, OnTriggerResult, ProcessContext,
-    ProcessSession, Schedulable,
-};
+use minifi_native::{ConstTriggerable, Logger, MetricsProvider, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, Schedulable};
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
 
 #[derive(Debug, Clone, Copy, PartialEq, Display, EnumString, VariantNames, IntoStaticStr)]
@@ -22,9 +19,9 @@ pub(crate) struct KamikazeProcessor {
 }
 
 impl Schedulable for KamikazeProcessor {
-    fn schedule<P: ProcessContext>(
+    fn schedule<P: ProcessContext, L: Logger>(
         context: &P,
-        _logger: &DefaultLogger,
+        _logger: &L,
     ) -> Result<Self, MinifiError>
     where
         Self: Sized,
@@ -49,22 +46,23 @@ impl Schedulable for KamikazeProcessor {
                 read_behaviour,
             }),
             KamikazeBehaviour::Panic => {
-                panic!("KamikazeProcessor panic")
+                panic!("KamikazeProcessor::on_schedule panic")
             }
         }
     }
 }
 
 impl ConstTriggerable for KamikazeProcessor {
-    fn trigger<PC, PS>(
+    fn trigger<PC, PS, L>(
         &self,
         _context: &mut PC,
         session: &mut PS,
-        _logger: &DefaultLogger,
+        _logger: &L,
     ) -> Result<OnTriggerResult, MinifiError>
     where
         PC: ProcessContext,
         PS: ProcessSession<FlowFile = PC::FlowFile>,
+        L: Logger,
     {
         if let Some(read_behaviour) = self.read_behaviour
             && let Some(flow_file) = session.get()
@@ -73,7 +71,7 @@ impl ConstTriggerable for KamikazeProcessor {
                 KamikazeBehaviour::ReturnErr => Err(MinifiError::UnknownError),
                 KamikazeBehaviour::ReturnOk => Ok(()),
                 KamikazeBehaviour::Panic => {
-                    panic!("KamikazeProcessor panic")
+                    panic!("KamikazeProcessor::on_trigger panic")
                 }
             });
 
@@ -84,7 +82,7 @@ impl ConstTriggerable for KamikazeProcessor {
             KamikazeBehaviour::ReturnErr => Err(MinifiError::UnknownError),
             KamikazeBehaviour::ReturnOk => Ok(OnTriggerResult::Ok),
             KamikazeBehaviour::Panic => {
-                panic!("KamikazeProcessor panic")
+                panic!("KamikazeProcessor::on_trigger panic")
             }
         }
     }

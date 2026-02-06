@@ -1,4 +1,4 @@
-use crate::api::error_code::MinifiError;
+use crate::api::errors::MinifiError;
 use crate::api::threading_model::{Concurrent, Exclusive, ThreadingModel};
 use crate::{DefaultLogger, DynProcessorDefinition, LogLevel, ProcessContext, ProcessSession};
 

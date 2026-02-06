@@ -1,9 +1,9 @@
-use crate::{DefaultLogger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession};
+use crate::{Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession};
 
 pub trait Schedulable {
-    fn schedule<P: ProcessContext>(
+    fn schedule<P: ProcessContext, L: Logger>(
         context: &P,
-        logger: &DefaultLogger,
+        logger: &L,
     ) -> Result<Self, MinifiError>
     where
         Self: Sized;
@@ -12,27 +12,29 @@ pub trait Schedulable {
 }
 
 pub trait ConstTriggerable {
-    fn trigger<PC, PS>(
+    fn trigger<PC, PS, L>(
         &self,
         context: &mut PC,
         session: &mut PS,
-        logger: &DefaultLogger,
+        logger: &L,
     ) -> Result<OnTriggerResult, MinifiError>
     where
         PC: ProcessContext,
-        PS: ProcessSession<FlowFile = PC::FlowFile>;
+        PS: ProcessSession<FlowFile = PC::FlowFile>,
+        L: Logger;
 }
 
 pub trait MutTriggerable {
-    fn trigger<PC, PS>(
+    fn trigger<PC, PS, L>(
         &mut self,
         context: &mut PC,
         session: &mut PS,
-        logger: &DefaultLogger,
+        logger: &L,
     ) -> Result<OnTriggerResult, MinifiError>
     where
         PC: ProcessContext,
-        PS: ProcessSession<FlowFile = PC::FlowFile>;
+        PS: ProcessSession<FlowFile = PC::FlowFile>,
+        L: Logger;
 }
 
 pub trait MetricsProvider {

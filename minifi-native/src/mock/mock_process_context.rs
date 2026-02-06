@@ -1,19 +1,23 @@
+use std::any::Any;
 use crate::api::ProcessContext;
 use crate::{ControllerService, MinifiError, MockFlowFile, Property};
 use std::collections::HashMap;
 
-pub struct MockProcessContext {
-    pub properties: HashMap<String, String>,
-    //pub controller_services: HashMap<String, Box<dyn ControllerService>>
+pub struct MockPropertyMap {
+    properties: HashMap<String, String>,
 }
 
-impl ProcessContext for MockProcessContext {
-    type FlowFile = MockFlowFile;
+impl MockPropertyMap {
+    pub fn new() -> Self{ Self{properties: HashMap::new()}}
+    pub fn insert(&mut self, key: String, value: String) { self.properties.insert(key, value); }
 
-    fn get_property(
+}
+
+impl MockPropertyMap {
+    pub fn get_property(
         &self,
         property: &Property,
-        _flow_file: Option<&Self::FlowFile>,
+        _flow_file: Option<&MockFlowFile>,
     ) -> Result<Option<String>, MinifiError> {
         if let Some(property) = self.properties.get(property.name) {
             Ok(Some(property.clone()))
@@ -27,20 +31,41 @@ impl ProcessContext for MockProcessContext {
             }
         }
     }
+}
 
-    fn get_controller_service<Cs>(&self, _property: &Property) -> Result<Option<&Cs>, MinifiError>
+pub struct MockProcessContext {
+    pub properties: MockPropertyMap,
+    pub controller_services: HashMap<String, Box<dyn Any>>
+}
+
+impl ProcessContext for MockProcessContext {
+    type FlowFile = MockFlowFile;
+
+    fn get_property(
+        &self,
+        property: &Property,
+        _flow_file: Option<&Self::FlowFile>,
+    ) -> Result<Option<String>, MinifiError> {
+        self.properties.get_property(property, _flow_file)
+    }
+
+    fn get_controller_service<Cs>(&self, property: &Property) -> Result<Option<&Cs>, MinifiError>
     where
-        Cs: ControllerService,
+        Cs: ControllerService + 'static,
     {
-        Ok(None)
+        if let Some(service_name) = self.get_property(property, None)? {
+            Ok(self.controller_services.get(&service_name).and_then(|c| c.downcast_ref::<Cs>()))
+        } else{
+            Ok(None)
+        }
     }
 }
 
 impl MockProcessContext {
     pub fn new() -> Self {
         Self {
-            properties: HashMap::new(),
-            //controller_services: HashMap::new()
+            properties: MockPropertyMap::new(),
+            controller_services: HashMap::new()
         }
     }
 }

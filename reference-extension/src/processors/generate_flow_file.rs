@@ -1,7 +1,4 @@
-use minifi_native::{
-    ConstTriggerable, DefaultLogger, MetricsProvider, MinifiError, OnTriggerResult, ProcessContext,
-    ProcessSession, Schedulable,
-};
+use minifi_native::{ConstTriggerable, Logger, MetricsProvider, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, Schedulable};
 use rand::Rng;
 use rand::distr::Alphanumeric;
 use std::cmp::PartialEq;
@@ -28,9 +25,9 @@ pub(crate) struct GenerateFlowFile {
 }
 
 impl Schedulable for GenerateFlowFile {
-    fn schedule<P: ProcessContext>(
+    fn schedule<P: ProcessContext, L: Logger>(
         context: &P,
-        _logger: &DefaultLogger,
+        _logger: &L,
     ) -> Result<Self, MinifiError>
     where
         Self: Sized,
@@ -127,11 +124,11 @@ impl GenerateFlowFile {
 }
 
 impl ConstTriggerable for GenerateFlowFile {
-    fn trigger<PC, PS>(
+    fn trigger<PC, PS, L>(
         &self,
         context: &mut PC,
         session: &mut PS,
-        _logger: &DefaultLogger,
+        _logger: &L,
     ) -> Result<OnTriggerResult, MinifiError>
     where
         PC: ProcessContext,

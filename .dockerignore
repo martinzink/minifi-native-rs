@@ -4,5 +4,5 @@
 .idea
 .target
 output
-docker
+docker_builder
 **/target

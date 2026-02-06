@@ -1,6 +1,6 @@
 mod controller_service;
 mod controller_service_context;
-mod error_code;
+mod errors;
 mod flow_file;
 mod logger;
 mod multi_threaded_processor;
@@ -13,10 +13,11 @@ mod raw_processor;
 mod relationship;
 mod single_threaded_processor;
 mod threading_model;
+mod flow_file_transform;
 
 pub use controller_service::ControllerService;
 pub use controller_service_context::ControllerServiceContext;
-pub use error_code::MinifiError;
+pub use errors::MinifiError;
 pub use flow_file::FlowFile;
 pub use logger::{DefaultLogger, LogLevel, Logger};
 pub use multi_threaded_processor::MultiThreadedProcessor;

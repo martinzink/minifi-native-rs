@@ -4,7 +4,7 @@ mod relationships;
 use crate::controller_services::dummy_controller_service::DummyControllerService;
 use crate::processors::dummy_processor::properties::CONTROLLER_SERVICE;
 use minifi_native::{
-    ConstTriggerable, DefaultLogger, Logger, MetricsProvider, MinifiError, OnTriggerResult,
+    ConstTriggerable, Logger, MetricsProvider, MinifiError, OnTriggerResult,
     ProcessContext, ProcessSession, Schedulable,
 };
 
@@ -12,9 +12,9 @@ use minifi_native::{
 pub(crate) struct DummyProcessor {}
 
 impl Schedulable for DummyProcessor {
-    fn schedule<P: ProcessContext>(
+    fn schedule<P: ProcessContext, L: Logger>(
         _context: &P,
-        _logger: &DefaultLogger,
+        _logger: &L,
     ) -> Result<Self, MinifiError>
     where
         Self: Sized,
@@ -24,15 +24,16 @@ impl Schedulable for DummyProcessor {
 }
 
 impl ConstTriggerable for DummyProcessor {
-    fn trigger<PC, PS>(
+    fn trigger<PC, PS, L>(
         &self,
         context: &mut PC,
         _session: &mut PS,
-        logger: &DefaultLogger,
+        logger: &L,
     ) -> Result<OnTriggerResult, MinifiError>
     where
         PC: ProcessContext,
         PS: ProcessSession<FlowFile = PC::FlowFile>,
+        L: Logger,
     {
         match context.get_controller_service::<DummyControllerService>(&CONTROLLER_SERVICE)? {
             None => {

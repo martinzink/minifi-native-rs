@@ -40,8 +40,6 @@ where
     fn on_unschedule(&mut self) {
         if let Some(ref mut scheduled_impl) = self.scheduled_impl {
             scheduled_impl.unschedule()
-        } else {
-            panic!("unscheduling not scheduled processor");
         }
     }
 }

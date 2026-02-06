@@ -18,7 +18,7 @@ fn tester(
         context.properties.insert(k.to_string(), v.to_string());
     }
 
-    let mut processor = LogAttribute::schedule(&context, &logger).unwrap();
+    let processor = LogAttribute::schedule(&context, &logger).unwrap();
 
     let mut session = MockProcessSession::new();
     for flow_file in input_flow_files {

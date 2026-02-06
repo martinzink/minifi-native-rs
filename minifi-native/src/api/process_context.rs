@@ -77,5 +77,5 @@ pub trait ProcessContext {
 
     fn get_controller_service<Cs>(&self, property: &Property) -> Result<Option<&Cs>, MinifiError>
     where
-        Cs: ControllerService;
+        Cs: ControllerService + 'static;
 }

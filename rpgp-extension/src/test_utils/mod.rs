@@ -6,3 +6,10 @@ pub fn get_test_key_path(filename: &str) -> String {
     path.push(filename);
     path.display().to_string()
 }
+
+pub fn get_test_message(filename: &str) -> Vec<u8> {
+    let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    path.push("test_messages");
+    path.push(filename);
+    std::fs::read(path).expect("test message should be readable")
+}

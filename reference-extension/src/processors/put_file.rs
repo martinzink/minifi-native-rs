@@ -1,5 +1,5 @@
 use minifi_native::{
-    DefaultLogger, Logger, MetricsProvider, MinifiError, MutTriggerable, OnTriggerResult,
+    Logger, MetricsProvider, MinifiError, MutTriggerable, OnTriggerResult,
     ProcessContext, ProcessSession, Schedulable,
 };
 use std::io::Write;
@@ -107,16 +107,17 @@ impl PutFile {
         Ok(())
     }
 
-    fn put_file<C, S>(
+    fn put_file<C, S, L>(
         &self,
         session: &mut S,
-        logger: &DefaultLogger,
+        logger: &L,
         destination: &Path,
         ff: &S::FlowFile,
     ) -> Result<(), MinifiError>
     where
         C: ProcessContext,
         S: ProcessSession<FlowFile = C::FlowFile>,
+        L: Logger,
     {
         match self.prepare_destination(destination) {
             Ok(_) => {}
@@ -170,9 +171,9 @@ impl PutFile {
 }
 
 impl Schedulable for PutFile {
-    fn schedule<P: ProcessContext>(
+    fn schedule<P: ProcessContext, L: Logger>(
         context: &P,
-        _logger: &DefaultLogger,
+        _logger: &L,
     ) -> Result<Self, MinifiError> {
         let conflict_resolution_strategy = context
             .get_property(&properties::CONFLICT_RESOLUTION, None)?
@@ -197,15 +198,16 @@ impl Schedulable for PutFile {
 }
 
 impl MutTriggerable for PutFile {
-    fn trigger<PC, PS>(
+    fn trigger<PC, PS, L>(
         &mut self,
         context: &mut PC,
         session: &mut PS,
-        logger: &DefaultLogger,
+        logger: &L,
     ) -> Result<OnTriggerResult, MinifiError>
     where
         PC: ProcessContext,
         PS: ProcessSession<FlowFile = PC::FlowFile>,
+        L: Logger,
     {
         logger.trace(format!("on_trigger: {:?}", self).as_str());
         let Some(mut ff) = session.get() else {
@@ -241,7 +243,7 @@ impl MutTriggerable for PutFile {
             }
         }
 
-        match self.put_file::<PC, PS>(session, logger, &destination_path, &ff) {
+        match self.put_file::<PC, PS, L>(session, logger, &destination_path, &ff) {
             Ok(_) => {
                 session.transfer(ff, relationships::SUCCESS.name);
                 Ok(OnTriggerResult::Ok)
