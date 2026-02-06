@@ -31,31 +31,52 @@ def step_impl(context: MinifiTestContext):
     dir_path = os.path.dirname(os.path.realpath(__file__))
 
     public_key_service = ControllerService(class_name="PgpPublicKeyService", service_name="my_public_keys")
-    alice_public_key = Path(f"{dir_path}/../../test_keys/alice.asc").read_text()
+    alice_public_key = Path(f"{dir_path}/../../test_keys/keyring.asc").read_text()
     public_key_service.add_property("Keyring", alice_public_key)
     context.get_or_create_default_minifi_container().flow_definition.controller_services.append(public_key_service)
 
     processor = Processor("EncryptContentPGP", "EncryptContentPGP")
     processor.add_property("Public Key Service", "my_public_keys")
-    processor.add_property("Public Key Search", "Alice")
     context.get_or_create_default_minifi_container().flow_definition.processors.append(processor)
 
 
-@step("a DecryptContentPGP processor with a PgpPrivateKeyService is set up")
+@step("a DecryptContentPGP processor named DecryptAlice with a PgpPrivateKeyService is set up for Alice")
 def step_impl(context: MinifiTestContext):
     dir_path = os.path.dirname(os.path.realpath(__file__))
 
-    private_key_service = ControllerService(class_name="PgpPrivateKeyService", service_name="my_private_key")
+    private_key_service = ControllerService(class_name="PgpPrivateKeyService", service_name="alice_private_key")
     alice_private_key = Path(f"{dir_path}/../../test_keys/alice_private.asc").read_text()
     private_key_service.add_property("Key", alice_private_key)
     private_key_service.add_property("Key Passphrase", "123")
     context.get_or_create_default_minifi_container().flow_definition.controller_services.append(private_key_service)
 
-    processor = Processor("DecryptContentPGP", "DecryptContentPGP")
-    processor.add_property("Private Key Service", "my_private_key")
+    processor = Processor("DecryptContentPGP", "DecryptAlice")
+    processor.add_property("Private Key Service", "alice_private_key")
     context.get_or_create_default_minifi_container().flow_definition.processors.append(processor)
+
+
+@step("a DecryptContentPGP processor named DecryptBob with a PgpPrivateKeyService is set up for Bob")
+def step_impl(context: MinifiTestContext):
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+
+    private_key_service = ControllerService(class_name="PgpPrivateKeyService", service_name="bob_private_key")
+    bob_private_key = Path(f"{dir_path}/../../test_keys/bob_private.asc").read_text()
+    private_key_service.add_property("Key", bob_private_key)
+    context.get_or_create_default_minifi_container().flow_definition.controller_services.append(private_key_service)
+
+    processor = Processor("DecryptContentPGP", "DecryptBob")
+    processor.add_property("Private Key Service", "bob_private_key")
+    context.get_or_create_default_minifi_container().flow_definition.processors.append(processor)
+
+
 @then('Minifi crashes with the following "{crash_msg}" in less than {duration}')
 def step_impl(context: MinifiTestContext, crash_msg: str, duration: str):
     duration_seconds = humanfriendly.parse_timespan(duration)
     assert wait_for_condition(condition=lambda: context.get_or_create_default_minifi_container().exited and crash_msg in context.get_or_create_default_minifi_container().get_logs(),
+                              timeout_seconds=duration_seconds, bail_condition=lambda: False, context=context)
+
+@then('an encrypted armored pgp file is placed in the "{directory}" directory in less than {duration}')
+def step_impl(context: MinifiTestContext, directory: str, duration: str):
+    duration_seconds = humanfriendly.parse_timespan(duration)
+    assert wait_for_condition(condition=lambda: context.get_or_create_default_minifi_container().directory_contains_file_with_regex(directory, "-----BEGIN PGP MESSAGE-----"),
                               timeout_seconds=duration_seconds, bail_condition=lambda: False, context=context)

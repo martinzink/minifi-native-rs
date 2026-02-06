@@ -17,25 +17,39 @@ Feature: Test PGP extension's encryption and decryption capabilities
     And the Minifi logs do not contain errors
     And the Minifi logs do not contain warnings
 
-  Scenario: GetFile -> Encrypt -> Decrypt -> PutFile
+    Scenario: Encrypted for Alice but not for Bob
     Given the built rust extension library is inside minifi's extension folder
 
     And a GetFile processor with the "Input Directory" property set to "/tmp/input"
     And an EncryptContentPGP processor with a PgpPublicKeyService is set up
-    And a DecryptContentPGP processor with a PgpPrivateKeyService is set up
-    And a PutFile processor with the "Directory" property set to "/tmp/output"
+    And a DecryptContentPGP processor named DecryptAlice with a PgpPrivateKeyService is set up for Alice
+    And a DecryptContentPGP processor named DecryptBob with a PgpPrivateKeyService is set up for Bob
+    And a PutFile processor with the name "AliceSuccess"
+    And a PutFile processor with the name "BobFailure"
 
-    And the "success" relationship of the GetFile processor is connected to the EncryptContentPGP
-    And the "success" relationship of the EncryptContentPGP processor is connected to the DecryptContentPGP
-    And the "success" relationship of the DecryptContentPGP processor is connected to the PutFile
+    And these processor properties are set
+      | processor name    | property name     | property value       |
+      | EncryptContentPGP | File Encoding     | ASCII                |
+      | EncryptContentPGP | Public Key Search | Alice                |
+      | AliceSuccess      | Directory         | /tmp/output/alice_ok |
+      | BobFailure        | Directory         | /tmp/output/bob_fail |
 
-    And PutFile's success relationship is auto-terminated
-    And PutFile's failure relationship is auto-terminated
+    And the processors are connected up as described here
+      | source name       | relationship name | destination name  |
+      | GetFile           | success           | EncryptContentPGP |
+      | EncryptContentPGP | success           | DecryptAlice      |
+      | EncryptContentPGP | success           | DecryptBob        |
+      | DecryptAlice      | success           | AliceSuccess      |
+      | DecryptBob        | failure           | BobFailure        |
+
+    And AliceSuccess's success relationship is auto-terminated
+    And BobFailure's success relationship is auto-terminated
 
     And a directory at "/tmp/input" has a file ("test_file.log") with the content "test content"
 
     When the MiNiFi instance starts up
 
-    Then at least one file with the content "test content" is placed in the "/tmp/output" directory in less than 10 seconds
+    Then at least one file with the content "test content" is placed in the "/tmp/output/alice_ok" directory in less than 5 seconds
+    And an encrypted armored pgp file is placed in the "/tmp/output/bob_fail" directory in less than 5 seconds
     And the Minifi logs do not contain errors
     And the Minifi logs do not contain warnings
