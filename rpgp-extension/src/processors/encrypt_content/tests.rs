@@ -80,14 +80,18 @@ fn public_key_service() -> PublicKeyService {
 #[test]
 fn encrypts_for_alice() {
     let mut context = MockProcessContext::new();
-    context
-        .properties
-        .insert("Public Key Service".to_string(), "my_controller_service".to_string());
+    context.properties.insert(
+        "Public Key Service".to_string(),
+        "my_controller_service".to_string(),
+    );
     context
         .properties
         .insert("Public Key Search".to_string(), "Alice".to_string());
 
-    context.controller_services.insert("my_controller_service".to_string(), Box::new(public_key_service()));
+    context.controller_services.insert(
+        "my_controller_service".to_string(),
+        Box::new(public_key_service()),
+    );
 
     let processor = EncryptContentPGP::schedule(&context, &MockLogger::new());
     assert!(processor.is_ok());
@@ -115,14 +119,18 @@ fn encrypts_for_alice() {
 #[test]
 fn encrypts_for_bob() {
     let mut context = MockProcessContext::new();
-    context
-        .properties
-        .insert("Public Key Service".to_string(), "my_controller_service".to_string());
+    context.properties.insert(
+        "Public Key Service".to_string(),
+        "my_controller_service".to_string(),
+    );
     context
         .properties
         .insert("Public Key Search".to_string(), "Bob".to_string());
 
-    context.controller_services.insert("my_controller_service".to_string(), Box::new(public_key_service()));
+    context.controller_services.insert(
+        "my_controller_service".to_string(),
+        Box::new(public_key_service()),
+    );
 
     let processor = EncryptContentPGP::schedule(&context, &MockLogger::new());
     assert!(processor.is_ok());
@@ -150,14 +158,18 @@ fn encrypts_for_bob() {
 #[test]
 fn cannot_encrypt_for_carol() {
     let mut context = MockProcessContext::new();
-    context
-        .properties
-        .insert("Public Key Service".to_string(), "my_controller_service".to_string());
+    context.properties.insert(
+        "Public Key Service".to_string(),
+        "my_controller_service".to_string(),
+    );
     context
         .properties
         .insert("Public Key Search".to_string(), "Carol".to_string());
 
-    context.controller_services.insert("my_controller_service".to_string(), Box::new(public_key_service()));
+    context.controller_services.insert(
+        "my_controller_service".to_string(),
+        Box::new(public_key_service()),
+    );
 
     let processor = EncryptContentPGP::schedule(&context, &MockLogger::new());
     assert!(processor.is_ok());

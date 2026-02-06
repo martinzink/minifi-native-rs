@@ -4,8 +4,8 @@ mod relationships;
 use crate::controller_services::dummy_controller_service::DummyControllerService;
 use crate::processors::dummy_processor::properties::CONTROLLER_SERVICE;
 use minifi_native::{
-    ConstTriggerable, Logger, MetricsProvider, MinifiError, OnTriggerResult,
-    ProcessContext, ProcessSession, Schedulable,
+    ConstTriggerable, Logger, MetricsProvider, MinifiError, OnTriggerResult, ProcessContext,
+    ProcessSession, Schedulable,
 };
 
 #[derive(Debug)]

@@ -18,7 +18,7 @@ impl ControllerService for PrivateKeyService {
         PrivateKeyService {
             logger,
             private_keys: Vec::new(),
-            passphrase: Password::empty()
+            passphrase: Password::empty(),
         }
     }
 

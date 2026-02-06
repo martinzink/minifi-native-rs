@@ -1,4 +1,4 @@
-use super::{PrivateKeyService};
+use super::PrivateKeyService;
 use super::properties::*;
 use minifi_native::{
     ControllerService, ControllerServiceDefinition, RegisterableControllerService,

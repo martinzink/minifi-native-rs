@@ -1,4 +1,7 @@
-use minifi_native::{ConstTriggerable, Logger, MetricsProvider, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, Schedulable};
+use minifi_native::{
+    ConstTriggerable, Logger, MetricsProvider, MinifiError, OnTriggerResult, ProcessContext,
+    ProcessSession, Schedulable,
+};
 use pgp::composed::{ArmorOptions, MessageBuilder, SignedPublicKey};
 use pgp::types::StringToKey;
 
@@ -57,10 +60,7 @@ impl EncryptContentPGP {
 }
 
 impl Schedulable for EncryptContentPGP {
-    fn schedule<P: ProcessContext, L: Logger>(
-        context: &P,
-        _logger: &L,
-    ) -> Result<Self, MinifiError>
+    fn schedule<P: ProcessContext, L: Logger>(context: &P, _logger: &L) -> Result<Self, MinifiError>
     where
         Self: Sized,
     {

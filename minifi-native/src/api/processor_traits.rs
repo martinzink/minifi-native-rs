@@ -1,10 +1,7 @@
 use crate::{Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession};
 
 pub trait Schedulable {
-    fn schedule<P: ProcessContext, L: Logger>(
-        context: &P,
-        logger: &L,
-    ) -> Result<Self, MinifiError>
+    fn schedule<P: ProcessContext, L: Logger>(context: &P, logger: &L) -> Result<Self, MinifiError>
     where
         Self: Sized;
 

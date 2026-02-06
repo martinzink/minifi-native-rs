@@ -1,6 +1,6 @@
 use minifi_native::{
-    Logger, MetricsProvider, MinifiError, MutTriggerable, OnTriggerResult,
-    ProcessContext, ProcessSession, Schedulable,
+    Logger, MetricsProvider, MinifiError, MutTriggerable, OnTriggerResult, ProcessContext,
+    ProcessSession, Schedulable,
 };
 use std::io::Write;
 use std::path::{Path, PathBuf};

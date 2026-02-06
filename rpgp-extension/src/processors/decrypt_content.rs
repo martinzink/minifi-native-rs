@@ -4,7 +4,10 @@ mod relationships;
 use crate::controller_services::private_key_service::PrivateKeyService;
 use crate::processors::decrypt_content::properties::{PRIVATE_KEY_SERVICE, SYMMETRIC_PASSWORD};
 use crate::processors::decrypt_content::relationships::{FAILURE, SUCCESS};
-use minifi_native::{ConstTriggerable, Logger, MetricsProvider, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, Schedulable};
+use minifi_native::{
+    ConstTriggerable, Logger, MetricsProvider, MinifiError, OnTriggerResult, ProcessContext,
+    ProcessSession, Schedulable,
+};
 use pgp::composed::TheRing;
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
 
@@ -22,10 +25,7 @@ pub(crate) struct DecryptContent {
 }
 
 impl Schedulable for DecryptContent {
-    fn schedule<P: ProcessContext, L>(
-        context: &P,
-        _logger: &L,
-    ) -> Result<Self, MinifiError>
+    fn schedule<P: ProcessContext, L>(context: &P, _logger: &L) -> Result<Self, MinifiError>
     where
         Self: Sized,
         L: Logger,
@@ -89,13 +89,11 @@ impl DecryptContent {
     where
         PS: ProcessSession,
     {
-        session
-            .read(&ff)
-            .and_then(|bytes| {
-                pgp::composed::Message::from_reader(std::io::Cursor::new(bytes)).map(|(msg, _header)| {
-                    msg
-                }).ok()
-            })
+        session.read(&ff).and_then(|bytes| {
+            pgp::composed::Message::from_reader(std::io::Cursor::new(bytes))
+                .map(|(msg, _header)| msg)
+                .ok()
+        })
     }
 }
 
@@ -116,11 +114,13 @@ impl ConstTriggerable for DecryptContent {
             return Ok(OnTriggerResult::Yield);
         }
 
-        if let Some(mut decrypted_msg) = self
-            .get_msg(session, ff.as_ref().unwrap())
-            .and_then(|msg| self.decrypt_msg(msg, context, logger).map_err(|e| logger.trace(&format!("Couldnt decrypt message due to {:?}", e))).ok())
+        if let Some(mut decrypted_msg) =
+            self.get_msg(session, ff.as_ref().unwrap()).and_then(|msg| {
+                self.decrypt_msg(msg, context, logger)
+                    .map_err(|e| logger.trace(&format!("Couldnt decrypt message due to {:?}", e)))
+                    .ok()
+            })
         {
-
             if self.decompress_data && decrypted_msg.is_compressed() {
                 match decrypted_msg.decompress() {
                     Ok(decompressed_data) => {

@@ -19,7 +19,7 @@ impl HasProcessorDefinition for EncryptContentPGP {
                 properties::FILE_ENCODING,
                 properties::PASSPHRASE,
                 properties::PUBLIC_KEY_SEARCH,
-                properties::PUBLIC_KEY_SERVICE
+                properties::PUBLIC_KEY_SERVICE,
             ],
         ))
     }

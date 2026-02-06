@@ -205,8 +205,8 @@ fn private_ascii_key() {
     let mut controller_service = PublicKeyService::new(MockLogger::new());
     let mut context = MockControllerServiceContext::new();
 
-    let file_content = std::fs::read_to_string(get_test_key_path("alice_private.asc"))
-        .expect("required for test");
+    let file_content =
+        std::fs::read_to_string(get_test_key_path("alice_private.asc")).expect("required for test");
 
     context
         .properties

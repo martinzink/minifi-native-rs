@@ -2,6 +2,7 @@ mod controller_service;
 mod controller_service_context;
 mod errors;
 mod flow_file;
+mod flow_file_transform;
 mod logger;
 mod multi_threaded_processor;
 mod output_attribute;
@@ -13,7 +14,6 @@ mod raw_processor;
 mod relationship;
 mod single_threaded_processor;
 mod threading_model;
-mod flow_file_transform;
 
 pub use controller_service::ControllerService;
 pub use controller_service_context::ControllerServiceContext;

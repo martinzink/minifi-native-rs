@@ -1,6 +1,6 @@
-use std::any::Any;
 use crate::api::ProcessContext;
 use crate::{ControllerService, MinifiError, MockFlowFile, Property};
+use std::any::Any;
 use std::collections::HashMap;
 
 pub struct MockPropertyMap {
@@ -8,9 +8,14 @@ pub struct MockPropertyMap {
 }
 
 impl MockPropertyMap {
-    pub fn new() -> Self{ Self{properties: HashMap::new()}}
-    pub fn insert(&mut self, key: String, value: String) { self.properties.insert(key, value); }
-
+    pub fn new() -> Self {
+        Self {
+            properties: HashMap::new(),
+        }
+    }
+    pub fn insert(&mut self, key: String, value: String) {
+        self.properties.insert(key, value);
+    }
 }
 
 impl MockPropertyMap {
@@ -35,7 +40,7 @@ impl MockPropertyMap {
 
 pub struct MockProcessContext {
     pub properties: MockPropertyMap,
-    pub controller_services: HashMap<String, Box<dyn Any>>
+    pub controller_services: HashMap<String, Box<dyn Any>>,
 }
 
 impl ProcessContext for MockProcessContext {
@@ -54,8 +59,11 @@ impl ProcessContext for MockProcessContext {
         Cs: ControllerService + 'static,
     {
         if let Some(service_name) = self.get_property(property, None)? {
-            Ok(self.controller_services.get(&service_name).and_then(|c| c.downcast_ref::<Cs>()))
-        } else{
+            Ok(self
+                .controller_services
+                .get(&service_name)
+                .and_then(|c| c.downcast_ref::<Cs>()))
+        } else {
             Ok(None)
         }
     }
@@ -65,7 +73,7 @@ impl MockProcessContext {
     pub fn new() -> Self {
         Self {
             properties: MockPropertyMap::new(),
-            controller_services: HashMap::new()
+            controller_services: HashMap::new(),
         }
     }
 }

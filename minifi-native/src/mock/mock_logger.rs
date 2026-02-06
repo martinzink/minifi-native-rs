@@ -23,9 +23,7 @@ impl MockLogger {
 }
 
 #[derive(Debug)]
-pub struct StdLogger {
-    
-}
+pub struct StdLogger {}
 
 impl Logger for StdLogger {
     fn log(&self, level: LogLevel, message: &str) {

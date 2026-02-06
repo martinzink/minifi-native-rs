@@ -116,7 +116,7 @@ fn test_decryption(
                 result_bytes
             );
         }
-        Err(_)=> {
+        Err(_) => {
             assert!(trigger_result.is_ok());
             assert_eq!(session.transferred_flow_files.len(), 1);
             assert_eq!(
@@ -130,9 +130,7 @@ fn test_decryption(
                     .unwrap()
                     .flow_file
                     .content,
-                get_test_message(
-                    message_file_name,
-                )
+                get_test_message(message_file_name,)
             );
         }
     }
@@ -156,13 +154,13 @@ fn decrypts_with_password() {
         "foo_for_alice.gpg",
         None,
         Some("my_secret_password"),
-        Err(())
+        Err(()),
     );
     test_decryption(
         "foo_for_alice.asc",
         None,
         Some("my_secret_password"),
-        Err(())
+        Err(()),
     );
 }
 
@@ -184,20 +182,20 @@ fn decrypts_for_alice() {
         "foo_for_alice.gpg",
         Some(alice_private_key_data),
         None,
-        Ok("foo\n".as_bytes())
+        Ok("foo\n".as_bytes()),
     );
 
     test_decryption(
         "password_encrypted_foo.gpg",
         Some(alice_private_key_data),
         None,
-        Err(())
+        Err(()),
     );
 
     test_decryption(
         "password_encrypted_foo.asc",
         Some(alice_private_key_data),
         None,
-        Err(())
+        Err(()),
     );
 }

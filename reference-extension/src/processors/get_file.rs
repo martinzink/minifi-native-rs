@@ -6,8 +6,8 @@ use crate::processors::get_file::properties::{
     MIN_SIZE, RECURSE,
 };
 use minifi_native::{
-    ConstTriggerable, Logger, MetricsProvider, MinifiError, OnTriggerResult,
-    ProcessContext, ProcessSession, Schedulable,
+    ConstTriggerable, Logger, MetricsProvider, MinifiError, OnTriggerResult, ProcessContext,
+    ProcessSession, Schedulable,
 };
 use std::collections::VecDeque;
 use std::error;
@@ -148,8 +148,12 @@ impl GetFile {
         Ok(true)
     }
 
-    fn get_single_file<PS: ProcessSession, L: Logger>(&self, session: &mut PS, logger: &L, path: PathBuf)
-    {
+    fn get_single_file<PS: ProcessSession, L: Logger>(
+        &self,
+        session: &mut PS,
+        logger: &L,
+        path: PathBuf,
+    ) {
         logger.info(format!("GetFile process {:?}", &path).as_str());
         let mut ff = session
             .create()
@@ -182,10 +186,7 @@ impl GetFile {
 }
 
 impl Schedulable for GetFile {
-    fn schedule<P: ProcessContext, L: Logger>(
-        context: &P,
-        _logger: &L,
-    ) -> Result<Self, MinifiError>
+    fn schedule<P: ProcessContext, L: Logger>(context: &P, _logger: &L) -> Result<Self, MinifiError>
     where
         Self: Sized,
     {

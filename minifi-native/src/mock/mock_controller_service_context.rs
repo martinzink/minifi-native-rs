@@ -1,6 +1,6 @@
 use crate::api::ControllerServiceContext;
-use crate::{MinifiError, Property};
 use crate::mock::mock_process_context::MockPropertyMap;
+use crate::{MinifiError, Property};
 
 pub struct MockControllerServiceContext {
     pub properties: MockPropertyMap,
