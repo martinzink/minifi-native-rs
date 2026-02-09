@@ -4,8 +4,8 @@ use crate::processors::decrypt_content::DecryptContent;
 use crate::test_utils;
 use crate::test_utils::get_test_message;
 use minifi_native::{
-    ConstTriggerable, ControllerService, MockControllerServiceContext, MockFlowFile, MockLogger,
-    MockProcessContext, MockProcessSession, Schedulable, StdLogger,
+    ConstTrigger, ControllerService, MockControllerServiceContext, MockFlowFile, MockLogger,
+    MockProcessContext, MockProcessSession, Schedule, StdLogger,
 };
 
 #[test]
@@ -55,7 +55,7 @@ impl PrivateKeyData {
         if let Some(passphrase) = self.passphrase {
             context.properties.insert(KEY_PASSPHRASE.name, passphrase);
         }
-        
+
 
         assert_eq!(controller_service.enable(&context), Ok(()));
         controller_service
@@ -166,7 +166,7 @@ fn decrypts_with_password() {
 fn decrypts_for_alice() {
     let alice_private_key_data = PrivateKeyData {
         key_filename: "alice_private.asc",
-        passphrase: Some("123"),
+        passphrase: Some("whiterabbit"),
     };
 
     test_decryption(

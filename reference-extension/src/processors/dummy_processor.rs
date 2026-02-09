@@ -2,14 +2,14 @@ mod properties;
 use crate::controller_services::dummy_controller_service::DummyControllerService;
 use crate::processors::dummy_processor::properties::CONTROLLER_SERVICE;
 use minifi_native::{
-    ConstTriggerable, Logger, MetricsProvider, MinifiError, OnTriggerResult, ProcessContext,
-    ProcessSession, Schedulable,
+    ConstTrigger, Logger, CalculateMetrics, MinifiError, OnTriggerResult, ProcessContext,
+    ProcessSession, Schedule,
 };
 
 #[derive(Debug)]
 pub(crate) struct DummyProcessor {}
 
-impl Schedulable for DummyProcessor {
+impl Schedule for DummyProcessor {
     fn schedule<P: ProcessContext, L: Logger>(
         _context: &P,
         _logger: &L,
@@ -21,7 +21,7 @@ impl Schedulable for DummyProcessor {
     }
 }
 
-impl ConstTriggerable for DummyProcessor {
+impl ConstTrigger for DummyProcessor {
     fn trigger<PC, PS, L>(
         &self,
         context: &mut PC,
@@ -51,7 +51,7 @@ impl ConstTriggerable for DummyProcessor {
     }
 }
 
-impl MetricsProvider for DummyProcessor {}
+impl CalculateMetrics for DummyProcessor {}
 
 #[cfg(not(test))]
 pub(crate) mod processor_definition;

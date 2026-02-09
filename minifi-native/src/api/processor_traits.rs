@@ -1,6 +1,6 @@
 use crate::{Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession};
 
-pub trait Schedulable {
+pub trait Schedule {
     fn schedule<P: ProcessContext, L: Logger>(context: &P, logger: &L) -> Result<Self, MinifiError>
     where
         Self: Sized;
@@ -8,7 +8,7 @@ pub trait Schedulable {
     fn unschedule(&mut self) {}
 }
 
-pub trait ConstTriggerable {
+pub trait ConstTrigger {
     fn trigger<PC, PS, L>(
         &self,
         context: &mut PC,
@@ -21,7 +21,7 @@ pub trait ConstTriggerable {
         L: Logger;
 }
 
-pub trait MutTriggerable {
+pub trait MutTrigger {
     fn trigger<PC, PS, L>(
         &mut self,
         context: &mut PC,
@@ -34,7 +34,7 @@ pub trait MutTriggerable {
         L: Logger;
 }
 
-pub trait MetricsProvider {
+pub trait CalculateMetrics {
     fn calculate_metrics(&self) -> Vec<(String, f64)> {
         vec![]
     }

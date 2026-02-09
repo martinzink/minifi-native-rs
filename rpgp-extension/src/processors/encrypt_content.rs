@@ -1,6 +1,6 @@
 use minifi_native::{
-    ConstTriggerable, Logger, MetricsProvider, MinifiError, OnTriggerResult, ProcessContext,
-    ProcessSession, Schedulable,
+    ConstTrigger, Logger, CalculateMetrics, MinifiError, OnTriggerResult, ProcessContext,
+    ProcessSession, Schedule,
 };
 use pgp::composed::{ArmorOptions, MessageBuilder, SignedPublicKey};
 use pgp::types::{StringToKey};
@@ -48,7 +48,7 @@ impl EncryptContentPGP {
 
         if let Some(passphrase) = passphrase {
             builder.encrypt_with_password(
-                StringToKey::new_argon2(rand::thread_rng(), 3, 4, 16),
+                StringToKey::new_argon2(rand::thread_rng(), 3, 4, 16),  // TODO(mzink) maybe something quicker for tests?
                 &passphrase.into(),
             )?;
         }
@@ -62,7 +62,7 @@ impl EncryptContentPGP {
     }
 }
 
-impl Schedulable for EncryptContentPGP {
+impl Schedule for EncryptContentPGP {
     fn schedule<P: ProcessContext, L: Logger>(context: &P, _logger: &L) -> Result<Self, MinifiError>
     where
         Self: Sized,
@@ -76,7 +76,7 @@ impl Schedulable for EncryptContentPGP {
     }
 }
 
-impl ConstTriggerable for EncryptContentPGP {
+impl ConstTrigger for EncryptContentPGP {
     fn trigger<PC, PS, L>(
         &self,
         context: &mut PC,
@@ -121,7 +121,7 @@ impl ConstTriggerable for EncryptContentPGP {
     }
 }
 
-impl MetricsProvider for EncryptContentPGP {}
+impl CalculateMetrics for EncryptContentPGP {}
 
 #[cfg(test)]
 mod tests;

@@ -1,6 +1,6 @@
 use minifi_native::{
-    ConstTriggerable, Logger, MetricsProvider, MinifiError, OnTriggerResult, ProcessContext,
-    ProcessSession, Schedulable,
+    ConstTrigger, Logger, CalculateMetrics, MinifiError, OnTriggerResult, ProcessContext,
+    ProcessSession, Schedule,
 };
 use rand::Rng;
 use rand::distr::Alphanumeric;
@@ -27,7 +27,7 @@ pub(crate) struct GenerateFlowFile {
     data_generated_during_on_schedule: Vec<u8>,
 }
 
-impl Schedulable for GenerateFlowFile {
+impl Schedule for GenerateFlowFile {
     fn schedule<P: ProcessContext, L: Logger>(context: &P, _logger: &L) -> Result<Self, MinifiError>
     where
         Self: Sized,
@@ -123,7 +123,7 @@ impl GenerateFlowFile {
     }
 }
 
-impl ConstTriggerable for GenerateFlowFile {
+impl ConstTrigger for GenerateFlowFile {
     fn trigger<PC, PS, L>(
         &self,
         context: &mut PC,
@@ -163,7 +163,7 @@ impl ConstTriggerable for GenerateFlowFile {
     }
 }
 
-impl MetricsProvider for GenerateFlowFile {}
+impl CalculateMetrics for GenerateFlowFile {}
 
 #[cfg(not(test))]
 pub(crate) mod processor_definition;

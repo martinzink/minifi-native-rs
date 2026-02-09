@@ -3,11 +3,11 @@ mod c_ffi;
 mod mock;
 
 pub use api::{
-    Concurrent, ConstTriggerable, ControllerService, ControllerServiceContext, DefaultLogger,
-    Exclusive, FlowFile, HasProcessorDefinition, LogLevel, Logger, MetricsProvider, MinifiError,
-    MultiThreadedProcessor, MutTriggerable, OnTriggerResult, OutputAttribute, ProcessContext,
+    Concurrent, ConstTrigger, ControllerService, ControllerServiceContext, DefaultLogger,
+    Exclusive, FlowFile, HasProcessorDefinition, LogLevel, Logger, CalculateMetrics, MinifiError,
+    MultiThreadedProcessor, MutTrigger, OnTriggerResult, OutputAttribute, ProcessContext,
     ProcessSession, ProcessorInputRequirement, Property, RawMultiThreadedTrigger, RawProcessor,
-    RawSingleThreadedTrigger, Relationship, Schedulable, SingleThreadedProcessor,
+    RawSingleThreadedTrigger, Relationship, Schedule, SingleThreadedProcessor,
     StandardPropertyValidator,
 };
 pub use c_ffi::{
@@ -29,7 +29,7 @@ use minifi_native_sys::{
 #[cfg_attr(target_os = "linux", unsafe(link_section = ".rodata"))]
 #[cfg_attr(target_os = "macos", unsafe(link_section = "__DATA,__const"))]
 #[cfg_attr(target_os = "windows", unsafe(link_section = ".rdata"))]
-pub static API_VERSION_STRING: &str = const_format::concatcp!(
+pub static MINIFI_C_API_VERSION: &str = const_format::concatcp!(
     "MINIFI_API_VERSION=[",
     MINIFI_API_MAJOR_VERSION,
     ".",
@@ -82,7 +82,7 @@ macro_rules! declare_minifi_extension {
                     controller_services_ptr: controller_list.get_controller_service_ptr(),
                 };
 
-                minifi_native::sys::MinifiCreateExtension(minifi_native::API_VERSION_STRING.as_minifi_c_type(), &extension_create_info)
+                minifi_native::sys::MinifiCreateExtension(minifi_native::MINIFI_C_API_VERSION.as_minifi_c_type(), &extension_create_info)
             }
         }
     };

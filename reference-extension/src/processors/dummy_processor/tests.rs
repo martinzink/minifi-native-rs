@@ -1,4 +1,4 @@
-use minifi_native::{MockLogger, MockProcessContext, Schedulable};
+use minifi_native::{MockLogger, MockProcessContext, Schedule};
 use crate::processors::dummy_processor::DummyProcessor;
 
 #[test]

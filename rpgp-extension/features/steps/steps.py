@@ -47,7 +47,7 @@ def step_impl(context: MinifiTestContext):
     private_key_service = ControllerService(class_name="PgpPrivateKeyService", service_name="alice_private_key")
     alice_private_key = Path(f"{dir_path}/../../test_keys/alice_private.asc").read_text()
     private_key_service.add_property("Key", alice_private_key)
-    private_key_service.add_property("Key Passphrase", "123")
+    private_key_service.add_property("Key Passphrase", "whiterabbit")
     context.get_or_create_default_minifi_container().flow_definition.controller_services.append(private_key_service)
 
     processor = Processor("DecryptContentPGP", "DecryptAlice")

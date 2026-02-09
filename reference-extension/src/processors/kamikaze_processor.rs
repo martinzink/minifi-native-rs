@@ -2,8 +2,8 @@ mod properties;
 mod relationships;
 
 use minifi_native::{
-    ConstTriggerable, Logger, MetricsProvider, MinifiError, OnTriggerResult, ProcessContext,
-    ProcessSession, Schedulable,
+    ConstTrigger, Logger, CalculateMetrics, MinifiError, OnTriggerResult, ProcessContext,
+    ProcessSession, Schedule,
 };
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
 
@@ -21,7 +21,7 @@ pub(crate) struct KamikazeProcessor {
     read_behaviour: Option<KamikazeBehaviour>,
 }
 
-impl Schedulable for KamikazeProcessor {
+impl Schedule for KamikazeProcessor {
     fn schedule<P: ProcessContext, L: Logger>(context: &P, _logger: &L) -> Result<Self, MinifiError>
     where
         Self: Sized,
@@ -52,7 +52,7 @@ impl Schedulable for KamikazeProcessor {
     }
 }
 
-impl ConstTriggerable for KamikazeProcessor {
+impl ConstTrigger for KamikazeProcessor {
     fn trigger<PC, PS, L>(
         &self,
         _context: &mut PC,
@@ -88,7 +88,7 @@ impl ConstTriggerable for KamikazeProcessor {
     }
 }
 
-impl MetricsProvider for KamikazeProcessor {}
+impl CalculateMetrics for KamikazeProcessor {}
 
 #[cfg(not(test))]
 pub(crate) mod processor_definition;

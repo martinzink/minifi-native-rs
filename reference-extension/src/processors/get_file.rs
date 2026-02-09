@@ -6,8 +6,8 @@ use crate::processors::get_file::properties::{
     MIN_SIZE, RECURSE,
 };
 use minifi_native::{
-    ConstTriggerable, Logger, MetricsProvider, MinifiError, OnTriggerResult, ProcessContext,
-    ProcessSession, Schedulable,
+    ConstTrigger, Logger, CalculateMetrics, MinifiError, OnTriggerResult, ProcessContext,
+    ProcessSession, Schedule,
 };
 use std::collections::VecDeque;
 use std::error;
@@ -185,7 +185,7 @@ impl GetFile {
     }
 }
 
-impl Schedulable for GetFile {
+impl Schedule for GetFile {
     fn schedule<P: ProcessContext, L: Logger>(context: &P, _logger: &L) -> Result<Self, MinifiError>
     where
         Self: Sized,
@@ -241,7 +241,7 @@ impl Schedulable for GetFile {
     }
 }
 
-impl ConstTriggerable for GetFile {
+impl ConstTrigger for GetFile {
     fn trigger<PC, PS, L>(
         &self,
         _context: &mut PC,
@@ -291,7 +291,7 @@ impl ConstTriggerable for GetFile {
     }
 }
 
-impl MetricsProvider for GetFile {
+impl CalculateMetrics for GetFile {
     fn calculate_metrics(&self) -> Vec<(String, f64)> {
         let metrics = self.metrics.lock().unwrap();
         vec![

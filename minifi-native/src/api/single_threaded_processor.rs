@@ -1,15 +1,15 @@
-use crate::api::processor_traits::MetricsProvider;
+use crate::api::processor_traits::CalculateMetrics;
 use crate::api::raw_processor::HasProcessorDefinition;
 use crate::{
     DefaultLogger, DynProcessorDefinition, Exclusive, LogLevel, Logger, MinifiError,
-    MutTriggerable, OnTriggerResult, ProcessContext, ProcessSession, RawProcessor,
-    RawRegisterableProcessor, RawSingleThreadedTrigger, Schedulable,
+    MutTrigger, OnTriggerResult, ProcessContext, ProcessSession, RawProcessor,
+    RawRegisterableProcessor, RawSingleThreadedTrigger, Schedule,
 };
 
 #[derive(Debug)]
 pub struct SingleThreadedProcessor<Implementation>
 where
-    Implementation: Schedulable + MutTriggerable + HasProcessorDefinition + MetricsProvider,
+    Implementation: Schedule + MutTrigger + HasProcessorDefinition + CalculateMetrics,
 {
     logger: DefaultLogger,
     scheduled_impl: Option<Implementation>,
@@ -17,7 +17,7 @@ where
 
 impl<Implementation> RawProcessor for SingleThreadedProcessor<Implementation>
 where
-    Implementation: Schedulable + MutTriggerable + HasProcessorDefinition + MetricsProvider,
+    Implementation: Schedule + MutTrigger + HasProcessorDefinition + CalculateMetrics,
 {
     type Threading = Exclusive;
 
@@ -46,7 +46,7 @@ where
 
 impl<Implementation> RawSingleThreadedTrigger for SingleThreadedProcessor<Implementation>
 where
-    Implementation: Schedulable + MutTriggerable + HasProcessorDefinition + MetricsProvider,
+    Implementation: Schedule + MutTrigger + HasProcessorDefinition + CalculateMetrics,
 {
     fn on_trigger<PC, PS>(
         &mut self,
@@ -69,7 +69,7 @@ where
 
 impl<Implementation> RawRegisterableProcessor for SingleThreadedProcessor<Implementation>
 where
-    Implementation: Schedulable + MutTriggerable + HasProcessorDefinition + MetricsProvider,
+    Implementation: Schedule + MutTrigger + HasProcessorDefinition + CalculateMetrics,
 {
     fn get_definition() -> Box<dyn DynProcessorDefinition> {
         Implementation::get_definition()

@@ -5,7 +5,7 @@ struct TransformResult<'a, FlowFileType> {
     flow_file: FlowFileType,
     relationship: &'a Relationship,
     content: Option<Vec<u8>>,
-    attributes: Vec<(String, String)>,
+    attributes_to_add: Vec<(String, String)>,
 }
 
 pub trait ConstFlowFileTransform {
@@ -79,15 +79,18 @@ where
     {
         if let Some(ref scheduled_impl) = self.scheduled_impl {
             if let Some(flow_file) = session.get() {
-                let transform_result = scheduled_impl.transform(context, flow_file, &self.logger);
-
+                match scheduled_impl.transform(context, flow_file, &self.logger) {
+                    Ok(result) => {},
+                    Err(RouteDueToError(route_target)) => {},
+                    Err(err) => {}
+                }
             } else {
                 self.log(LogLevel::Trace, "No flowfile to transform");
                 Ok(OnTriggerResult::Yield)
             }
         } else {
             Err(MinifiError::TriggerError(
-                "The processor hasnt been scheduled yet".to_string(),
+                "The processor hasn't been scheduled yet".to_string(),
             ))
         }
     }

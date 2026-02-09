@@ -6,8 +6,8 @@ use crate::controller_services::private_key_service::PrivateKeyService;
 use crate::processors::decrypt_content::properties::{PRIVATE_KEY_SERVICE, SYMMETRIC_PASSWORD};
 use crate::processors::decrypt_content::relationships::{FAILURE, SUCCESS};
 use minifi_native::{
-    ConstTriggerable, Logger, MetricsProvider, MinifiError, OnTriggerResult, ProcessContext,
-    ProcessSession, Schedulable,
+    ConstTrigger, Logger, CalculateMetrics, MinifiError, OnTriggerResult, ProcessContext,
+    ProcessSession, Schedule,
 };
 use pgp::composed::TheRing;
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
@@ -25,7 +25,7 @@ pub(crate) struct DecryptContent {
     symmetric_password: Option<pgp::types::Password>,
 }
 
-impl Schedulable for DecryptContent {
+impl Schedule for DecryptContent {
     fn schedule<P: ProcessContext, L>(context: &P, _logger: &L) -> Result<Self, MinifiError>
     where
         Self: Sized,
@@ -98,7 +98,7 @@ impl DecryptContent {
     }
 }
 
-impl ConstTriggerable for DecryptContent {
+impl ConstTrigger for DecryptContent {
     fn trigger<PC, PS, L>(
         &self,
         context: &mut PC,
@@ -159,7 +159,7 @@ impl ConstTriggerable for DecryptContent {
     }
 }
 
-impl MetricsProvider for DecryptContent {}
+impl CalculateMetrics for DecryptContent {}
 
 #[cfg(test)]
 mod tests;

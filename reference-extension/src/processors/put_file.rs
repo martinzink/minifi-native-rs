@@ -1,6 +1,6 @@
 use minifi_native::{
-    Logger, MetricsProvider, MinifiError, MutTriggerable, OnTriggerResult, ProcessContext,
-    ProcessSession, Schedulable,
+    Logger, CalculateMetrics, MinifiError, MutTrigger, OnTriggerResult, ProcessContext,
+    ProcessSession, Schedule,
 };
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -170,7 +170,7 @@ impl PutFile {
     }
 }
 
-impl Schedulable for PutFile {
+impl Schedule for PutFile {
     fn schedule<P: ProcessContext, L: Logger>(
         context: &P,
         _logger: &L,
@@ -197,7 +197,7 @@ impl Schedulable for PutFile {
     }
 }
 
-impl MutTriggerable for PutFile {
+impl MutTrigger for PutFile {
     fn trigger<PC, PS, L>(
         &mut self,
         context: &mut PC,
@@ -257,7 +257,7 @@ impl MutTriggerable for PutFile {
     }
 }
 
-impl MetricsProvider for PutFile {}
+impl CalculateMetrics for PutFile {}
 
 #[cfg(not(test))]
 pub(crate) mod processor_definition;
