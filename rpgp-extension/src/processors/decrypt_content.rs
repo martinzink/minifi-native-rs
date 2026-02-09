@@ -1,12 +1,12 @@
+mod output_attributes;
 mod properties;
 mod relationships;
-mod output_attributes;
 
 use crate::controller_services::private_key_service::PrivateKeyService;
 use crate::processors::decrypt_content::properties::{PRIVATE_KEY_SERVICE, SYMMETRIC_PASSWORD};
 use crate::processors::decrypt_content::relationships::{FAILURE, SUCCESS};
 use minifi_native::{
-    ConstTrigger, Logger, CalculateMetrics, MinifiError, OnTriggerResult, ProcessContext,
+    CalculateMetrics, ConstTrigger, Logger, MinifiError, OnTriggerResult, ProcessContext,
     ProcessSession, Schedule,
 };
 use pgp::composed::TheRing;
@@ -118,13 +118,11 @@ impl ConstTrigger for DecryptContent {
 
         let mut ff = ff.unwrap();
 
-        if let Some(mut decrypted_msg) =
-            self.get_msg(session, &ff).and_then(|msg| {
-                self.decrypt_msg(msg, context, logger)
-                    .map_err(|e| logger.trace(&format!("Couldnt decrypt message due to {:?}", e)))
-                    .ok()
-            })
-        {
+        if let Some(mut decrypted_msg) = self.get_msg(session, &ff).and_then(|msg| {
+            self.decrypt_msg(msg, context, logger)
+                .map_err(|e| logger.trace(&format!("Couldnt decrypt message due to {:?}", e)))
+                .ok()
+        }) {
             if self.decompress_data && decrypted_msg.is_compressed() {
                 match decrypted_msg.decompress() {
                     Ok(decompressed_data) => {
@@ -140,9 +138,15 @@ impl ConstTrigger for DecryptContent {
             if let Ok(data_vec) = decrypted_msg.as_data_vec() {
                 if let Some(literal_data_header) = decrypted_msg.literal_data_header() {
                     if let Ok(file_name) = str::from_utf8(literal_data_header.file_name()) {
-                        attributes.push((output_attributes::LITERAL_DATA_FILENAME.name.to_string(), file_name.to_string()));
+                        attributes.push((
+                            output_attributes::LITERAL_DATA_FILENAME.name.to_string(),
+                            file_name.to_string(),
+                        ));
                     }
-                    attributes.push((output_attributes::LITERAL_DATA_MODIFIED.name.to_string(), literal_data_header.created().to_string()));
+                    attributes.push((
+                        output_attributes::LITERAL_DATA_MODIFIED.name.to_string(),
+                        literal_data_header.created().to_string(),
+                    ));
                 }
                 session.write(&mut ff, &data_vec);
                 session.transfer(ff, &SUCCESS.name);

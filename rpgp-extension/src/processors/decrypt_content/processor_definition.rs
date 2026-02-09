@@ -1,4 +1,4 @@
-use super::{DecryptContent, properties, relationships, output_attributes};
+use super::{DecryptContent, output_attributes, properties, relationships};
 use minifi_native::{
     HasProcessorDefinition, MultiThreadedProcessor, ProcessorDefinition, ProcessorInputRequirement,
 };

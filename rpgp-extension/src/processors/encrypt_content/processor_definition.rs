@@ -1,4 +1,4 @@
-use super::{EncryptContentPGP, properties, relationships, output_attributes};
+use super::{EncryptContentPGP, output_attributes, properties, relationships};
 use minifi_native::{
     HasProcessorDefinition, MultiThreadedProcessor, ProcessorDefinition, ProcessorInputRequirement,
 };
@@ -13,9 +13,7 @@ impl HasProcessorDefinition for EncryptContentPGP {
             ProcessorInputRequirement::Required,
             false,
             false,
-            &[
-                output_attributes::FILE_ENCODING,
-            ],
+            &[output_attributes::FILE_ENCODING],
             &[relationships::SUCCESS, relationships::FAILURE],
             &[
                 properties::FILE_ENCODING,

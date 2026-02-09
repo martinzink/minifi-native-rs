@@ -2,7 +2,7 @@ mod properties;
 mod relationships;
 
 use minifi_native::{
-    ConstTrigger, Logger, CalculateMetrics, MinifiError, OnTriggerResult, ProcessContext,
+    CalculateMetrics, ConstTrigger, Logger, MinifiError, OnTriggerResult, ProcessContext,
     ProcessSession, Schedule,
 };
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};

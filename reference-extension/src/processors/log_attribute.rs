@@ -1,7 +1,7 @@
 use crate::processors::log_attribute::properties::{FLOW_FILES_TO_LOG, LOG_LEVEL, LOG_PAYLOAD};
 use minifi_native::{
-    ConstTrigger, LogLevel, Logger, CalculateMetrics, MinifiError, OnTriggerResult,
-    ProcessContext, ProcessSession, Property, Schedule,
+    CalculateMetrics, ConstTrigger, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext,
+    ProcessSession, Property, Schedule,
 };
 
 mod properties;

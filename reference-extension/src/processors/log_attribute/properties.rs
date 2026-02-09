@@ -7,7 +7,7 @@ pub(crate) const LOG_LEVEL: Property = Property {
     is_required: true,
     is_sensitive: false,
     supports_expr_lang: false,
-    default_value: Some("Info"),  // TODO (from enum)
+    default_value: Some("Info"), // TODO (from enum)
     validator: StandardPropertyValidator::AlwaysValidValidator,
     allowed_values: &LogLevel::VARIANTS,
     allowed_type: "",

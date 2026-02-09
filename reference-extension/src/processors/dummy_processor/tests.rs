@@ -1,5 +1,5 @@
-use minifi_native::{MockLogger, MockProcessContext, Schedule};
 use crate::processors::dummy_processor::DummyProcessor;
+use minifi_native::{MockLogger, MockProcessContext, Schedule};
 
 #[test]
 fn schedules_with_controller() {

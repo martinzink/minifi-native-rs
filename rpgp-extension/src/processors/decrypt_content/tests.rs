@@ -56,7 +56,6 @@ impl PrivateKeyData {
             context.properties.insert(KEY_PASSPHRASE.name, passphrase);
         }
 
-
         assert_eq!(controller_service.enable(&context), Ok(()));
         controller_service
     }

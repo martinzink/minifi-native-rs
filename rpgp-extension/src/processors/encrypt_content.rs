@@ -1,22 +1,21 @@
 use minifi_native::{
-    ConstTrigger, Logger, CalculateMetrics, MinifiError, OnTriggerResult, ProcessContext,
+    CalculateMetrics, ConstTrigger, Logger, MinifiError, OnTriggerResult, ProcessContext,
     ProcessSession, Schedule,
 };
 use pgp::composed::{ArmorOptions, MessageBuilder, SignedPublicKey};
-use pgp::types::{StringToKey};
+use pgp::types::StringToKey;
 
+mod output_attributes;
 mod properties;
 mod relationships;
-mod output_attributes;
-
 
 use crate::controller_services::public_key_service::PublicKeyService;
+use crate::processors::encrypt_content::output_attributes::FILE_ENCODING;
 use crate::processors::encrypt_content::properties::{
     PASSPHRASE, PUBLIC_KEY_SEARCH, PUBLIC_KEY_SERVICE,
 };
 use crate::processors::encrypt_content::relationships::{FAILURE, SUCCESS};
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
-use crate::processors::encrypt_content::output_attributes::FILE_ENCODING;
 
 #[derive(Debug, Clone, Copy, PartialEq, Display, EnumString, VariantNames, IntoStaticStr)]
 #[strum(serialize_all = "UPPERCASE", const_into_str)]
@@ -48,7 +47,7 @@ impl EncryptContentPGP {
 
         if let Some(passphrase) = passphrase {
             builder.encrypt_with_password(
-                StringToKey::new_argon2(rand::thread_rng(), 3, 4, 16),  // TODO(mzink) maybe something quicker for tests?
+                StringToKey::new_argon2(rand::thread_rng(), 3, 4, 16), // TODO(mzink) maybe something quicker for tests?
                 &passphrase.into(),
             )?;
         }
@@ -107,7 +106,11 @@ impl ConstTrigger for EncryptContentPGP {
                     self.encrypt_message(content, public_key, password.as_deref())
                 {
                     session.write(&mut flow_file, &encrypted_content);
-                    session.set_attribute(&mut flow_file, FILE_ENCODING.name, &self.file_encoding.to_string());
+                    session.set_attribute(
+                        &mut flow_file,
+                        FILE_ENCODING.name,
+                        &self.file_encoding.to_string(),
+                    );
                     session.transfer(flow_file, SUCCESS.name);
                 } else {
                     session.transfer(flow_file, FAILURE.name);

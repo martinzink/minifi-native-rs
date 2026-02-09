@@ -1,9 +1,9 @@
 use crate::api::processor_traits::CalculateMetrics;
 use crate::api::raw_processor::HasProcessorDefinition;
 use crate::{
-    DefaultLogger, DynProcessorDefinition, Exclusive, LogLevel, Logger, MinifiError,
-    MutTrigger, OnTriggerResult, ProcessContext, ProcessSession, RawProcessor,
-    RawRegisterableProcessor, RawSingleThreadedTrigger, Schedule,
+    DefaultLogger, DynProcessorDefinition, Exclusive, LogLevel, Logger, MinifiError, MutTrigger,
+    OnTriggerResult, ProcessContext, ProcessSession, RawProcessor, RawRegisterableProcessor,
+    RawSingleThreadedTrigger, Schedule,
 };
 
 #[derive(Debug)]

@@ -24,7 +24,7 @@ pub use multi_threaded_processor::MultiThreadedProcessor;
 pub use output_attribute::OutputAttribute;
 pub use process_context::ProcessContext;
 pub use process_session::ProcessSession;
-pub use processor_traits::{ConstTrigger, CalculateMetrics, MutTrigger, Schedule};
+pub use processor_traits::{CalculateMetrics, ConstTrigger, MutTrigger, Schedule};
 pub use raw_processor::{
     HasProcessorDefinition, OnTriggerResult, ProcessorInputRequirement, RawMultiThreadedTrigger,
     RawProcessor, RawSingleThreadedTrigger,

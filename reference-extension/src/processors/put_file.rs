@@ -1,5 +1,5 @@
 use minifi_native::{
-    Logger, CalculateMetrics, MinifiError, MutTrigger, OnTriggerResult, ProcessContext,
+    CalculateMetrics, Logger, MinifiError, MutTrigger, OnTriggerResult, ProcessContext,
     ProcessSession, Schedule,
 };
 use std::io::Write;
