@@ -1,6 +1,5 @@
 use super::DummyProcessor;
 use super::properties::*;
-use crate::processors::dummy_processor::relationships::SUCCESS;
 use minifi_native::{
     HasProcessorDefinition, MultiThreadedProcessor, ProcessorDefinition, ProcessorInputRequirement,
 };
@@ -15,7 +14,7 @@ impl HasProcessorDefinition for DummyProcessor {
                 false,
                 false,
                 &[],
-                &[SUCCESS],
+                &[],
                 &[CONTROLLER_SERVICE],
             ),
         )

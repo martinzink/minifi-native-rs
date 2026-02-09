@@ -1,6 +1,4 @@
 mod properties;
-mod relationships;
-
 use crate::controller_services::dummy_controller_service::DummyControllerService;
 use crate::processors::dummy_processor::properties::CONTROLLER_SERVICE;
 use minifi_native::{
@@ -57,3 +55,6 @@ impl MetricsProvider for DummyProcessor {}
 
 #[cfg(not(test))]
 pub(crate) mod processor_definition;
+
+#[cfg(test)]
+mod tests;

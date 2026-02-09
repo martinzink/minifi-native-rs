@@ -8,7 +8,7 @@ use minifi_native::{
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
 
 #[derive(Debug, Clone, Copy, PartialEq, Display, EnumString, VariantNames, IntoStaticStr)]
-#[strum(serialize_all = "PascalCase")]
+#[strum(serialize_all = "PascalCase", const_into_str)]
 enum KamikazeBehaviour {
     ReturnErr,
     ReturnOk,

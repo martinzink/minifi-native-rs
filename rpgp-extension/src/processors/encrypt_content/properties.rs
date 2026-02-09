@@ -8,7 +8,7 @@ pub(crate) const FILE_ENCODING: Property = Property {
     is_required: true,
     is_sensitive: false,
     supports_expr_lang: false,
-    default_value: Some("BINARY"), // todo from enum
+    default_value: Some(FileEncoding::Binary.into_str()),
     validator: StandardPropertyValidator::AlwaysValidValidator,
     allowed_values: &FileEncoding::VARIANTS,
     allowed_type: "",

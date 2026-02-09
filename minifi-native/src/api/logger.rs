@@ -8,7 +8,7 @@ use strum_macros::{Display, EnumString, VariantNames};
 use crate::MockLogger;
 
 #[derive(Debug, Clone, Copy, PartialEq, Display, EnumString, VariantNames)]
-#[strum(serialize_all = "PascalCase")]
+#[strum(serialize_all = "PascalCase", const_into_str)]
 pub enum LogLevel {
     Trace,
     Debug,

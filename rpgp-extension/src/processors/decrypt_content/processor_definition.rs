@@ -1,4 +1,4 @@
-use super::{DecryptContent, properties, relationships};
+use super::{DecryptContent, properties, relationships, output_attributes};
 use minifi_native::{
     HasProcessorDefinition, MultiThreadedProcessor, ProcessorDefinition, ProcessorInputRequirement,
 };
@@ -12,7 +12,10 @@ impl HasProcessorDefinition for DecryptContent {
                 ProcessorInputRequirement::Required,
                 false,
                 false,
-                &[],
+                &[
+                    output_attributes::LITERAL_DATA_FILENAME,
+                    output_attributes::LITERAL_DATA_MODIFIED,
+                ],
                 &[relationships::SUCCESS, relationships::FAILURE],
                 &[
                     properties::DECRYPTION_STRATEGY,

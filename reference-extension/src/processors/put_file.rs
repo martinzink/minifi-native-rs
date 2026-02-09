@@ -13,7 +13,7 @@ mod relationships;
 mod unix_only_properties;
 
 #[derive(Debug, Clone, Copy, PartialEq, Display, EnumString, VariantNames, IntoStaticStr)]
-#[strum(serialize_all = "camelCase")]
+#[strum(serialize_all = "camelCase", const_into_str)]
 enum ConflictResolutionStrategy {
     Fail,
     Replace,

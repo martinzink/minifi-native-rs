@@ -46,18 +46,16 @@ impl PrivateKeyData {
     fn into_controller(self) -> PrivateKeyService {
         let mut controller_service = PrivateKeyService::new(MockLogger::new());
         let mut context = MockControllerServiceContext::new();
+        use private_key_service::properties::{KEY_FILE, KEY_PASSPHRASE};
         context.properties.insert(
-            private_key_service::properties::KEY_FILE.name.to_string(),
+            KEY_FILE.name,
             test_utils::get_test_key_path(self.key_filename),
         );
+
         if let Some(passphrase) = self.passphrase {
-            context.properties.insert(
-                private_key_service::properties::KEY_PASSPHRASE
-                    .name
-                    .to_string(),
-                passphrase.to_string(),
-            );
+            context.properties.insert(KEY_PASSPHRASE.name, passphrase);
         }
+        
 
         assert_eq!(controller_service.enable(&context), Ok(()));
         controller_service

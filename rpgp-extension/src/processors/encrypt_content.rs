@@ -3,10 +3,12 @@ use minifi_native::{
     ProcessSession, Schedulable,
 };
 use pgp::composed::{ArmorOptions, MessageBuilder, SignedPublicKey};
-use pgp::types::StringToKey;
+use pgp::types::{StringToKey};
 
 mod properties;
 mod relationships;
+mod output_attributes;
+
 
 use crate::controller_services::public_key_service::PublicKeyService;
 use crate::processors::encrypt_content::properties::{
@@ -14,9 +16,10 @@ use crate::processors::encrypt_content::properties::{
 };
 use crate::processors::encrypt_content::relationships::{FAILURE, SUCCESS};
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
+use crate::processors::encrypt_content::output_attributes::FILE_ENCODING;
 
 #[derive(Debug, Clone, Copy, PartialEq, Display, EnumString, VariantNames, IntoStaticStr)]
-#[strum(serialize_all = "UPPERCASE")]
+#[strum(serialize_all = "UPPERCASE", const_into_str)]
 enum FileEncoding {
     Ascii,
     Binary,
@@ -104,6 +107,7 @@ impl ConstTriggerable for EncryptContentPGP {
                     self.encrypt_message(content, public_key, password.as_deref())
                 {
                     session.write(&mut flow_file, &encrypted_content);
+                    session.set_attribute(&mut flow_file, FILE_ENCODING.name, &self.file_encoding.to_string());
                     session.transfer(flow_file, SUCCESS.name);
                 } else {
                     session.transfer(flow_file, FAILURE.name);

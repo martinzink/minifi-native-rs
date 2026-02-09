@@ -4,7 +4,7 @@ use std::any::Any;
 use std::collections::HashMap;
 
 pub struct MockPropertyMap {
-    properties: HashMap<String, String>,
+    pub properties: HashMap<String, String>,
 }
 
 impl MockPropertyMap {
@@ -13,8 +13,18 @@ impl MockPropertyMap {
             properties: HashMap::new(),
         }
     }
-    pub fn insert(&mut self, key: String, value: String) {
-        self.properties.insert(key, value);
+
+    pub fn insert<K, V>(&mut self, key: K, value: V) where K: Into<String>, V: Into<String> {
+        self.properties.insert(key.into(), value.into());
+    }
+
+    pub fn extend<I, K, V>(&mut self, iter: I)
+    where I: IntoIterator<Item = (K, V)>,
+        K: Into<String>,
+        V: Into<String>, {
+        self.properties.extend(
+            iter.into_iter().map(|(k,v)| (k.into(), v.into()))
+        )
     }
 }
 

@@ -26,19 +26,15 @@ fn schedules_but_fails_to_encrypt_with_defaults() {
     );
     assert!(session.input_flow_files.is_empty());
     assert_eq!(session.transferred_flow_files.len(), 1);
-    assert_eq!(session.transferred_flow_files[0].relationship, FAILURE.name);
-    assert_eq!(
-        session.transferred_flow_files[0].flow_file.content,
-        "foo".as_bytes().to_vec()
-    );
+    let result_ff = &session.transferred_flow_files[0];
+    assert_eq!(result_ff.relationship, FAILURE.name);
+    assert_eq!(result_ff.flow_file.content, "foo".as_bytes().to_vec());
 }
 
 #[test]
 fn encrypts_via_passphrase() {
     let mut context = MockProcessContext::new();
-    context
-        .properties
-        .insert("Passphrase".to_string(), "password".to_string());
+    context.properties.insert("Passphrase", "password");
 
     let processor = EncryptContentPGP::schedule(&context, &MockLogger::new())
         .expect("Should be able to schedule");
@@ -59,11 +55,9 @@ fn encrypts_via_passphrase() {
     );
     assert!(session.input_flow_files.is_empty());
     assert_eq!(session.transferred_flow_files.len(), 1);
-    assert_eq!(session.transferred_flow_files[0].relationship, SUCCESS.name);
-    assert_ne!(
-        session.transferred_flow_files[0].flow_file.content,
-        "foo".as_bytes().to_vec()
-    );
+    let result_ff = &session.transferred_flow_files[0];
+    assert_eq!(result_ff.relationship, SUCCESS.name);
+    assert_ne!(result_ff.flow_file.content, "foo".as_bytes().to_vec());
 }
 
 fn public_key_service() -> PublicKeyService {
@@ -78,15 +72,13 @@ fn public_key_service() -> PublicKeyService {
 }
 
 #[test]
-fn encrypts_for_alice() {
+fn encrypts_ascii_for_alice() {
     let mut context = MockProcessContext::new();
-    context.properties.insert(
-        "Public Key Service".to_string(),
-        "my_controller_service".to_string(),
-    );
-    context
-        .properties
-        .insert("Public Key Search".to_string(), "Alice".to_string());
+    context.properties.extend([
+        ("Public Key Service", "my_controller_service"),
+        ("Public Key Search", "Alice"),
+        ("File Encoding", "ASCII"),
+    ]);
 
     context.controller_services.insert(
         "my_controller_service".to_string(),
@@ -109,23 +101,20 @@ fn encrypts_for_alice() {
     );
     assert!(session.input_flow_files.is_empty());
     assert_eq!(session.transferred_flow_files.len(), 1);
-    assert_eq!(session.transferred_flow_files[0].relationship, SUCCESS.name);
-    assert_ne!(
-        session.transferred_flow_files[0].flow_file.content,
-        "foo".as_bytes().to_vec()
-    );
+    let result_ff = &session.transferred_flow_files[0];
+    assert_eq!(result_ff.relationship, SUCCESS.name);
+    assert_ne!(result_ff.flow_file.content, "foo".as_bytes().to_vec());
+    assert!(result_ff.flow_file.content.is_ascii());
 }
 
 #[test]
-fn encrypts_for_bob() {
+fn encrypts_binary_for_bob() {
     let mut context = MockProcessContext::new();
-    context.properties.insert(
-        "Public Key Service".to_string(),
-        "my_controller_service".to_string(),
-    );
-    context
-        .properties
-        .insert("Public Key Search".to_string(), "Bob".to_string());
+    context.properties.extend([
+        ("Public Key Service", "my_controller_service"),
+        ("Public Key Search", "Bob"),
+        ("File Encoding", "BINARY"),
+    ]);
 
     context.controller_services.insert(
         "my_controller_service".to_string(),
@@ -148,23 +137,19 @@ fn encrypts_for_bob() {
     );
     assert!(session.input_flow_files.is_empty());
     assert_eq!(session.transferred_flow_files.len(), 1);
-    assert_eq!(session.transferred_flow_files[0].relationship, SUCCESS.name);
-    assert_ne!(
-        session.transferred_flow_files[0].flow_file.content,
-        "foo".as_bytes().to_vec()
-    );
+    let result_ff = &session.transferred_flow_files[0];
+    assert_eq!(result_ff.relationship, SUCCESS.name);
+    assert_ne!(result_ff.flow_file.content, "foo".as_bytes().to_vec());
+    assert!(!result_ff.flow_file.content.is_ascii());
 }
 
 #[test]
 fn cannot_encrypt_for_carol() {
     let mut context = MockProcessContext::new();
-    context.properties.insert(
-        "Public Key Service".to_string(),
-        "my_controller_service".to_string(),
-    );
-    context
-        .properties
-        .insert("Public Key Search".to_string(), "Carol".to_string());
+    context.properties.extend([
+        ("Public Key Service", "my_controller_service"),
+        ("Public Key Search", "Carol"),
+    ]);
 
     context.controller_services.insert(
         "my_controller_service".to_string(),
@@ -187,9 +172,7 @@ fn cannot_encrypt_for_carol() {
     );
     assert!(session.input_flow_files.is_empty());
     assert_eq!(session.transferred_flow_files.len(), 1);
-    assert_eq!(session.transferred_flow_files[0].relationship, FAILURE.name);
-    assert_eq!(
-        session.transferred_flow_files[0].flow_file.content,
-        "foo".as_bytes().to_vec()
-    );
+    let result_ff = &session.transferred_flow_files[0];
+    assert_eq!(result_ff.relationship, FAILURE.name);
+    assert_eq!(result_ff.flow_file.content, "foo".as_bytes().to_vec());
 }

@@ -7,7 +7,7 @@ pub(crate) const DECRYPTION_STRATEGY: Property = Property {
     is_required: false,
     is_sensitive: true,
     supports_expr_lang: false,
-    default_value: Some("DECRYPTED"), // TODO(mzink) from enum
+    default_value: Some(super::DecryptionStrategy::Decrypted.into_str()),
     validator: StandardPropertyValidator::AlwaysValidValidator,
     allowed_values: &super::DecryptionStrategy::VARIANTS,
     allowed_type: "",

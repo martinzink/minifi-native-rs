@@ -1,5 +1,6 @@
 mod properties;
 mod relationships;
+mod output_attributes;
 
 use crate::controller_services::private_key_service::PrivateKeyService;
 use crate::processors::decrypt_content::properties::{PRIVATE_KEY_SERVICE, SYMMETRIC_PASSWORD};
@@ -12,7 +13,7 @@ use pgp::composed::TheRing;
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
 
 #[derive(Debug, Clone, Copy, PartialEq, Display, EnumString, VariantNames, IntoStaticStr)]
-#[strum(serialize_all = "UPPERCASE")]
+#[strum(serialize_all = "UPPERCASE", const_into_str)]
 enum DecryptionStrategy {
     Decrypted,
     Packaged,
@@ -109,13 +110,16 @@ impl ConstTriggerable for DecryptContent {
         PS: ProcessSession<FlowFile = PC::FlowFile>,
         L: Logger,
     {
-        let mut ff = session.get();
+        let mut attributes: Vec<(String, String)> = Vec::new();
+        let ff = session.get();
         if ff.is_none() {
             return Ok(OnTriggerResult::Yield);
         }
 
+        let mut ff = ff.unwrap();
+
         if let Some(mut decrypted_msg) =
-            self.get_msg(session, ff.as_ref().unwrap()).and_then(|msg| {
+            self.get_msg(session, &ff).and_then(|msg| {
                 self.decrypt_msg(msg, context, logger)
                     .map_err(|e| logger.trace(&format!("Couldnt decrypt message due to {:?}", e)))
                     .ok()
@@ -128,22 +132,28 @@ impl ConstTriggerable for DecryptContent {
                     }
                     Err(e) => {
                         logger.warn(&format!("Failed to decompress message {:?}", e));
-                        session.transfer(ff.unwrap(), &FAILURE.name);
+                        session.transfer(ff, &FAILURE.name);
                         return Ok(OnTriggerResult::Ok);
                     }
                 }
             }
             if let Ok(data_vec) = decrypted_msg.as_data_vec() {
-                session.write(&mut ff.as_mut().unwrap(), &data_vec);
-                session.transfer(ff.unwrap(), &SUCCESS.name);
+                if let Some(literal_data_header) = decrypted_msg.literal_data_header() {
+                    if let Ok(file_name) = str::from_utf8(literal_data_header.file_name()) {
+                        attributes.push((output_attributes::LITERAL_DATA_FILENAME.name.to_string(), file_name.to_string()));
+                    }
+                    attributes.push((output_attributes::LITERAL_DATA_MODIFIED.name.to_string(), literal_data_header.created().to_string()));
+                }
+                session.write(&mut ff, &data_vec);
+                session.transfer(ff, &SUCCESS.name);
                 Ok(OnTriggerResult::Ok)
             } else {
                 logger.warn("Failed to serialize decrypted message");
-                session.transfer(ff.unwrap(), &FAILURE.name);
+                session.transfer(ff, &FAILURE.name);
                 Ok(OnTriggerResult::Ok)
             }
         } else {
-            session.transfer(ff.unwrap(), &FAILURE.name);
+            session.transfer(ff, &FAILURE.name);
             Ok(OnTriggerResult::Ok)
         }
     }
