@@ -29,6 +29,16 @@ pub(crate) struct EncryptContentPGP {
     file_encoding: FileEncoding,
 }
 
+#[cfg(not(test))]
+fn string_to_key() -> StringToKey {
+    StringToKey::new_argon2(rand::thread_rng(), 3, 4, 16) // 64 MiB with rpgp's recommended parameter choice
+}
+
+#[cfg(test)]
+fn string_to_key() -> StringToKey {
+    StringToKey::new_argon2(rand::thread_rng(), 1, 1, 10) // fast for unit tests
+}
+
 impl EncryptContentPGP {
     fn encrypt_message(
         &self,
@@ -46,10 +56,7 @@ impl EncryptContentPGP {
         }
 
         if let Some(passphrase) = passphrase {
-            builder.encrypt_with_password(
-                StringToKey::new_argon2(rand::thread_rng(), 3, 4, 16), // TODO(mzink) maybe something quicker for tests?
-                &passphrase.into(),
-            )?;
+            builder.encrypt_with_password(string_to_key(), &passphrase.into())?;
         }
 
         match self.file_encoding {
