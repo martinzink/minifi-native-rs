@@ -9,11 +9,11 @@ Feature: Test PGP extension's encryption and decryption capabilities
 
     When the MiNiFi instance starts up
 
-    Then the Minifi logs contain the following message: "libminifi-pgp.so as CApi extension" in less than 10 seconds
-    And the Minifi logs contain the following message: "Registering class 'EncryptContentPGP' at '/rpgp-extension'" in less than 1 seconds
-    And the Minifi logs contain the following message: "Registering class 'DecryptContentPGP' at '/rpgp-extension'" in less than 1 seconds
-    And the Minifi logs contain the following message: "Registering class 'PgpPublicKeyService' at '/rpgp-extension'" in less than 1 seconds
-    And the Minifi logs contain the following message: "Registering class 'PgpPrivateKeyService' at '/rpgp-extension'" in less than 1 seconds
+    Then the Minifi logs contain the following message: "libminifi_pgp.so as CApi extension" in less than 10 seconds
+    And the Minifi logs contain the following message: "Registering class 'EncryptContentPGP' at '/minifi_pgp'" in less than 1 seconds
+    And the Minifi logs contain the following message: "Registering class 'DecryptContentPGP' at '/minifi_pgp'" in less than 1 seconds
+    And the Minifi logs contain the following message: "Registering class 'PGPPublicKeyService' at '/minifi_pgp'" in less than 1 seconds
+    And the Minifi logs contain the following message: "Registering class 'PGPPrivateKeyService' at '/minifi_pgp'" in less than 1 seconds
     And the Minifi logs do not contain errors
     And the Minifi logs do not contain warnings
 
@@ -21,9 +21,9 @@ Feature: Test PGP extension's encryption and decryption capabilities
     Given the built rust extension library is inside minifi's extension folder
 
     And a GetFile processor with the "Input Directory" property set to "/tmp/input"
-    And an EncryptContentPGP processor with a PgpPublicKeyService is set up
-    And a DecryptContentPGP processor named DecryptAlice with a PgpPrivateKeyService is set up for Alice
-    And a DecryptContentPGP processor named DecryptBob with a PgpPrivateKeyService is set up for Bob
+    And an EncryptContentPGP processor with a PGPPublicKeyService is set up
+    And a DecryptContentPGP processor named DecryptAlice with a PGPPrivateKeyService is set up for Alice
+    And a DecryptContentPGP processor named DecryptBob with a PGPPrivateKeyService is set up for Bob
     And a PutFile processor with the name "AliceSuccess"
     And a PutFile processor with the name "BobFailure"
 

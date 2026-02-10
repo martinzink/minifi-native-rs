@@ -89,7 +89,7 @@ impl Schedule for EncryptContentPGP {
 
 impl FlowFileTransform for EncryptContentPGP {
     fn transform<
-        'b,
+        'a,
         Context: ProcessContext,
         GetContent: FnMut(&Context::FlowFile) -> Option<Vec<u8>>,
         LoggerImpl: Logger,
@@ -98,8 +98,8 @@ impl FlowFileTransform for EncryptContentPGP {
         context: &mut Context,
         flow_file: Context::FlowFile,
         mut get_content: GetContent,
-        _logger: &LoggerImpl,
-    ) -> Result<TransformedFlowFile<'b, Context::FlowFile>, MinifiError> {
+        logger: &LoggerImpl,
+    ) -> Result<TransformedFlowFile<'a, Context::FlowFile>, MinifiError> {
         let public_key = if let (Some(pub_key_search), Some(public_key_service)) = (
             context.get_property(&PUBLIC_KEY_SEARCH, Some(&flow_file))?,
             context.get_controller_service::<PGPPublicKeyService>(&PUBLIC_KEY_SERVICE)?,
@@ -110,29 +110,33 @@ impl FlowFileTransform for EncryptContentPGP {
         };
         let password = context.get_property(&PASSPHRASE, Some(&flow_file))?;
         if public_key.is_none() && password.is_none() {
+            logger.debug("No password or public key to encrypt with");
             return Ok(TransformedFlowFile::route_without_changes(
                 flow_file, &FAILURE,
             ));
         }
 
         let content = get_content(&flow_file)
-            .ok_or_else(|| MinifiError::TriggerError("No content to encrypt".to_string()))?;
-        if let Ok(encrypted_content) =
-            self.encrypt_message(content, public_key, password.as_deref())
-        {
-            Ok(TransformedFlowFile::new(
-                flow_file,
-                &SUCCESS,
-                Some(encrypted_content),
-                HashMap::from([(
-                    FILE_ENCODING.name.to_string(),
-                    self.file_encoding.to_string(),
-                )]),
-            ))
-        } else {
-            Ok(TransformedFlowFile::route_without_changes(
-                flow_file, &FAILURE,
-            ))
+            .ok_or_else(|| MinifiError::TriggerError("Failed to get content".to_string()))?;
+
+        match self.encrypt_message(content, public_key.as_deref(), password.as_deref()) {
+            Ok(encrypted_content) => {
+                Ok(TransformedFlowFile::new(
+                    flow_file,
+                    &SUCCESS,
+                    Some(encrypted_content),
+                    HashMap::from([(
+                        FILE_ENCODING.name.to_string(),
+                        self.file_encoding.to_string(),
+                    )]),
+                ))
+            },
+            Err(e) => {
+                logger.debug(&format!("Failed to encrypt content {:?}", e));
+                Ok(TransformedFlowFile::route_without_changes(
+                    flow_file, &FAILURE,
+                ))
+            },
         }
     }
 }

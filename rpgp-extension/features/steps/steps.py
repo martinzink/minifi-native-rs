@@ -22,15 +22,15 @@ def step_impl(context: MinifiTestContext):
 @step("the built rust extension library is inside minifi's extension folder")
 def step_impl(context: MinifiTestContext):
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    host_path = f"{dir_path}/../../../docker_builder/target/librpgp_extension.so"
+    host_path = f"{dir_path}/../../../docker_builder/target/libminifi_pgp.so"
     print(host_path)
-    context.get_or_create_default_minifi_container().host_files.append(HostFile("/opt/minifi/minifi-current/extensions/libminifi-pgp.so", host_path))
+    context.get_or_create_default_minifi_container().host_files.append(HostFile("/opt/minifi/minifi-current/extensions/libminifi_pgp.so", host_path))
 
-@step("an EncryptContentPGP processor with a PgpPublicKeyService is set up")
+@step("an EncryptContentPGP processor with a PGPPublicKeyService is set up")
 def step_impl(context: MinifiTestContext):
     dir_path = os.path.dirname(os.path.realpath(__file__))
 
-    public_key_service = ControllerService(class_name="PgpPublicKeyService", service_name="my_public_keys")
+    public_key_service = ControllerService(class_name="PGPPublicKeyService", service_name="my_public_keys")
     alice_public_key = Path(f"{dir_path}/../../test_keys/keyring.asc").read_text()
     public_key_service.add_property("Keyring", alice_public_key)
     context.get_or_create_default_minifi_container().flow_definition.controller_services.append(public_key_service)
@@ -40,11 +40,11 @@ def step_impl(context: MinifiTestContext):
     context.get_or_create_default_minifi_container().flow_definition.processors.append(processor)
 
 
-@step("a DecryptContentPGP processor named DecryptAlice with a PgpPrivateKeyService is set up for Alice")
+@step("a DecryptContentPGP processor named DecryptAlice with a PGPPrivateKeyService is set up for Alice")
 def step_impl(context: MinifiTestContext):
     dir_path = os.path.dirname(os.path.realpath(__file__))
 
-    private_key_service = ControllerService(class_name="PgpPrivateKeyService", service_name="alice_private_key")
+    private_key_service = ControllerService(class_name="PGPPrivateKeyService", service_name="alice_private_key")
     alice_private_key = Path(f"{dir_path}/../../test_keys/alice_private.asc").read_text()
     private_key_service.add_property("Key", alice_private_key)
     private_key_service.add_property("Key Passphrase", "whiterabbit")
@@ -55,11 +55,11 @@ def step_impl(context: MinifiTestContext):
     context.get_or_create_default_minifi_container().flow_definition.processors.append(processor)
 
 
-@step("a DecryptContentPGP processor named DecryptBob with a PgpPrivateKeyService is set up for Bob")
+@step("a DecryptContentPGP processor named DecryptBob with a PGPPrivateKeyService is set up for Bob")
 def step_impl(context: MinifiTestContext):
     dir_path = os.path.dirname(os.path.realpath(__file__))
 
-    private_key_service = ControllerService(class_name="PgpPrivateKeyService", service_name="bob_private_key")
+    private_key_service = ControllerService(class_name="PGPPrivateKeyService", service_name="bob_private_key")
     bob_private_key = Path(f"{dir_path}/../../test_keys/bob_private.asc").read_text()
     private_key_service.add_property("Key", bob_private_key)
     context.get_or_create_default_minifi_container().flow_definition.controller_services.append(private_key_service)
