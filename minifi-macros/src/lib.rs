@@ -10,7 +10,7 @@ pub fn derive_component_identifier(input: TokenStream) -> TokenStream {
 
     let expanded = quote! {
         impl ::minifi_native::ComponentIdentifier for #name {
-            const CLASS_NAME: &'static str = #name_str;
+            const CLASS_NAME: &'static str = concat!(module_path!(), "::", #name_str);
             const GROUP_NAME: &'static str = env!("CARGO_PKG_NAME");
             const VERSION: &'static str = env!("CARGO_PKG_VERSION");
         }

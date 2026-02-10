@@ -1205,6 +1205,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "minifi_pgp"
+version = "0.1.0"
+dependencies = [
+ "minifi-native",
+ "pgp",
+ "rand 0.8.5",
+ "strum",
+ "strum_macros",
+]
+
+[[package]]
 name = "minimal-lexical"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1758,17 +1769,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
-]
-
-[[package]]
-name = "rpgp-extension"
-version = "0.1.0"
-dependencies = [
- "minifi-native",
- "pgp",
- "rand 0.8.5",
- "strum",
- "strum_macros",
 ]
 
 [[package]]

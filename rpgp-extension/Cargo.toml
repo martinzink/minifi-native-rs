@@ -1,5 +1,5 @@
 [package]
-name = "rpgp-extension"
+name = "minifi_pgp"
 version = "0.1.0"
 edition = "2024"
 

@@ -7,7 +7,7 @@ impl HasProcessorDefinition for DecryptContentPGP {
     fn get_definition() -> Box<dyn minifi_native::DynProcessorDefinition> {
         Box::new(
             ProcessorDefinition::<FlowFileTransformer<DecryptContentPGP>>::new(
-                "rs::DecryptContentPGP",
+                "rs::DecryptContentPGP",  // TODO(mzink) should come from ComponentIdentifier trait
                 "Decrypt contents of OpenPGP messages. Using the Packaged Decryption Strategy preserves OpenPGP encoding to support subsequent signature verification.",
                 ProcessorInputRequirement::Required,
                 false,
