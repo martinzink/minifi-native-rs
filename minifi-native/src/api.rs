@@ -34,3 +34,5 @@ pub use single_threaded_processor::SingleThreadedProcessor;
 pub use property::{Property, StandardPropertyValidator};
 pub use relationship::Relationship;
 pub use threading_model::{Concurrent, Exclusive, ThreadingModel};
+
+pub use flow_file_transform::{FlowFileTransform, TransformedFlowFile};

@@ -1,6 +1,6 @@
 use minifi_native::{
-    CalculateMetrics, ConstTrigger, Logger, MinifiError, OnTriggerResult, ProcessContext,
-    ProcessSession, Schedule,
+    CalculateMetrics, FlowFileTransform, Logger, MinifiError,
+    ProcessContext, Schedule, TransformedFlowFile,
 };
 use pgp::composed::{ArmorOptions, MessageBuilder, SignedPublicKey};
 use pgp::types::StringToKey;
@@ -82,51 +82,51 @@ impl Schedule for EncryptContentPGP {
     }
 }
 
-impl ConstTrigger for EncryptContentPGP {
-    fn trigger<PC, PS, L>(
+impl FlowFileTransform for EncryptContentPGP {
+    fn transform<
+        Context: ProcessContext,
+        GetContent: FnMut(&Context::FlowFile) -> Option<Vec<u8>>,
+        LoggerImpl: Logger,
+    >(
         &self,
-        context: &mut PC,
-        session: &mut PS,
-        logger: &L,
-    ) -> Result<OnTriggerResult, MinifiError>
-    where
-        PC: ProcessContext,
-        PS: ProcessSession<FlowFile = PC::FlowFile>,
-        L: Logger,
-    {
-        if let Some(mut flow_file) = session.get() {
-            let public_key = if let (Some(pub_key_search), Some(public_key_service)) = (
-                context.get_property(&PUBLIC_KEY_SEARCH, Some(&flow_file))?,
-                context.get_controller_service::<PublicKeyService>(&PUBLIC_KEY_SERVICE)?,
-            ) {
-                public_key_service.get(&pub_key_search)
-            } else {
-                None
-            };
-
-            let password = context.get_property(&PASSPHRASE, Some(&flow_file))?;
-            if public_key.is_none() && password.is_none() {
-                logger.warn("The was no public key or password provided");
-                session.transfer(flow_file, FAILURE.name);
-            } else if let Some(content) = session.read(&flow_file) {
-                if let Ok(encrypted_content) =
-                    self.encrypt_message(content, public_key, password.as_deref())
-                {
-                    session.write(&mut flow_file, &encrypted_content);
-                    session.set_attribute(
-                        &mut flow_file,
-                        FILE_ENCODING.name,
-                        &self.file_encoding.to_string(),
-                    );
-                    session.transfer(flow_file, SUCCESS.name);
-                } else {
-                    session.transfer(flow_file, FAILURE.name);
-                }
-            }
-
-            Ok(OnTriggerResult::Ok)
+        context: &mut Context,
+        flow_file: Context::FlowFile,
+        mut get_content: GetContent,
+        _logger: &LoggerImpl,
+    ) -> Result<TransformedFlowFile<'_, Context::FlowFile>, MinifiError> {
+        let public_key = if let (Some(pub_key_search), Some(public_key_service)) = (
+            context.get_property(&PUBLIC_KEY_SEARCH, Some(&flow_file))?,
+            context.get_controller_service::<PublicKeyService>(&PUBLIC_KEY_SERVICE)?,
+        ) {
+            public_key_service.get(&pub_key_search)
         } else {
-            Ok(OnTriggerResult::Yield)
+            None
+        };
+        let password = context.get_property(&PASSPHRASE, Some(&flow_file))?;
+        if public_key.is_none() && password.is_none() {
+            return Ok(TransformedFlowFile::route_without_changes(
+                flow_file, &FAILURE,
+            ));
+        }
+
+        let content = get_content(&flow_file)
+            .ok_or_else(|| MinifiError::TriggerError("No content to encrypt".to_string()))?;
+        if let Ok(encrypted_content) =
+            self.encrypt_message(content, public_key, password.as_deref())
+        {
+            Ok(TransformedFlowFile::new(
+                flow_file,
+                &SUCCESS,
+                Some(encrypted_content),
+                vec![(
+                    FILE_ENCODING.name.to_string(),
+                    self.file_encoding.to_string(),
+                )],
+            ))
+        } else {
+            Ok(TransformedFlowFile::route_without_changes(
+                flow_file, &FAILURE,
+            ))
         }
     }
 }

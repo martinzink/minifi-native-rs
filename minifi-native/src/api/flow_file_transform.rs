@@ -1,4 +1,4 @@
-use crate::{CalculateMetrics, Concurrent, DefaultLogger, DynProcessorDefinition, FlowFile, HasProcessorDefinition, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, RawMultiThreadedTrigger, RawProcessor, RawRegisterableProcessor, Relationship, Schedule};
+use crate::{CalculateMetrics, Concurrent, DefaultLogger, DynProcessorDefinition, HasProcessorDefinition, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, RawMultiThreadedTrigger, RawProcessor, RawRegisterableProcessor, Relationship, Schedule};
 
 pub struct TransformedFlowFile<'a, FlowFileType> {
     flow_file: FlowFileType,
@@ -7,24 +7,41 @@ pub struct TransformedFlowFile<'a, FlowFileType> {
     attributes_to_add: Vec<(String, String)>,
 }
 
-pub enum TransformError<FlowFileType> {
-    RouteTo((FlowFileType, &'static str)),
-    MinifiError(MinifiError),
+impl<'a, FlowFileType> TransformedFlowFile<'a, FlowFileType> {
+    pub fn route_without_changes(flow_file: FlowFileType, target_relationship: &'a Relationship) -> Self {
+        Self { flow_file, target_relationship, new_content: None, attributes_to_add: vec![] }
+    }
+    pub fn new(flow_file: FlowFileType, target_relationship: &'a Relationship, new_content: Option<Vec<u8>>, attributes_to_add: Vec<(String, String)>) -> Self {
+        Self { flow_file, target_relationship, new_content, attributes_to_add }
+    }
+
+    pub fn new_content(&self) -> Option<&Vec<u8>> {
+        self.new_content.as_ref()
+    }
+
+    pub fn target_relationship(&self) -> &Relationship {
+        self.target_relationship
+    }
+
+    pub fn attributes_to_add(&self) -> &Vec<(String, String)> {
+        &self.attributes_to_add
+    }
 }
 
-pub trait ConstFlowFileTransform {
-    fn transform<Context: ProcessContext, LoggerImpl: Logger>(
+pub trait FlowFileTransform {
+    fn transform<Context: ProcessContext, GetContent: FnMut(&Context::FlowFile) -> Option<Vec<u8>>, LoggerImpl: Logger>(
         &self,
         context: &mut Context,
         flow_file: Context::FlowFile,
+        flow_file_content: GetContent,
         logger: &LoggerImpl,
-    ) -> Result<TransformedFlowFile<'_, Context::FlowFile>, TransformError<Context::FlowFile>>;
+    ) -> Result<TransformedFlowFile<'_, Context::FlowFile>, MinifiError>;
 }
 
 #[derive(Debug)]
 pub struct MultiThreadedFlowFileTransformer<Implementation>
 where
-    Implementation: Schedule + ConstFlowFileTransform + HasProcessorDefinition + CalculateMetrics,
+    Implementation: Schedule + FlowFileTransform + HasProcessorDefinition + CalculateMetrics,
 {
     logger: DefaultLogger,
     scheduled_impl: Option<Implementation>,
@@ -32,7 +49,7 @@ where
 
 impl<Implementation> RawProcessor for MultiThreadedFlowFileTransformer<Implementation>
 where
-    Implementation: Schedule + ConstFlowFileTransform + HasProcessorDefinition + CalculateMetrics,
+    Implementation: Schedule + FlowFileTransform + HasProcessorDefinition + CalculateMetrics,
 {
     type Threading = Concurrent;
 
@@ -61,7 +78,7 @@ where
 
 impl<Implementation> RawMultiThreadedTrigger for MultiThreadedFlowFileTransformer<Implementation>
 where
-    Implementation: Schedule + ConstFlowFileTransform + HasProcessorDefinition + CalculateMetrics,
+    Implementation: Schedule + FlowFileTransform + HasProcessorDefinition + CalculateMetrics,
 {
     fn on_trigger<PC, PS>(
         &self,
@@ -74,23 +91,15 @@ where
     {
         if let Some(ref scheduled_impl) = self.scheduled_impl {
             if let Some(flow_file) = session.get() {
-                match scheduled_impl.transform(context, flow_file, &self.logger) {
-                    Ok(mut transform_result) => {
-                        for (k, v) in &transform_result.attributes_to_add {
-                            session.set_attribute(&mut transform_result.flow_file, k, v);
-                        }
-                        if let Some(new_content) = &transform_result.new_content {
-                            session.write(&mut transform_result.flow_file, new_content);
-                        }
-                        session.transfer(transform_result.flow_file, transform_result.target_relationship.name);
-                        Ok(OnTriggerResult::Ok)
-                    },
-                    Err(TransformError::<PC::FlowFile>::RouteTo((ff, target))) => {
-                        session.transfer(ff, target);
-                        Ok(OnTriggerResult::Ok)
-                    },
-                    Err(TransformError::<PC::FlowFile>::MinifiError(e)) => Err(e)
+                let mut transformed_ff =  scheduled_impl.transform(context, flow_file, |ff| {session.read(&ff) }, &self.logger)?;
+                for (k, v) in &transformed_ff.attributes_to_add {
+                    session.set_attribute(&mut transformed_ff.flow_file, k, v);
                 }
+                if let Some(new_content) = &transformed_ff.new_content {
+                    session.write(&mut transformed_ff.flow_file, new_content);
+                }
+                session.transfer(transformed_ff.flow_file, transformed_ff.target_relationship.name);
+                Ok(OnTriggerResult::Ok)
             } else {
                 self.log(LogLevel::Trace, "No flowfile to transform");
                 Ok(OnTriggerResult::Yield)
@@ -105,7 +114,7 @@ where
 
 impl<Implementation> RawRegisterableProcessor for MultiThreadedFlowFileTransformer<Implementation>
 where
-    Implementation: Schedule + ConstFlowFileTransform + HasProcessorDefinition + CalculateMetrics,
+    Implementation: Schedule + FlowFileTransform + HasProcessorDefinition + CalculateMetrics,
 {
     fn get_definition() -> Box<dyn DynProcessorDefinition> {
         Implementation::get_definition()
