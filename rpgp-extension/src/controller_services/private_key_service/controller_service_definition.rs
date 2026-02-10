@@ -1,14 +1,8 @@
 use super::PGPPrivateKeyService;
 use super::properties::*;
-use minifi_native::{
-    ControllerServiceDefinition, RegisterableControllerService,
-};
+use minifi_native::{ControllerServiceDefinition, Property};
 
-impl RegisterableControllerService for PGPPrivateKeyService {
-    fn get_definition() -> Box<dyn minifi_native::DynControllerServiceDefinition> {
-        Box::new(ControllerServiceDefinition::<PGPPrivateKeyService>::new(
-            "PGP Public Key Service providing Public Keys loaded from files",
-            &[KEY_FILE, KEY, KEY_PASSPHRASE],
-        ))
-    }
+impl ControllerServiceDefinition for PGPPrivateKeyService {
+    const DESCRIPTION: &'static str = "PGP Private Key Service provides Private Keys loaded from files or properties";
+    const PROPERTIES: &'static [Property] = &[KEY_FILE, KEY, KEY_PASSPHRASE];
 }

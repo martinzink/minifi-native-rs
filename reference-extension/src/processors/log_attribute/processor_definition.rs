@@ -1,13 +1,13 @@
 use crate::processors::log_attribute::properties::*;
 use crate::processors::log_attribute::{LogAttribute, relationships};
 use minifi_native::{
-    HasProcessorDefinition, MultiThreadedProcessor, ProcessorDefinition, ProcessorInputRequirement,
+    HasRawProcessorDefinition, MultiThreadedProcessor, RawProcessorDefinition, ProcessorInputRequirement,
 };
 
-impl HasProcessorDefinition for LogAttribute {
-    fn get_definition() -> Box<dyn minifi_native::DynProcessorDefinition> {
+impl HasRawProcessorDefinition for LogAttribute {
+    fn get_definition() -> Box<dyn minifi_native::DynRawProcessorDefinition> {
         Box::new(
-            ProcessorDefinition::<MultiThreadedProcessor<LogAttribute>>::new(
+            RawProcessorDefinition::<MultiThreadedProcessor<LogAttribute>>::new(
                 "rs::LogAttributeRs",
                 "Logs attributes of flow files in the MiNiFi application log.",
                 ProcessorInputRequirement::Required,

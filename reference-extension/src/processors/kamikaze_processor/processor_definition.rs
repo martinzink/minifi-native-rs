@@ -1,11 +1,11 @@
 use super::*;
 use minifi_native::{
-    HasProcessorDefinition, MultiThreadedProcessor, ProcessorDefinition, ProcessorInputRequirement,
+    HasRawProcessorDefinition, MultiThreadedProcessor, RawProcessorDefinition, ProcessorInputRequirement,
 };
 
-impl HasProcessorDefinition for KamikazeProcessor {
-    fn get_definition() -> Box<dyn minifi_native::DynProcessorDefinition> {
-        Box::new(ProcessorDefinition::<
+impl HasRawProcessorDefinition for KamikazeProcessor {
+    fn get_definition() -> Box<dyn minifi_native::DynRawProcessorDefinition> {
+        Box::new(RawProcessorDefinition::<
             MultiThreadedProcessor<KamikazeProcessor>,
         >::new(
             "rs::KamikazeProcessorRs",

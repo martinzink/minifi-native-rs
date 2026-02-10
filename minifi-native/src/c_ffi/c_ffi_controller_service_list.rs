@@ -1,9 +1,9 @@
 use crate::c_ffi::RegisterableControllerService;
-use crate::c_ffi::c_ffi_controller_service_definition::DynControllerServiceDefinition;
+use crate::c_ffi::c_ffi_controller_service_definition::DynRawControllerServiceDefinition;
 use minifi_native_sys::MinifiControllerServiceClassDefinition;
 
 pub struct CffiControllerServiceList {
-    controller_service_definitions: Vec<Box<dyn DynControllerServiceDefinition>>,
+    controller_service_definitions: Vec<Box<dyn DynRawControllerServiceDefinition>>,
     minifi_controller_service_class_description_list: Vec<MinifiControllerServiceClassDefinition>,
 }
 
@@ -21,7 +21,7 @@ impl CffiControllerServiceList {
 
     pub fn add_controller_service_definition(
         &mut self,
-        processor_definition: Box<dyn DynControllerServiceDefinition>,
+        processor_definition: Box<dyn DynRawControllerServiceDefinition>,
     ) {
         unsafe {
             self.controller_service_definitions

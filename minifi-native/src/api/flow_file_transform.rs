@@ -1,8 +1,4 @@
-use crate::{
-    CalculateMetrics, Concurrent, DefaultLogger, DynProcessorDefinition, HasProcessorDefinition,
-    LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession,
-    RawMultiThreadedTrigger, RawProcessor, RawRegisterableProcessor, Relationship, Schedule,
-};
+use crate::{CalculateMetrics, ComponentIdentifier, Concurrent, DefaultLogger, DynRawProcessorDefinition, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, ProcessorDefinition, RawMultiThreadedTrigger, RawProcessor, RawProcessorDefinition, RawRegisterableProcessor, Relationship, Schedule};
 use std::collections::HashMap;
 
 pub struct TransformedFlowFile<'a, FlowFileType> {
@@ -53,7 +49,7 @@ impl<'a, FlowFileType> TransformedFlowFile<'a, FlowFileType> {
 
 pub trait FlowFileTransform {
     fn transform<
-        'b,
+        'a,
         Context: ProcessContext,
         GetContent: FnMut(&Context::FlowFile) -> Option<Vec<u8>>,
         LoggerImpl: Logger,
@@ -63,13 +59,13 @@ pub trait FlowFileTransform {
         flow_file: Context::FlowFile,
         flow_file_content: GetContent,
         logger: &LoggerImpl,
-    ) -> Result<TransformedFlowFile<'b, Context::FlowFile>, MinifiError>;
+    ) -> Result<TransformedFlowFile<'a, Context::FlowFile>, MinifiError>;
 }
 
 #[derive(Debug)]
 pub struct FlowFileTransformer<Implementation>
 where
-    Implementation: Schedule + FlowFileTransform + HasProcessorDefinition + CalculateMetrics,
+    Implementation: Schedule + FlowFileTransform + CalculateMetrics,
 {
     logger: DefaultLogger,
     scheduled_impl: Option<Implementation>,
@@ -77,7 +73,7 @@ where
 
 impl<'a, Implementation> RawProcessor for FlowFileTransformer<Implementation>
 where
-    Implementation: Schedule + FlowFileTransform + HasProcessorDefinition + CalculateMetrics,
+    Implementation: Schedule + FlowFileTransform + CalculateMetrics,
 {
     type Threading = Concurrent;
 
@@ -115,7 +111,7 @@ where
 
 impl<'a, Implementation> RawMultiThreadedTrigger for FlowFileTransformer<Implementation>
 where
-    Implementation: Schedule + FlowFileTransform + HasProcessorDefinition + CalculateMetrics,
+    Implementation: Schedule + FlowFileTransform + CalculateMetrics,
 {
     fn on_trigger<PC, PS>(
         &self,
@@ -159,9 +155,22 @@ where
 
 impl<Implementation> RawRegisterableProcessor for FlowFileTransformer<Implementation>
 where
-    Implementation: Schedule + FlowFileTransform + HasProcessorDefinition + CalculateMetrics,
+    Implementation: Schedule + FlowFileTransform + CalculateMetrics + ComponentIdentifier + ProcessorDefinition + 'static
 {
-    fn get_definition() -> Box<dyn DynProcessorDefinition> {
-        Implementation::get_definition()
+    fn get_definition() -> Box<dyn DynRawProcessorDefinition> {
+        Box::new(
+            RawProcessorDefinition::<FlowFileTransformer<Implementation>>::new(
+                Implementation::CLASS_NAME,
+                Implementation::DESCRIPTION,
+                Implementation::INPUT_REQUIREMENT,
+                Implementation::SUPPORTS_DYNAMIC_PROPERTIES,
+                Implementation::SUPPORTS_DYNAMIC_RELATIONSHIPS,
+                Implementation::OUTPUT_ATTRIBUTES,
+                Implementation::RELATIONSHIPS,
+                Implementation::PROPERTIES,
+            )
+        )
     }
 }
+
+

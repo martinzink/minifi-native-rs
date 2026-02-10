@@ -12,13 +12,13 @@ mod c_ffi_processor_list;
 mod c_ffi_property;
 mod c_ffi_relationship;
 
-pub use c_ffi_controller_service_definition::ControllerServiceDefinition;
-pub use c_ffi_controller_service_definition::DynControllerServiceDefinition;
+pub use c_ffi_controller_service_definition::CffiControllerServiceDefinition;
+pub use c_ffi_controller_service_definition::DynRawControllerServiceDefinition;
 pub use c_ffi_controller_service_definition::RegisterableControllerService;
 pub use c_ffi_controller_service_list::CffiControllerServiceList;
 pub use c_ffi_logger::CffiLogger;
 pub use c_ffi_primitives::StaticStrAsMinifiCStr;
-pub use c_ffi_processor_definition::DynProcessorDefinition;
-pub use c_ffi_processor_definition::ProcessorDefinition;
+pub use c_ffi_processor_definition::DynRawProcessorDefinition;
+pub use c_ffi_processor_definition::RawProcessorDefinition;
 pub use c_ffi_processor_definition::RawRegisterableProcessor;
 pub use c_ffi_processor_list::CffiProcessorList;

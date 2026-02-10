@@ -1,6 +1,6 @@
 use crate::api::errors::MinifiError;
 use crate::api::threading_model::{Concurrent, Exclusive, ThreadingModel};
-use crate::{DefaultLogger, DynProcessorDefinition, LogLevel, ProcessContext, ProcessSession};
+use crate::{DefaultLogger, DynRawProcessorDefinition, LogLevel, ProcessContext, ProcessSession};
 
 pub enum ProcessorInputRequirement {
     Required,
@@ -55,6 +55,6 @@ pub trait RawMultiThreadedTrigger: RawProcessor<Threading = Concurrent> {
         PS: ProcessSession<FlowFile = PC::FlowFile>;
 }
 
-pub trait HasProcessorDefinition {
-    fn get_definition() -> Box<dyn DynProcessorDefinition>;
+pub trait HasRawProcessorDefinition {
+    fn get_definition() -> Box<dyn DynRawProcessorDefinition>;
 }

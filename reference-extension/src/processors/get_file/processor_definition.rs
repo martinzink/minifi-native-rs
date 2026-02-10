@@ -4,12 +4,12 @@ use crate::processors::get_file::output_attributes::{
 use crate::processors::get_file::properties::*;
 use crate::processors::get_file::{GetFile, relationships};
 use minifi_native::{
-    HasProcessorDefinition, MultiThreadedProcessor, ProcessorDefinition, ProcessorInputRequirement,
+    HasRawProcessorDefinition, MultiThreadedProcessor, RawProcessorDefinition, ProcessorInputRequirement,
 };
 
-impl HasProcessorDefinition for GetFile {
-    fn get_definition() -> Box<dyn minifi_native::DynProcessorDefinition> {
-        Box::new(ProcessorDefinition::<MultiThreadedProcessor<GetFile>>::new(
+impl HasRawProcessorDefinition for GetFile {
+    fn get_definition() -> Box<dyn minifi_native::DynRawProcessorDefinition> {
+        Box::new(RawProcessorDefinition::<MultiThreadedProcessor<GetFile>>::new(
             "rs::GetFileRs",
             "Creates FlowFiles from files in a directory. MiNiFi will ignore files for which it doesn't have read permissions.",
             ProcessorInputRequirement::Forbidden,

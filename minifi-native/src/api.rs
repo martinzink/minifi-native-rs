@@ -1,4 +1,4 @@
-mod controller_service;
+pub(crate) mod controller_service;
 mod controller_service_context;
 mod errors;
 mod flow_file;
@@ -27,9 +27,9 @@ pub use multi_threaded_processor::MultiThreadedProcessor;
 pub use output_attribute::OutputAttribute;
 pub use process_context::ProcessContext;
 pub use process_session::ProcessSession;
-pub use processor_traits::{CalculateMetrics, ConstTrigger, MutTrigger, Schedule};
+pub use processor_traits::{CalculateMetrics, ConstTrigger, MutTrigger, Schedule, ProcessorDefinition};
 pub use raw_processor::{
-    HasProcessorDefinition, OnTriggerResult, ProcessorInputRequirement, RawMultiThreadedTrigger,
+    HasRawProcessorDefinition, OnTriggerResult, ProcessorInputRequirement, RawMultiThreadedTrigger,
     RawProcessor, RawSingleThreadedTrigger,
 };
 pub use single_threaded_processor::SingleThreadedProcessor;

@@ -1,14 +1,14 @@
 use crate::api::ControllerService;
 use crate::c_ffi::c_ffi_controller_service_context::CffiControllerServiceContext;
 use crate::c_ffi::c_ffi_property::CProperties;
-use crate::{ComponentIdentifier, LogLevel, Property, StaticStrAsMinifiCStr};
+use crate::{ComponentIdentifier, ControllerServiceDefinition, LogLevel, Property, StaticStrAsMinifiCStr};
 use minifi_native_sys::{
     MinifiControllerServiceCallbacks, MinifiControllerServiceClassDefinition,
     MinifiControllerServiceContext, MinifiControllerServiceMetadata, MinifiStatus,
 };
 use std::ffi::c_void;
 
-pub struct ControllerServiceDefinition<T>
+pub struct CffiControllerServiceDefinition<T>
 where
     T: ControllerService + ComponentIdentifier,
 {
@@ -20,7 +20,7 @@ where
     _phantom: std::marker::PhantomData<T>,
 }
 
-impl<T> ControllerServiceDefinition<T>
+impl<T> CffiControllerServiceDefinition<T>
 where
     T: ControllerService + ComponentIdentifier,
 {
@@ -87,12 +87,12 @@ where
     }
 }
 
-pub trait DynControllerServiceDefinition {
+pub trait DynRawControllerServiceDefinition {
     // unsafe because self must outlive the resulting MinifiControllerServiceClassDefinition
     unsafe fn class_description(&self) -> MinifiControllerServiceClassDefinition;
 }
 
-impl<T> DynControllerServiceDefinition for ControllerServiceDefinition<T>
+impl<T> DynRawControllerServiceDefinition for CffiControllerServiceDefinition<T>
 where
     T: ControllerService + ComponentIdentifier,
 {
@@ -115,5 +115,14 @@ where
 }
 
 pub trait RegisterableControllerService {
-    fn get_definition() -> Box<dyn DynControllerServiceDefinition>;
+    fn get_definition() -> Box<dyn DynRawControllerServiceDefinition>;
+}
+
+impl<T> RegisterableControllerService for T where T: ComponentIdentifier + ControllerServiceDefinition + ControllerService + 'static {
+    fn get_definition() -> Box<dyn DynRawControllerServiceDefinition> {
+        Box::new(CffiControllerServiceDefinition::<T>::new(
+            T::DESCRIPTION,
+            T::PROPERTIES,
+        ))
+    }
 }

@@ -1,13 +1,13 @@
 use super::DummyProcessor;
 use super::properties::*;
 use minifi_native::{
-    HasProcessorDefinition, MultiThreadedProcessor, ProcessorDefinition, ProcessorInputRequirement,
+    HasRawProcessorDefinition, MultiThreadedProcessor, RawProcessorDefinition, ProcessorInputRequirement,
 };
 
-impl HasProcessorDefinition for DummyProcessor {
-    fn get_definition() -> Box<dyn minifi_native::DynProcessorDefinition> {
+impl HasRawProcessorDefinition for DummyProcessor {
+    fn get_definition() -> Box<dyn minifi_native::DynRawProcessorDefinition> {
         Box::new(
-            ProcessorDefinition::<MultiThreadedProcessor<DummyProcessor>>::new(
+            RawProcessorDefinition::<MultiThreadedProcessor<DummyProcessor>>::new(
                 "rs::DummyProcessorRs",
                 "Processor to test Controller Service API",
                 ProcessorInputRequirement::Forbidden,

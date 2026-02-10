@@ -1,7 +1,4 @@
-use minifi_native::{
-    CalculateMetrics, FlowFileTransform, Logger, MinifiError, ProcessContext, Schedule,
-    TransformedFlowFile,
-};
+use minifi_native::{CalculateMetrics, FlowFileTransform, IdentifyComponent, Logger, MinifiError, ProcessContext, Schedule, TransformedFlowFile};
 use pgp::composed::{ArmorOptions, MessageBuilder, SignedPublicKey};
 use pgp::types::StringToKey;
 use std::collections::HashMap;
@@ -25,7 +22,7 @@ enum FileEncoding {
     Binary,
 }
 
-#[derive(Debug)]
+#[derive(Debug, IdentifyComponent)]
 pub(crate) struct EncryptContentPGP {
     file_encoding: FileEncoding,
 }

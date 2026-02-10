@@ -1,9 +1,9 @@
 use crate::RawRegisterableProcessor;
-use crate::c_ffi::c_ffi_processor_definition::DynProcessorDefinition;
+use crate::c_ffi::c_ffi_processor_definition::DynRawProcessorDefinition;
 use minifi_native_sys::MinifiProcessorClassDefinition;
 
 pub struct CffiProcessorList {
-    processor_definitions: Vec<Box<dyn DynProcessorDefinition>>,
+    processor_definitions: Vec<Box<dyn DynRawProcessorDefinition>>,
     minifi_processor_class_description_list: Vec<MinifiProcessorClassDefinition>,
 }
 
@@ -21,7 +21,7 @@ impl CffiProcessorList {
 
     pub fn add_processor_definition(
         &mut self,
-        processor_definition: Box<dyn DynProcessorDefinition>,
+        processor_definition: Box<dyn DynRawProcessorDefinition>,
     ) {
         unsafe {
             self.processor_definitions.push(processor_definition);

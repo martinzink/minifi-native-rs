@@ -7,10 +7,7 @@ use super::c_ffi_process_session::CffiProcessSession;
 use crate::api::{ProcessorInputRequirement, RawProcessor, ThreadingModel};
 use crate::c_ffi::c_ffi_output_attribute::COutputAttributes;
 use crate::c_ffi::c_ffi_property::CProperties;
-use crate::{
-    Concurrent, Exclusive, LogLevel, OutputAttribute, Property, RawMultiThreadedTrigger,
-    RawSingleThreadedTrigger,
-};
+use crate::{Concurrent, Exclusive, LogLevel, OutputAttribute, Property, RawMultiThreadedTrigger, RawSingleThreadedTrigger};
 use crate::{OnTriggerResult, Relationship};
 use minifi_native_sys::*;
 
@@ -66,7 +63,7 @@ where
     }
 }
 
-pub struct ProcessorDefinition<T>
+pub struct RawProcessorDefinition<T>
 where
     T: RawProcessor + DispatchOnTrigger<T::Threading>,
 {
@@ -83,7 +80,7 @@ where
     _phantom: std::marker::PhantomData<T>,
 }
 
-impl<T> ProcessorDefinition<T>
+impl<T> RawProcessorDefinition<T>
 where
     T: RawProcessor + DispatchOnTrigger<T::Threading>,
 {
@@ -216,12 +213,12 @@ where
     }
 }
 
-pub trait DynProcessorDefinition {
+pub trait DynRawProcessorDefinition {
     // unsafe because self must outlive the resulting MinifiProcessorClassDefinition
     unsafe fn class_description(&self) -> MinifiProcessorClassDefinition;
 }
 
-impl<T> DynProcessorDefinition for ProcessorDefinition<T>
+impl<T> DynRawProcessorDefinition for RawProcessorDefinition<T>
 where
     T: RawProcessor + DispatchOnTrigger<T::Threading>,
 {
@@ -260,5 +257,5 @@ where
 }
 
 pub trait RawRegisterableProcessor {
-    fn get_definition() -> Box<dyn DynProcessorDefinition>;
+    fn get_definition() -> Box<dyn DynRawProcessorDefinition>;
 }

@@ -1,7 +1,7 @@
 use crate::api::processor_traits::CalculateMetrics;
-use crate::api::raw_processor::HasProcessorDefinition;
+use crate::api::raw_processor::HasRawProcessorDefinition;
 use crate::{
-    DefaultLogger, DynProcessorDefinition, Exclusive, LogLevel, Logger, MinifiError, MutTrigger,
+    DefaultLogger, DynRawProcessorDefinition, Exclusive, LogLevel, Logger, MinifiError, MutTrigger,
     OnTriggerResult, ProcessContext, ProcessSession, RawProcessor, RawRegisterableProcessor,
     RawSingleThreadedTrigger, Schedule,
 };
@@ -9,7 +9,7 @@ use crate::{
 #[derive(Debug)]
 pub struct SingleThreadedProcessor<Implementation>
 where
-    Implementation: Schedule + MutTrigger + HasProcessorDefinition + CalculateMetrics,
+    Implementation: Schedule + MutTrigger + HasRawProcessorDefinition + CalculateMetrics,
 {
     logger: DefaultLogger,
     scheduled_impl: Option<Implementation>,
@@ -17,7 +17,7 @@ where
 
 impl<Implementation> RawProcessor for SingleThreadedProcessor<Implementation>
 where
-    Implementation: Schedule + MutTrigger + HasProcessorDefinition + CalculateMetrics,
+    Implementation: Schedule + MutTrigger + HasRawProcessorDefinition + CalculateMetrics,
 {
     type Threading = Exclusive;
 
@@ -55,7 +55,7 @@ where
 
 impl<Implementation> RawSingleThreadedTrigger for SingleThreadedProcessor<Implementation>
 where
-    Implementation: Schedule + MutTrigger + HasProcessorDefinition + CalculateMetrics,
+    Implementation: Schedule + MutTrigger + HasRawProcessorDefinition + CalculateMetrics,
 {
     fn on_trigger<PC, PS>(
         &mut self,
@@ -78,9 +78,9 @@ where
 
 impl<Implementation> RawRegisterableProcessor for SingleThreadedProcessor<Implementation>
 where
-    Implementation: Schedule + MutTrigger + HasProcessorDefinition + CalculateMetrics,
+    Implementation: Schedule + MutTrigger + HasRawProcessorDefinition + CalculateMetrics,
 {
-    fn get_definition() -> Box<dyn DynProcessorDefinition> {
+    fn get_definition() -> Box<dyn DynRawProcessorDefinition> {
         Implementation::get_definition()
     }
 }

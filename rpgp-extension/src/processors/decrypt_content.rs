@@ -5,10 +5,7 @@ mod relationships;
 use crate::controller_services::private_key_service::PGPPrivateKeyService;
 use crate::processors::decrypt_content::properties::{PRIVATE_KEY_SERVICE, SYMMETRIC_PASSWORD};
 use crate::processors::decrypt_content::relationships::{FAILURE, SUCCESS};
-use minifi_native::{
-    CalculateMetrics, FlowFileTransform, Logger, MinifiError, ProcessContext, Schedule,
-    TransformedFlowFile,
-};
+use minifi_native::{CalculateMetrics, FlowFileTransform, IdentifyComponent, Logger, MinifiError, ProcessContext, Schedule, TransformedFlowFile};
 use pgp::composed::{Message, TheRing};
 use std::collections::HashMap;
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
@@ -20,7 +17,7 @@ enum DecryptionStrategy {
     Packaged,
 }
 
-#[derive(Debug)]
+#[derive(Debug, IdentifyComponent)]
 pub(crate) struct DecryptContentPGP {
     decompress_data: bool,
     symmetric_password: Option<pgp::types::Password>,
@@ -105,7 +102,7 @@ impl DecryptContentPGP {
 
 impl FlowFileTransform for DecryptContentPGP {
     fn transform<
-        'b,
+        'a,
         Context: ProcessContext,
         GetContent: FnMut(&Context::FlowFile) -> Option<Vec<u8>>,
         LoggerImpl: Logger,
@@ -115,7 +112,7 @@ impl FlowFileTransform for DecryptContentPGP {
         flow_file: Context::FlowFile,
         mut flow_file_content: GetContent,
         logger: &LoggerImpl,
-    ) -> Result<TransformedFlowFile<'b, Context::FlowFile>, MinifiError> {
+    ) -> Result<TransformedFlowFile<'a, Context::FlowFile>, MinifiError> {
         let Some(content) = flow_file_content(&flow_file) else {
             logger.debug("No content to decrypt");
             return Ok(TransformedFlowFile::route_without_changes(

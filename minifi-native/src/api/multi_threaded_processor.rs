@@ -1,8 +1,8 @@
 use crate::api::RawProcessor;
 use crate::api::processor_traits::CalculateMetrics;
-use crate::api::raw_processor::HasProcessorDefinition;
+use crate::api::raw_processor::HasRawProcessorDefinition;
 use crate::{
-    Concurrent, ConstTrigger, DefaultLogger, DynProcessorDefinition, LogLevel, Logger, MinifiError,
+    Concurrent, ConstTrigger, DefaultLogger, DynRawProcessorDefinition, LogLevel, Logger, MinifiError,
     OnTriggerResult, ProcessContext, ProcessSession, RawMultiThreadedTrigger,
     RawRegisterableProcessor, Schedule,
 };
@@ -10,7 +10,7 @@ use crate::{
 #[derive(Debug)]
 pub struct MultiThreadedProcessor<Implementation>
 where
-    Implementation: Schedule + ConstTrigger + HasProcessorDefinition + CalculateMetrics,
+    Implementation: Schedule + ConstTrigger + HasRawProcessorDefinition + CalculateMetrics,
 {
     logger: DefaultLogger,
     scheduled_impl: Option<Implementation>,
@@ -18,7 +18,7 @@ where
 
 impl<Implementation> RawProcessor for MultiThreadedProcessor<Implementation>
 where
-    Implementation: Schedule + ConstTrigger + HasProcessorDefinition + CalculateMetrics,
+    Implementation: Schedule + ConstTrigger + HasRawProcessorDefinition + CalculateMetrics,
 {
     type Threading = Concurrent;
 
@@ -51,7 +51,7 @@ where
 
 impl<Implementation> RawMultiThreadedTrigger for MultiThreadedProcessor<Implementation>
 where
-    Implementation: Schedule + ConstTrigger + HasProcessorDefinition + CalculateMetrics,
+    Implementation: Schedule + ConstTrigger + HasRawProcessorDefinition + CalculateMetrics,
 {
     fn on_trigger<PC, PS>(
         &self,
@@ -74,9 +74,9 @@ where
 
 impl<Implementation> RawRegisterableProcessor for MultiThreadedProcessor<Implementation>
 where
-    Implementation: Schedule + ConstTrigger + HasProcessorDefinition + CalculateMetrics,
+    Implementation: Schedule + ConstTrigger + HasRawProcessorDefinition + CalculateMetrics,
 {
-    fn get_definition() -> Box<dyn DynProcessorDefinition> {
+    fn get_definition() -> Box<dyn DynRawProcessorDefinition> {
         Implementation::get_definition()
     }
 }

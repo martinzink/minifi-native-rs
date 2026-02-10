@@ -1,26 +1,17 @@
 use super::{EncryptContentPGP, output_attributes, properties, relationships};
-use minifi_native::{
-    FlowFileTransformer, HasProcessorDefinition, ProcessorDefinition, ProcessorInputRequirement,
-};
+use minifi_native::{ProcessorInputRequirement, ProcessorDefinition, OutputAttribute, Relationship, Property};
 
-impl HasProcessorDefinition for EncryptContentPGP {
-    fn get_definition() -> Box<dyn minifi_native::DynProcessorDefinition> {
-        Box::new(
-            ProcessorDefinition::<FlowFileTransformer<EncryptContentPGP>>::new(
-                "rs::EncryptContentPGP",
-                "Encrypt contents using OpenPGP. The processor reads input and detects OpenPGP messages to avoid unnecessary additional wrapping in Literal Data packets.",
-                ProcessorInputRequirement::Required,
-                false,
-                false,
-                &[output_attributes::FILE_ENCODING],
-                &[relationships::SUCCESS, relationships::FAILURE],
-                &[
-                    properties::FILE_ENCODING,
-                    properties::PASSPHRASE,
-                    properties::PUBLIC_KEY_SEARCH,
-                    properties::PUBLIC_KEY_SERVICE,
-                ],
-            ),
-        )
-    }
+impl ProcessorDefinition for EncryptContentPGP {
+    const DESCRIPTION: &'static str = "Encrypt contents using OpenPGP. The processor reads input and detects OpenPGP messages to avoid unnecessary additional wrapping in Literal Data packets.";
+    const INPUT_REQUIREMENT: ProcessorInputRequirement = ProcessorInputRequirement::Required;
+    const SUPPORTS_DYNAMIC_PROPERTIES: bool = false;
+    const SUPPORTS_DYNAMIC_RELATIONSHIPS: bool = false;
+    const OUTPUT_ATTRIBUTES: &'static [OutputAttribute] = &[output_attributes::FILE_ENCODING];
+    const RELATIONSHIPS: &'static [Relationship] = &[relationships::SUCCESS, relationships::FAILURE];
+    const PROPERTIES: &'static [Property] = &[
+        properties::FILE_ENCODING,
+        properties::PASSPHRASE,
+        properties::PUBLIC_KEY_SEARCH,
+        properties::PUBLIC_KEY_SERVICE,
+    ];
 }
