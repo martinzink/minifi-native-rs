@@ -86,7 +86,7 @@ fn test_decryption(
     }
 
     let decrypt_content = DecryptContent::schedule(&processor_context, &MockLogger::new())
-        .expect("Should schedule without any properties"); // TODO(mzink) maybe it shouldnt?
+        .expect("Should schedule without any properties");
     let res = decrypt_content
         .transform(
             &mut processor_context,

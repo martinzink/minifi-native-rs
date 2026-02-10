@@ -68,8 +68,8 @@ impl ControllerServiceHelper {
 unsafe extern "C" fn get_controller_service_callback(
     controller_service_helper_ptr: *mut c_void,
     controller_ptr: *mut c_void,
-    group_name: MinifiStringView,
     class_name: MinifiStringView,
+    group_name: MinifiStringView,
     version: MinifiStringView,
 ) {
     unsafe {

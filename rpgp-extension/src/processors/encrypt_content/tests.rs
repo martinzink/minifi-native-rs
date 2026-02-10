@@ -9,7 +9,7 @@ fn encrypt_with_processor(
     mut context: MockProcessContext,
 ) -> TransformedFlowFile<'static, MockFlowFile> {
     let processor = EncryptContent::schedule(&context, &MockLogger::new())
-        .expect("Should schedule without any properties"); // TODO(mzink) maybe it shouldnt?
+        .expect("should schedule");
     let res = processor
         .transform(
             &mut context,
@@ -22,9 +22,8 @@ fn encrypt_with_processor(
 }
 
 #[test]
-fn schedules_but_fails_to_encrypt_with_defaults() {
-    let transformed_ff = encrypt_with_processor(MockProcessContext::new());
-    assert_eq!(transformed_ff.target_relationship(), &FAILURE);
+fn cannot_schedule_without_password_or_public_key() {
+    assert!(EncryptContent::schedule(&MockProcessContext::new(), &MockLogger::new()).is_err());
 }
 
 #[test]
