@@ -6,10 +6,11 @@ use crate::controller_services::private_key_service::PrivateKeyService;
 use crate::processors::decrypt_content::properties::{PRIVATE_KEY_SERVICE, SYMMETRIC_PASSWORD};
 use crate::processors::decrypt_content::relationships::{FAILURE, SUCCESS};
 use minifi_native::{
-    CalculateMetrics, ConstTrigger, Logger, MinifiError, OnTriggerResult, ProcessContext,
-    ProcessSession, Schedule,
+    CalculateMetrics, FlowFileTransform, Logger, MinifiError, ProcessContext, Schedule,
+    TransformedFlowFile,
 };
-use pgp::composed::TheRing;
+use pgp::composed::{Message, TheRing};
+use std::collections::HashMap;
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
 
 #[derive(Debug, Clone, Copy, PartialEq, Display, EnumString, VariantNames, IntoStaticStr)]
@@ -82,84 +83,90 @@ impl DecryptContent {
         Ok(decrypted_msg)
     }
 
-    fn get_msg<PS>(
-        &'_ self,
-        session: &mut PS,
-        ff: &PS::FlowFile,
-    ) -> Option<pgp::composed::Message<'_>>
-    where
-        PS: ProcessSession,
-    {
-        session.read(&ff).and_then(|bytes| {
-            pgp::composed::Message::from_reader(std::io::Cursor::new(bytes))
-                .map(|(msg, _header)| msg)
-                .ok()
-        })
+    fn extract_attributes_from_decrypted_message(
+        decrypted_msg: &Message,
+    ) -> HashMap<String, String> {
+        let mut attributes_to_add = HashMap::new();
+        if let Some(literal_data_header) = decrypted_msg.literal_data_header() {
+            if let Ok(file_name) = str::from_utf8(literal_data_header.file_name()) {
+                attributes_to_add.insert(
+                    output_attributes::LITERAL_DATA_FILENAME.name.to_string(),
+                    file_name.to_string(),
+                );
+            }
+            attributes_to_add.insert(
+                output_attributes::LITERAL_DATA_MODIFIED.name.to_string(),
+                literal_data_header.created().to_string(),
+            );
+        }
+        attributes_to_add
     }
 }
 
-impl ConstTrigger for DecryptContent {
-    fn trigger<PC, PS, L>(
+impl FlowFileTransform for DecryptContent {
+    fn transform<
+        'b,
+        Context: ProcessContext,
+        GetContent: FnMut(&Context::FlowFile) -> Option<Vec<u8>>,
+        LoggerImpl: Logger,
+    >(
         &self,
-        context: &mut PC,
-        session: &mut PS,
-        logger: &L,
-    ) -> Result<OnTriggerResult, MinifiError>
-    where
-        PC: ProcessContext,
-        PS: ProcessSession<FlowFile = PC::FlowFile>,
-        L: Logger,
-    {
-        let mut attributes: Vec<(String, String)> = Vec::new();
-        let ff = session.get();
-        if ff.is_none() {
-            return Ok(OnTriggerResult::Yield);
-        }
+        context: &mut Context,
+        flow_file: Context::FlowFile,
+        mut flow_file_content: GetContent,
+        logger: &LoggerImpl,
+    ) -> Result<TransformedFlowFile<'b, Context::FlowFile>, MinifiError> {
+        let Some(content) = flow_file_content(&flow_file) else {
+            logger.debug("No content to decrypt");
+            return Ok(TransformedFlowFile::route_without_changes(
+                flow_file, &FAILURE,
+            ));
+        };
 
-        let mut ff = ff.unwrap();
+        let Ok(msg) = pgp::composed::Message::from_reader(std::io::Cursor::new(content))
+            .map(|(msg, _header)| msg)
+        else {
+            logger.debug("No valid PGP message found");
+            return Ok(TransformedFlowFile::route_without_changes(
+                flow_file, &FAILURE,
+            ));
+        };
 
-        if let Some(mut decrypted_msg) = self.get_msg(session, &ff).and_then(|msg| {
-            self.decrypt_msg(msg, context, logger)
-                .map_err(|e| logger.trace(&format!("Couldnt decrypt message due to {:?}", e)))
-                .ok()
-        }) {
-            if self.decompress_data && decrypted_msg.is_compressed() {
-                match decrypted_msg.decompress() {
-                    Ok(decompressed_data) => {
-                        decrypted_msg = decompressed_data;
-                    }
-                    Err(e) => {
-                        logger.warn(&format!("Failed to decompress message {:?}", e));
-                        session.transfer(ff, &FAILURE.name);
-                        return Ok(OnTriggerResult::Ok);
-                    }
+        let Ok(mut decrypted_msg) = self.decrypt_msg(msg, context, logger) else {
+            logger.debug("Failed to decrypt data");
+            return Ok(TransformedFlowFile::route_without_changes(
+                flow_file, &FAILURE,
+            ));
+        };
+
+        if self.decompress_data && decrypted_msg.is_compressed() {
+            match decrypted_msg.decompress() {
+                Ok(decompressed_data) => {
+                    decrypted_msg = decompressed_data;
                 }
-            }
-            if let Ok(data_vec) = decrypted_msg.as_data_vec() {
-                if let Some(literal_data_header) = decrypted_msg.literal_data_header() {
-                    if let Ok(file_name) = str::from_utf8(literal_data_header.file_name()) {
-                        attributes.push((
-                            output_attributes::LITERAL_DATA_FILENAME.name.to_string(),
-                            file_name.to_string(),
-                        ));
-                    }
-                    attributes.push((
-                        output_attributes::LITERAL_DATA_MODIFIED.name.to_string(),
-                        literal_data_header.created().to_string(),
+                Err(e) => {
+                    logger.debug(&format!("Failed to decompress data: {}", e));
+                    return Ok(TransformedFlowFile::route_without_changes(
+                        flow_file, &FAILURE,
                     ));
                 }
-                session.write(&mut ff, &data_vec);
-                session.transfer(ff, &SUCCESS.name);
-                Ok(OnTriggerResult::Ok)
-            } else {
-                logger.warn("Failed to serialize decrypted message");
-                session.transfer(ff, &FAILURE.name);
-                Ok(OnTriggerResult::Ok)
             }
-        } else {
-            session.transfer(ff, &FAILURE.name);
-            Ok(OnTriggerResult::Ok)
-        }
+        };
+
+        let attributes_to_add = Self::extract_attributes_from_decrypted_message(&decrypted_msg);
+        let Ok(new_content) = decrypted_msg.as_data_vec() else {
+            logger.debug("Failed to extract raw data from decrypted message");
+            return Ok(TransformedFlowFile::route_without_changes(
+                flow_file, &FAILURE,
+            ));
+        };
+
+        Ok(TransformedFlowFile::new(
+            flow_file,
+            &SUCCESS,
+            Some(new_content),
+            attributes_to_add,
+        ))
     }
 }
 

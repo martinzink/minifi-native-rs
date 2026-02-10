@@ -4,11 +4,11 @@ mod mock;
 
 pub use api::{
     CalculateMetrics, Concurrent, ConstTrigger, ControllerService, ControllerServiceContext,
-    DefaultLogger, Exclusive, FlowFile, HasProcessorDefinition, LogLevel, Logger, MinifiError,
-    MultiThreadedProcessor, MutTrigger, OnTriggerResult, OutputAttribute, ProcessContext,
-    ProcessSession, ProcessorInputRequirement, Property, RawMultiThreadedTrigger, RawProcessor,
-    RawSingleThreadedTrigger, Relationship, Schedule, SingleThreadedProcessor,
-    StandardPropertyValidator, FlowFileTransform, TransformedFlowFile
+    DefaultLogger, Exclusive, FlowFile, FlowFileTransform, FlowFileTransformer,
+    HasProcessorDefinition, LogLevel, Logger, MinifiError, MultiThreadedProcessor, MutTrigger,
+    OnTriggerResult, OutputAttribute, ProcessContext, ProcessSession, ProcessorInputRequirement,
+    Property, RawMultiThreadedTrigger, RawProcessor, RawSingleThreadedTrigger, Relationship,
+    Schedule, SingleThreadedProcessor, StandardPropertyValidator, TransformedFlowFile,
 };
 pub use c_ffi::{
     CffiControllerServiceList, CffiLogger, CffiProcessorList, ControllerServiceDefinition,

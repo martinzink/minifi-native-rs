@@ -1,9 +1,10 @@
 use minifi_native::{
-    CalculateMetrics, FlowFileTransform, Logger, MinifiError,
-    ProcessContext, Schedule, TransformedFlowFile,
+    CalculateMetrics, FlowFileTransform, Logger, MinifiError, ProcessContext, Schedule,
+    TransformedFlowFile,
 };
 use pgp::composed::{ArmorOptions, MessageBuilder, SignedPublicKey};
 use pgp::types::StringToKey;
+use std::collections::HashMap;
 
 mod output_attributes;
 mod properties;
@@ -25,7 +26,7 @@ enum FileEncoding {
 }
 
 #[derive(Debug)]
-pub(crate) struct EncryptContentPGP {
+pub(crate) struct EncryptContent {
     file_encoding: FileEncoding,
 }
 
@@ -39,7 +40,7 @@ fn string_to_key() -> StringToKey {
     StringToKey::new_argon2(rand::thread_rng(), 1, 1, 10) // fast for unit tests
 }
 
-impl EncryptContentPGP {
+impl EncryptContent {
     fn encrypt_message(
         &self,
         message: Vec<u8>,
@@ -68,7 +69,7 @@ impl EncryptContentPGP {
     }
 }
 
-impl Schedule for EncryptContentPGP {
+impl Schedule for EncryptContent {
     fn schedule<P: ProcessContext, L: Logger>(context: &P, _logger: &L) -> Result<Self, MinifiError>
     where
         Self: Sized,
@@ -78,12 +79,13 @@ impl Schedule for EncryptContentPGP {
             .expect("required property")
             .parse::<FileEncoding>()?;
 
-        Ok(EncryptContentPGP { file_encoding })
+        Ok(EncryptContent { file_encoding })
     }
 }
 
-impl FlowFileTransform for EncryptContentPGP {
+impl FlowFileTransform for EncryptContent {
     fn transform<
+        'b,
         Context: ProcessContext,
         GetContent: FnMut(&Context::FlowFile) -> Option<Vec<u8>>,
         LoggerImpl: Logger,
@@ -93,7 +95,7 @@ impl FlowFileTransform for EncryptContentPGP {
         flow_file: Context::FlowFile,
         mut get_content: GetContent,
         _logger: &LoggerImpl,
-    ) -> Result<TransformedFlowFile<'_, Context::FlowFile>, MinifiError> {
+    ) -> Result<TransformedFlowFile<'b, Context::FlowFile>, MinifiError> {
         let public_key = if let (Some(pub_key_search), Some(public_key_service)) = (
             context.get_property(&PUBLIC_KEY_SEARCH, Some(&flow_file))?,
             context.get_controller_service::<PublicKeyService>(&PUBLIC_KEY_SERVICE)?,
@@ -118,10 +120,10 @@ impl FlowFileTransform for EncryptContentPGP {
                 flow_file,
                 &SUCCESS,
                 Some(encrypted_content),
-                vec![(
+                HashMap::from([(
                     FILE_ENCODING.name.to_string(),
                     self.file_encoding.to_string(),
-                )],
+                )]),
             ))
         } else {
             Ok(TransformedFlowFile::route_without_changes(
@@ -131,7 +133,7 @@ impl FlowFileTransform for EncryptContentPGP {
     }
 }
 
-impl CalculateMetrics for EncryptContentPGP {}
+impl CalculateMetrics for EncryptContent {}
 
 #[cfg(test)]
 mod tests;

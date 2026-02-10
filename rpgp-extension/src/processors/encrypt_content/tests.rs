@@ -1,13 +1,23 @@
 use super::*;
 use crate::test_utils;
 use minifi_native::{
-    ControllerService, TransformedFlowFile, MockFlowFile, MockLogger, MockProcessContext,
-    MockProcessSession,
+    ControllerService, MockControllerServiceContext, MockFlowFile, MockLogger, MockProcessContext,
+    TransformedFlowFile,
 };
 
-fn encrypt_with_processor(mut context: MockProcessContext) -> TransformedFlowFile<'static, MockFlowFile> {
-    let processor = EncryptContentPGP::schedule(&context, &MockLogger::new()).expect("Should schedule without any properties");  // TODO(mzink) maybe it shouldnt?
-    let res = processor.transform(&mut context, MockFlowFile::new(), |_ff| { return Some("foo".as_bytes().to_vec()) }, &MockLogger::new()).expect("Should be able to transform");
+fn encrypt_with_processor(
+    mut context: MockProcessContext,
+) -> TransformedFlowFile<'static, MockFlowFile> {
+    let processor = EncryptContent::schedule(&context, &MockLogger::new())
+        .expect("Should schedule without any properties"); // TODO(mzink) maybe it shouldnt?
+    let res = processor
+        .transform(
+            &mut context,
+            MockFlowFile::new(),
+            |_ff| return Some("foo".as_bytes().to_vec()),
+            &MockLogger::new(),
+        )
+        .expect("Should be able to transform");
     res
 }
 
@@ -16,7 +26,6 @@ fn schedules_but_fails_to_encrypt_with_defaults() {
     let transformed_ff = encrypt_with_processor(MockProcessContext::new());
     assert_eq!(transformed_ff.target_relationship(), &FAILURE);
 }
-
 
 #[test]
 fn encrypts_via_passphrase() {
@@ -27,10 +36,15 @@ fn encrypts_via_passphrase() {
 
     assert_eq!(transformed_ff.target_relationship(), &SUCCESS);
     assert!(transformed_ff.new_content().is_some());
-    //assert!(transformed_ff.attributes_to_add().contains(("FILE_ENCODING".to_string(), "lofasz".to_string())));
+    assert_eq!(
+        transformed_ff
+            .attributes_to_add()
+            .get("pgp.file.encoding")
+            .unwrap(),
+        "BINARY"
+    );
 }
 
-/*
 fn public_key_service() -> PublicKeyService {
     let mut controller_service = PublicKeyService::new(MockLogger::new());
     let mut context = MockControllerServiceContext::new();
@@ -56,26 +70,17 @@ fn encrypts_ascii_for_alice() {
         Box::new(public_key_service()),
     );
 
-    let processor = EncryptContentPGP::schedule(&context, &MockLogger::new());
-    assert!(processor.is_ok());
-    let mut session = MockProcessSession::new();
-
-    let mut input_ff = MockFlowFile::new();
-    input_ff.content = "foo".as_bytes().to_vec();
-    session.input_flow_files.push(input_ff);
-
+    let transformed_ff = encrypt_with_processor(context);
+    assert_eq!(transformed_ff.target_relationship(), &SUCCESS);
+    assert!(transformed_ff.new_content().is_some());
+    assert!(transformed_ff.new_content().unwrap().is_ascii());
     assert_eq!(
-        processor
-            .unwrap()
-            .trigger(&mut context, &mut session, &MockLogger::new()),
-        Ok(OnTriggerResult::Ok)
+        transformed_ff
+            .attributes_to_add()
+            .get("pgp.file.encoding")
+            .unwrap(),
+        "ASCII"
     );
-    assert!(session.input_flow_files.is_empty());
-    assert_eq!(session.transferred_flow_files.len(), 1);
-    let result_ff = &session.transferred_flow_files[0];
-    assert_eq!(result_ff.relationship, SUCCESS.name);
-    assert_ne!(result_ff.flow_file.content, "foo".as_bytes().to_vec());
-    assert!(result_ff.flow_file.content.is_ascii());
 }
 
 #[test]
@@ -92,26 +97,17 @@ fn encrypts_binary_for_bob() {
         Box::new(public_key_service()),
     );
 
-    let processor = EncryptContentPGP::schedule(&context, &MockLogger::new());
-    assert!(processor.is_ok());
-    let mut session = MockProcessSession::new();
-
-    let mut input_ff = MockFlowFile::new();
-    input_ff.content = "foo".as_bytes().to_vec();
-    session.input_flow_files.push(input_ff);
-
+    let transformed_ff = encrypt_with_processor(context);
+    assert_eq!(transformed_ff.target_relationship(), &SUCCESS);
+    assert!(transformed_ff.new_content().is_some());
+    assert!(!transformed_ff.new_content().unwrap().is_ascii());
     assert_eq!(
-        processor
-            .unwrap()
-            .trigger(&mut context, &mut session, &MockLogger::new()),
-        Ok(OnTriggerResult::Ok)
+        transformed_ff
+            .attributes_to_add()
+            .get("pgp.file.encoding")
+            .unwrap(),
+        "BINARY"
     );
-    assert!(session.input_flow_files.is_empty());
-    assert_eq!(session.transferred_flow_files.len(), 1);
-    let result_ff = &session.transferred_flow_files[0];
-    assert_eq!(result_ff.relationship, SUCCESS.name);
-    assert_ne!(result_ff.flow_file.content, "foo".as_bytes().to_vec());
-    assert!(!result_ff.flow_file.content.is_ascii());
 }
 
 #[test]
@@ -127,25 +123,8 @@ fn cannot_encrypt_for_carol() {
         Box::new(public_key_service()),
     );
 
-    let processor = EncryptContentPGP::schedule(&context, &MockLogger::new());
-    assert!(processor.is_ok());
-    let mut session = MockProcessSession::new();
-
-    let mut input_ff = MockFlowFile::new();
-    input_ff.content = "foo".as_bytes().to_vec();
-    session.input_flow_files.push(input_ff);
-
-    assert_eq!(
-        processor
-            .unwrap()
-            .trigger(&mut context, &mut session, &MockLogger::new()),
-        Ok(OnTriggerResult::Ok)
-    );
-    assert!(session.input_flow_files.is_empty());
-    assert_eq!(session.transferred_flow_files.len(), 1);
-    let result_ff = &session.transferred_flow_files[0];
-    assert_eq!(result_ff.relationship, FAILURE.name);
-    assert_eq!(result_ff.flow_file.content, "foo".as_bytes().to_vec());
+    let transformed_ff = encrypt_with_processor(context);
+    assert_eq!(transformed_ff.target_relationship(), &FAILURE);
+    assert!(transformed_ff.new_content().is_none());
+    assert!(transformed_ff.attributes_to_add().is_empty());
 }
-*/
-

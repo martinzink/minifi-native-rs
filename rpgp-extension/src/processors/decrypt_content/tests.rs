@@ -4,8 +4,8 @@ use crate::processors::decrypt_content::DecryptContent;
 use crate::test_utils;
 use crate::test_utils::get_test_message;
 use minifi_native::{
-    ConstTrigger, ControllerService, MockControllerServiceContext, MockFlowFile, MockLogger,
-    MockProcessContext, MockProcessSession, Schedule, StdLogger,
+    ControllerService, FlowFileTransform, MockControllerServiceContext, MockFlowFile, MockLogger,
+    MockProcessContext, Schedule,
 };
 
 #[test]
@@ -85,50 +85,25 @@ fn test_decryption(
         );
     }
 
-    let decrypt_content = DecryptContent::schedule(&processor_context, &MockLogger::new()).unwrap();
+    let decrypt_content = DecryptContent::schedule(&processor_context, &MockLogger::new())
+        .expect("Should schedule without any properties"); // TODO(mzink) maybe it shouldnt?
+    let res = decrypt_content
+        .transform(
+            &mut processor_context,
+            MockFlowFile::new(),
+            |_ff| Some(get_test_message(message_file_name)),
+            &MockLogger::new(),
+        )
+        .expect("Should be able to transform");
 
-    let mut session = MockProcessSession::new();
-    session
-        .input_flow_files
-        .push(MockFlowFile::with_content(get_test_message(
-            message_file_name,
-        )));
-    let trigger_result =
-        decrypt_content.trigger(&mut processor_context, &mut session, &StdLogger {});
     match expected_result {
         Ok(result_bytes) => {
-            assert!(trigger_result.is_ok());
-            assert_eq!(session.transferred_flow_files.len(), 1);
-            assert_eq!(
-                session.transferred_flow_files.first().unwrap().relationship,
-                super::relationships::SUCCESS.name
-            );
-            assert_eq!(
-                session
-                    .transferred_flow_files
-                    .first()
-                    .unwrap()
-                    .flow_file
-                    .content,
-                result_bytes
-            );
+            assert_eq!(res.target_relationship(), &super::relationships::SUCCESS);
+            assert_eq!(res.new_content().unwrap(), result_bytes);
         }
         Err(_) => {
-            assert!(trigger_result.is_ok());
-            assert_eq!(session.transferred_flow_files.len(), 1);
-            assert_eq!(
-                session.transferred_flow_files.first().unwrap().relationship,
-                super::relationships::FAILURE.name
-            );
-            assert_eq!(
-                session
-                    .transferred_flow_files
-                    .first()
-                    .unwrap()
-                    .flow_file
-                    .content,
-                get_test_message(message_file_name,)
-            );
+            assert_eq!(res.target_relationship(), &super::relationships::FAILURE);
+            assert!(res.new_content().is_none());
         }
     }
 }

@@ -1,12 +1,12 @@
 use super::{DecryptContent, output_attributes, properties, relationships};
 use minifi_native::{
-    HasProcessorDefinition, MultiThreadedProcessor, ProcessorDefinition, ProcessorInputRequirement,
+    FlowFileTransformer, HasProcessorDefinition, ProcessorDefinition, ProcessorInputRequirement,
 };
 
 impl HasProcessorDefinition for DecryptContent {
     fn get_definition() -> Box<dyn minifi_native::DynProcessorDefinition> {
         Box::new(
-            ProcessorDefinition::<MultiThreadedProcessor<DecryptContent>>::new(
+            ProcessorDefinition::<FlowFileTransformer<DecryptContent>>::new(
                 "rs::DecryptContentPGP",
                 "Decrypt contents of OpenPGP messages. Using the Packaged Decryption Strategy preserves OpenPGP encoding to support subsequent signature verification.",
                 ProcessorInputRequirement::Required,

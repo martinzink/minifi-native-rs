@@ -4,7 +4,7 @@ set -e
 cd "$(dirname "$0")/.."
 pwd
 
-mkdir ./docker_builder/target
+mkdir -p ./docker_builder/target
 
 docker buildx build -f docker_builder/rocky.dockerfile . -t minifi-rust-extension-build:latest
 
