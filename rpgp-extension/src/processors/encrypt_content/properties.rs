@@ -1,6 +1,8 @@
+use minifi_native::ComponentIdentifier;
 use crate::processors::encrypt_content::FileEncoding;
 use minifi_native::{Property, StandardPropertyValidator};
 use strum::VariantNames;
+use crate::controller_services::public_key_service::PGPPublicKeyService;
 
 pub(crate) const FILE_ENCODING: Property = Property {
     name: "File Encoding",
@@ -47,5 +49,5 @@ pub(crate) const PUBLIC_KEY_SERVICE: Property = Property {
     default_value: None,
     validator: StandardPropertyValidator::AlwaysValidValidator,
     allowed_values: &[],
-    allowed_type: "PgpPublicKeyService", // TODO(mzink) cannot call non-const associated function in constants
+    allowed_type: PGPPublicKeyService::CLASS_NAME,
 };

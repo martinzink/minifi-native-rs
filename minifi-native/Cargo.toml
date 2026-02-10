@@ -11,6 +11,7 @@ mock-logger = []
 [dependencies]
 const_format = "0.2.34"
 minifi-native-sys = { path = "../minifi-native-sys" }
+minifi-macros = { path = "../minifi-macros" }
 strum = "0.27.2"
 strum_macros = "0.27.2"
 humantime = "2.3.0"

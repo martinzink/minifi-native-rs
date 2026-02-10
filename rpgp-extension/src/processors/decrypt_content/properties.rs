@@ -1,5 +1,7 @@
+use minifi_native::ComponentIdentifier;
 use minifi_native::{Property, StandardPropertyValidator};
 use strum::VariantNames;
+use crate::controller_services::private_key_service::PGPPrivateKeyService;
 
 pub(crate) const DECRYPTION_STRATEGY: Property = Property {
     name: "Decryption Strategy",
@@ -34,5 +36,5 @@ pub(crate) const PRIVATE_KEY_SERVICE: Property = Property {
     default_value: None,
     validator: StandardPropertyValidator::AlwaysValidValidator,
     allowed_values: &[],
-    allowed_type: "PgpPrivateKeyService", // TODO(mzink) cannot call non-const associated function in constants
+    allowed_type: PGPPrivateKeyService::CLASS_NAME,
 };

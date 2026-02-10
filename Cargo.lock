@@ -1175,6 +1175,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f52b00d39961fc5b2736ea853c9cc86238e165017a493d1d5c8eac6bdc4cc273"
 
 [[package]]
+name = "minifi-macros"
+version = "0.1.0"
+dependencies = [
+ "quote",
+ "syn 2.0.114",
+]
+
+[[package]]
 name = "minifi-native"
 version = "0.1.0"
 dependencies = [
@@ -1182,6 +1190,7 @@ dependencies = [
  "const_format",
  "humantime",
  "itertools 0.14.0",
+ "minifi-macros",
  "minifi-native-sys",
  "strum",
  "strum_macros",

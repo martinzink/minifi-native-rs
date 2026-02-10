@@ -1,7 +1,7 @@
 use crate::api::ControllerService;
 use crate::c_ffi::c_ffi_controller_service_context::CffiControllerServiceContext;
 use crate::c_ffi::c_ffi_property::CProperties;
-use crate::{LogLevel, Property, StaticStrAsMinifiCStr};
+use crate::{ComponentIdentifier, LogLevel, Property, StaticStrAsMinifiCStr};
 use minifi_native_sys::{
     MinifiControllerServiceCallbacks, MinifiControllerServiceClassDefinition,
     MinifiControllerServiceContext, MinifiControllerServiceMetadata, MinifiStatus,
@@ -10,7 +10,7 @@ use std::ffi::c_void;
 
 pub struct ControllerServiceDefinition<T>
 where
-    T: ControllerService,
+    T: ControllerService + ComponentIdentifier,
 {
     name: &'static str,
     description_text: &'static str,
@@ -22,17 +22,16 @@ where
 
 impl<T> ControllerServiceDefinition<T>
 where
-    T: ControllerService,
+    T: ControllerService + ComponentIdentifier,
 {
     pub fn new(
-        name: &'static str,
         description_text: &'static str,
         properties: &'static [Property],
     ) -> Self {
         let c_properties = Property::create_c_properties(properties);
 
         Self {
-            name,
+            name: T::CLASS_NAME,
             description_text,
             c_properties,
             _phantom: std::marker::PhantomData,
@@ -95,7 +94,7 @@ pub trait DynControllerServiceDefinition {
 
 impl<T> DynControllerServiceDefinition for ControllerServiceDefinition<T>
 where
-    T: ControllerService,
+    T: ControllerService + ComponentIdentifier,
 {
     unsafe fn class_description(&self) -> MinifiControllerServiceClassDefinition {
         unsafe {

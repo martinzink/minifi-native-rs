@@ -102,6 +102,15 @@ where
             scheduled_impl.unschedule()
         }
     }
+
+    fn calculate_metrics(&self) -> Vec<(String, f64)> {
+        if let Some(ref scheduled_impl) = self.scheduled_impl {
+            scheduled_impl.calculate_metrics()
+        } else {
+            self.logger.warn("Calculating metrics before processor is scheduled.");
+            vec![]
+        }
+    }
 }
 
 impl<'a, Implementation> RawMultiThreadedTrigger for FlowFileTransformer<Implementation>

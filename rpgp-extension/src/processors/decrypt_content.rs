@@ -2,7 +2,7 @@ mod output_attributes;
 mod properties;
 mod relationships;
 
-use crate::controller_services::private_key_service::PrivateKeyService;
+use crate::controller_services::private_key_service::PGPPrivateKeyService;
 use crate::processors::decrypt_content::properties::{PRIVATE_KEY_SERVICE, SYMMETRIC_PASSWORD};
 use crate::processors::decrypt_content::relationships::{FAILURE, SUCCESS};
 use minifi_native::{
@@ -21,12 +21,12 @@ enum DecryptionStrategy {
 }
 
 #[derive(Debug)]
-pub(crate) struct DecryptContent {
+pub(crate) struct DecryptContentPGP {
     decompress_data: bool,
     symmetric_password: Option<pgp::types::Password>,
 }
 
-impl Schedule for DecryptContent {
+impl Schedule for DecryptContentPGP {
     fn schedule<P: ProcessContext, L>(context: &P, _logger: &L) -> Result<Self, MinifiError>
     where
         Self: Sized,
@@ -46,7 +46,7 @@ impl Schedule for DecryptContent {
                 "Either Symmetric Password or Private Key Service must be set".to_string(),
             ))
         } else {
-            Ok(DecryptContent {
+            Ok(DecryptContentPGP {
                 decompress_data: decryption_strategy == DecryptionStrategy::Decrypted,
                 symmetric_password,
             })
@@ -54,7 +54,7 @@ impl Schedule for DecryptContent {
     }
 }
 
-impl DecryptContent {
+impl DecryptContentPGP {
     fn decrypt_msg<'a, PC, L>(
         &self,
         msg: pgp::composed::Message<'a>,
@@ -66,7 +66,7 @@ impl DecryptContent {
         L: Logger,
     {
         let private_key_service = ctx
-            .get_controller_service::<PrivateKeyService>(&PRIVATE_KEY_SERVICE)
+            .get_controller_service::<PGPPrivateKeyService>(&PRIVATE_KEY_SERVICE)
             .unwrap_or(None);
         let mut ring = if let Some(pks) = private_key_service {
             pks.get_the_ring()
@@ -103,7 +103,7 @@ impl DecryptContent {
     }
 }
 
-impl FlowFileTransform for DecryptContent {
+impl FlowFileTransform for DecryptContentPGP {
     fn transform<
         'b,
         Context: ProcessContext,
@@ -170,7 +170,7 @@ impl FlowFileTransform for DecryptContent {
     }
 }
 
-impl CalculateMetrics for DecryptContent {}
+impl CalculateMetrics for DecryptContentPGP {}
 
 #[cfg(test)]
 mod tests;

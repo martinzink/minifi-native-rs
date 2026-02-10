@@ -2,20 +2,18 @@ mod controller_service_definition;
 mod properties;
 
 use crate::controller_services::public_key_service::properties::{KEYRING, KEYRING_FILE};
-use minifi_native::{
-    ControllerService, ControllerServiceContext, DefaultLogger, LogLevel, Logger, MinifiError,
-};
+use minifi_native::{ControllerService, ControllerServiceContext, DefaultLogger, IdentifyComponent, LogLevel, Logger, MinifiError};
 use pgp::composed::{Deserializable, SignedPublicKey};
 
-#[derive(Debug)]
-pub(crate) struct PublicKeyService {
+#[derive(Debug, IdentifyComponent)]
+pub(crate) struct PGPPublicKeyService {
     logger: DefaultLogger,
     public_keys: Vec<SignedPublicKey>,
 }
 
-impl ControllerService for PublicKeyService {
+impl ControllerService for PGPPublicKeyService {
     fn new(logger: DefaultLogger) -> Self {
-        PublicKeyService {
+        PGPPublicKeyService {
             logger,
             public_keys: Vec::new(),
         }
@@ -48,20 +46,9 @@ impl ControllerService for PublicKeyService {
         }
         Ok(())
     }
-
-    fn class_name() -> &'static str {
-        "PgpPublicKeyService" // TODO(mzink)
-    }
-
-    fn group_name() -> &'static str {
-        env!("CARGO_PKG_NAME") // TODO(mzink)
-    }
-    fn version() -> &'static str {
-        env!("CARGO_PKG_VERSION") // TODO(mzink)
-    }
 }
 
-impl PublicKeyService {
+impl PGPPublicKeyService {
     pub fn get(&self, target_id: &str) -> Option<&SignedPublicKey> {
         self.public_keys.iter().find(|public_key| {
             public_key.details.users.iter().any(|user| {

@@ -29,10 +29,8 @@ pub trait RawProcessor: Sized {
     } // TODO(mzink)
     fn log(&self, log_level: LogLevel, message: &str);
     fn on_schedule<P: ProcessContext>(&mut self, context: &P) -> Result<(), MinifiError>;
-    fn on_unschedule(&mut self) {}
-    fn calculate_metrics(&self) -> Vec<(String, f64)> {
-        vec![]
-    } // TODO(mzink) remove default impl
+    fn on_unschedule(&mut self);
+    fn calculate_metrics(&self) -> Vec<(String, f64)>;
 }
 
 pub trait RawSingleThreadedTrigger: RawProcessor<Threading = Exclusive> {

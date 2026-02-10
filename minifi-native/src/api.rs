@@ -14,7 +14,10 @@ mod raw_processor;
 mod relationship;
 mod single_threaded_processor;
 mod threading_model;
+mod component_identifier;
 
+pub use component_identifier::IdentifyComponent;
+pub use component_identifier::ComponentIdentifier;
 pub use controller_service::ControllerService;
 pub use controller_service_context::ControllerServiceContext;
 pub use errors::MinifiError;

@@ -8,7 +8,7 @@ use minifi_native::{
 fn encrypt_with_processor(
     mut context: MockProcessContext,
 ) -> TransformedFlowFile<'static, MockFlowFile> {
-    let processor = EncryptContent::schedule(&context, &MockLogger::new())
+    let processor = EncryptContentPGP::schedule(&context, &MockLogger::new())
         .expect("should schedule");
     let res = processor
         .transform(
@@ -23,7 +23,7 @@ fn encrypt_with_processor(
 
 #[test]
 fn cannot_schedule_without_password_or_public_key() {
-    assert!(EncryptContent::schedule(&MockProcessContext::new(), &MockLogger::new()).is_err());
+    assert!(EncryptContentPGP::schedule(&MockProcessContext::new(), &MockLogger::new()).is_err());
 }
 
 #[test]
@@ -44,8 +44,8 @@ fn encrypts_via_passphrase() {
     );
 }
 
-fn public_key_service() -> PublicKeyService {
-    let mut controller_service = PublicKeyService::new(MockLogger::new());
+fn public_key_service() -> PGPPublicKeyService {
+    let mut controller_service = PGPPublicKeyService::new(MockLogger::new());
     let mut context = MockControllerServiceContext::new();
     context.properties.insert(
         "Keyring File".to_string(),

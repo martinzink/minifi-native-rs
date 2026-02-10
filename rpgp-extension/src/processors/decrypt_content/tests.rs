@@ -1,6 +1,6 @@
 use crate::controller_services::private_key_service;
-use crate::controller_services::private_key_service::PrivateKeyService;
-use crate::processors::decrypt_content::DecryptContent;
+use crate::controller_services::private_key_service::PGPPrivateKeyService;
+use crate::processors::decrypt_content::DecryptContentPGP;
 use crate::test_utils;
 use crate::test_utils::get_test_message;
 use minifi_native::{
@@ -10,7 +10,7 @@ use minifi_native::{
 
 #[test]
 fn fails_to_schedule_by_default() {
-    let decrypt_content = DecryptContent::schedule(&MockProcessContext::new(), &MockLogger::new());
+    let decrypt_content = DecryptContentPGP::schedule(&MockProcessContext::new(), &MockLogger::new());
     assert!(decrypt_content.is_err());
 }
 
@@ -21,7 +21,7 @@ fn schedules_with_password() {
         super::properties::SYMMETRIC_PASSWORD.name.to_string(),
         "my_secret_password".to_string(),
     );
-    let decrypt_content = DecryptContent::schedule(&context, &MockLogger::new());
+    let decrypt_content = DecryptContentPGP::schedule(&context, &MockLogger::new());
     assert!(decrypt_content.is_ok());
 }
 
@@ -32,7 +32,7 @@ fn schedules_with_controller() {
         super::properties::PRIVATE_KEY_SERVICE.name.to_string(),
         "my_private_key_service".to_string(),
     );
-    let decrypt_content = DecryptContent::schedule(&context, &MockLogger::new());
+    let decrypt_content = DecryptContentPGP::schedule(&context, &MockLogger::new());
     assert!(decrypt_content.is_ok());
 }
 
@@ -43,8 +43,8 @@ struct PrivateKeyData {
 }
 
 impl PrivateKeyData {
-    fn into_controller(self) -> PrivateKeyService {
-        let mut controller_service = PrivateKeyService::new(MockLogger::new());
+    fn into_controller(self) -> PGPPrivateKeyService {
+        let mut controller_service = PGPPrivateKeyService::new(MockLogger::new());
         let mut context = MockControllerServiceContext::new();
         use private_key_service::properties::{KEY_FILE, KEY_PASSPHRASE};
         context.properties.insert(
@@ -85,7 +85,7 @@ fn test_decryption(
         );
     }
 
-    let decrypt_content = DecryptContent::schedule(&processor_context, &MockLogger::new())
+    let decrypt_content = DecryptContentPGP::schedule(&processor_context, &MockLogger::new())
         .expect("Should schedule without any properties");
     let res = decrypt_content
         .transform(

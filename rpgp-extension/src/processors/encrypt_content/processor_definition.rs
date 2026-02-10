@@ -1,12 +1,12 @@
-use super::{EncryptContent, output_attributes, properties, relationships};
+use super::{EncryptContentPGP, output_attributes, properties, relationships};
 use minifi_native::{
     FlowFileTransformer, HasProcessorDefinition, ProcessorDefinition, ProcessorInputRequirement,
 };
 
-impl HasProcessorDefinition for EncryptContent {
+impl HasProcessorDefinition for EncryptContentPGP {
     fn get_definition() -> Box<dyn minifi_native::DynProcessorDefinition> {
         Box::new(
-            ProcessorDefinition::<FlowFileTransformer<EncryptContent>>::new(
+            ProcessorDefinition::<FlowFileTransformer<EncryptContentPGP>>::new(
                 "rs::EncryptContentPGP",
                 "Encrypt contents using OpenPGP. The processor reads input and detects OpenPGP messages to avoid unnecessary additional wrapping in Literal Data packets.",
                 ProcessorInputRequirement::Required,

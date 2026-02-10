@@ -10,7 +10,7 @@ mod output_attributes;
 mod properties;
 mod relationships;
 
-use crate::controller_services::public_key_service::PublicKeyService;
+use crate::controller_services::public_key_service::PGPPublicKeyService;
 use crate::processors::encrypt_content::output_attributes::FILE_ENCODING;
 use crate::processors::encrypt_content::properties::{
     PASSPHRASE, PUBLIC_KEY_SEARCH, PUBLIC_KEY_SERVICE,
@@ -26,7 +26,7 @@ enum FileEncoding {
 }
 
 #[derive(Debug)]
-pub(crate) struct EncryptContent {
+pub(crate) struct EncryptContentPGP {
     file_encoding: FileEncoding,
 }
 
@@ -40,7 +40,7 @@ fn string_to_key() -> StringToKey {
     StringToKey::new_argon2(rand::thread_rng(), 1, 1, 10) // fast for unit tests
 }
 
-impl EncryptContent {
+impl EncryptContentPGP {
     fn encrypt_message(
         &self,
         message: Vec<u8>,
@@ -69,7 +69,7 @@ impl EncryptContent {
     }
 }
 
-impl Schedule for EncryptContent {
+impl Schedule for EncryptContentPGP {
     fn schedule<P: ProcessContext, L: Logger>(context: &P, _logger: &L) -> Result<Self, MinifiError>
     where
         Self: Sized,
@@ -85,12 +85,12 @@ impl Schedule for EncryptContent {
         if !has_password && !has_public_key {
             Err(MinifiError::ScheduleError("Either a password or Public Key Service with Public Key Search should be configured to encrypt files".to_string()))
         } else {
-            Ok(EncryptContent { file_encoding })
+            Ok(EncryptContentPGP { file_encoding })
         }
     }
 }
 
-impl FlowFileTransform for EncryptContent {
+impl FlowFileTransform for EncryptContentPGP {
     fn transform<
         'b,
         Context: ProcessContext,
@@ -105,7 +105,7 @@ impl FlowFileTransform for EncryptContent {
     ) -> Result<TransformedFlowFile<'b, Context::FlowFile>, MinifiError> {
         let public_key = if let (Some(pub_key_search), Some(public_key_service)) = (
             context.get_property(&PUBLIC_KEY_SEARCH, Some(&flow_file))?,
-            context.get_controller_service::<PublicKeyService>(&PUBLIC_KEY_SERVICE)?,
+            context.get_controller_service::<PGPPublicKeyService>(&PUBLIC_KEY_SERVICE)?,
         ) {
             public_key_service.get(&pub_key_search)
         } else {
@@ -140,7 +140,7 @@ impl FlowFileTransform for EncryptContent {
     }
 }
 
-impl CalculateMetrics for EncryptContent {}
+impl CalculateMetrics for EncryptContentPGP {}
 
 #[cfg(test)]
 mod tests;

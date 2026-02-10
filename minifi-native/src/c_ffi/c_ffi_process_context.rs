@@ -1,7 +1,7 @@
 use super::c_ffi_flow_file::CffiFlowFile;
 use super::c_ffi_primitives::{ConvertMinifiStringView, FfiConversionError, StringView};
 use crate::api::ProcessContext;
-use crate::{ControllerService, MinifiError, Property};
+use crate::{ComponentIdentifier, ControllerService, MinifiError, Property};
 use minifi_native_sys::*;
 use std::ffi::c_void;
 
@@ -125,15 +125,15 @@ impl<'a> ProcessContext for CffiProcessContext<'a> {
 
     fn get_controller_service<Cs>(&self, property: &Property) -> Result<Option<&Cs>, MinifiError>
     where
-        Cs: ControllerService,
+        Cs: ControllerService + ComponentIdentifier,
     {
         if let Some(service_name) = self.get_property(property, None)? {
             let str_view = StringView::new(service_name.as_str());
             let mut helper = ControllerServiceHelper {
                 result: None,
-                controller_service_class_name: Cs::class_name(),
-                group_name: Cs::group_name(),
-                version_str: Cs::version(),
+                controller_service_class_name: Cs::CLASS_NAME,
+                group_name: Cs::GROUP_NAME,
+                version_str: Cs::VERSION,
             };
             unsafe {
                 MinifiProcessContextGetControllerService(

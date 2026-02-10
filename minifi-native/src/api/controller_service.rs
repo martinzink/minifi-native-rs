@@ -6,7 +6,4 @@ pub trait ControllerService: Sized {
     fn log(&self, log_level: LogLevel, message: &str);
     fn enable<P: ControllerServiceContext>(&mut self, context: &P) -> Result<(), MinifiError>;
     fn disable(&mut self) {}
-    fn class_name() -> &'static str;
-    fn group_name() -> &'static str;
-    fn version() -> &'static str;
 }

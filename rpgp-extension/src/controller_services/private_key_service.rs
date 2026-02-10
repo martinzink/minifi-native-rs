@@ -1,21 +1,19 @@
 pub(crate) mod properties;
 
-use minifi_native::{
-    ControllerService, ControllerServiceContext, DefaultLogger, LogLevel, Logger, MinifiError,
-};
+use minifi_native::{ControllerService, ControllerServiceContext, DefaultLogger, IdentifyComponent, LogLevel, Logger, MinifiError};
 use pgp::composed::{Deserializable, SignedSecretKey, TheRing};
 use pgp::types::Password;
 
-#[derive(Debug)]
-pub(crate) struct PrivateKeyService {
+#[derive(Debug, IdentifyComponent)]
+pub(crate) struct PGPPrivateKeyService {
     logger: DefaultLogger,
     private_keys: Vec<SignedSecretKey>,
     passphrase: Password,
 }
 
-impl ControllerService for PrivateKeyService {
+impl ControllerService for PGPPrivateKeyService {
     fn new(logger: DefaultLogger) -> Self {
-        PrivateKeyService {
+        PGPPrivateKeyService {
             logger,
             private_keys: Vec::new(),
             passphrase: Password::empty(),
@@ -53,20 +51,9 @@ impl ControllerService for PrivateKeyService {
         }
         Ok(())
     }
-
-    fn class_name() -> &'static str {
-        "PgpPrivateKeyService" // TODO(mzink)
-    }
-
-    fn group_name() -> &'static str {
-        env!("CARGO_PKG_NAME") // TODO(mzink)
-    }
-    fn version() -> &'static str {
-        env!("CARGO_PKG_VERSION") // TODO(mzink)
-    }
 }
 
-impl PrivateKeyService {
+impl PGPPrivateKeyService {
     pub fn get_the_ring(&'_ self) -> TheRing<'_> {
         TheRing {
             secret_keys: self.private_keys.iter().collect(),

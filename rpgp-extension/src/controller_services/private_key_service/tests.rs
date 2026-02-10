@@ -1,11 +1,11 @@
-use super::PrivateKeyService;
+use super::PGPPrivateKeyService;
 use crate::test_utils::get_test_key_path;
 use minifi_native::MinifiError::ControllerServiceError;
 use minifi_native::{ControllerService, MockControllerServiceContext, MockLogger};
 
 #[test]
 fn default_fails() {
-    let mut controller_service = PrivateKeyService::new(MockLogger::new());
+    let mut controller_service = PGPPrivateKeyService::new(MockLogger::new());
     let context = MockControllerServiceContext::new();
 
     assert_eq!(
@@ -16,7 +16,7 @@ fn default_fails() {
 
 #[test]
 fn corrupted_binary_keyring_file() {
-    let mut controller_service = PrivateKeyService::new(MockLogger::new());
+    let mut controller_service = PGPPrivateKeyService::new(MockLogger::new());
     let mut context = MockControllerServiceContext::new();
     context
         .properties
@@ -30,7 +30,7 @@ fn corrupted_binary_keyring_file() {
 
 #[test]
 fn armored_public_key_file() {
-    let mut controller_service = PrivateKeyService::new(MockLogger::new());
+    let mut controller_service = PGPPrivateKeyService::new(MockLogger::new());
     let mut context = MockControllerServiceContext::new();
     context.properties.insert(
         "Key File".to_string(),
@@ -45,7 +45,7 @@ fn armored_public_key_file() {
 
 #[test]
 fn corrupted_armored_key_file() {
-    let mut controller_service = PrivateKeyService::new(MockLogger::new());
+    let mut controller_service = PGPPrivateKeyService::new(MockLogger::new());
     let mut context = MockControllerServiceContext::new();
     context.properties.insert(
         "Key File".to_string(),
@@ -60,7 +60,7 @@ fn corrupted_armored_key_file() {
 
 #[test]
 fn non_existent_keyfile() {
-    let mut controller_service = PrivateKeyService::new(MockLogger::new());
+    let mut controller_service = PGPPrivateKeyService::new(MockLogger::new());
     let mut context = MockControllerServiceContext::new();
     context.properties.insert(
         "Key File".to_string(),
@@ -75,7 +75,7 @@ fn non_existent_keyfile() {
 
 #[test]
 fn single_armored_key_file() {
-    let mut controller_service = PrivateKeyService::new(MockLogger::new());
+    let mut controller_service = PGPPrivateKeyService::new(MockLogger::new());
     let mut context = MockControllerServiceContext::new();
     context.properties.insert(
         "Key File".to_string(),
@@ -96,7 +96,7 @@ fn single_armored_key_file() {
 
 #[test]
 fn single_binary_key_file() {
-    let mut controller_service = PrivateKeyService::new(MockLogger::new());
+    let mut controller_service = PGPPrivateKeyService::new(MockLogger::new());
     let mut context = MockControllerServiceContext::new();
     context.properties.insert(
         "Key File".to_string(),
@@ -120,7 +120,7 @@ fn single_binary_key_file() {
 
 #[test]
 fn armored_keyring_key_file() {
-    let mut controller_service = PrivateKeyService::new(MockLogger::new());
+    let mut controller_service = PGPPrivateKeyService::new(MockLogger::new());
     let mut context = MockControllerServiceContext::new();
     context.properties.insert(
         "Key File".to_string(),
@@ -137,7 +137,7 @@ fn armored_keyring_key_file() {
 
 #[test]
 fn binary_keyring_key_file() {
-    let mut controller_service = PrivateKeyService::new(MockLogger::new());
+    let mut controller_service = PGPPrivateKeyService::new(MockLogger::new());
     let mut context = MockControllerServiceContext::new();
     context.properties.insert(
         "Key File".to_string(),
@@ -154,7 +154,7 @@ fn binary_keyring_key_file() {
 
 #[test]
 fn armored_keyring() {
-    let mut controller_service = PrivateKeyService::new(MockLogger::new());
+    let mut controller_service = PGPPrivateKeyService::new(MockLogger::new());
     let mut context = MockControllerServiceContext::new();
 
     let file_content = std::fs::read_to_string(get_test_key_path("secret_keyring.asc"))
@@ -172,7 +172,7 @@ fn armored_keyring() {
 
 #[test]
 fn armored_single_key() {
-    let mut controller_service = PrivateKeyService::new(MockLogger::new());
+    let mut controller_service = PGPPrivateKeyService::new(MockLogger::new());
     let mut context = MockControllerServiceContext::new();
 
     let file_content =
@@ -188,7 +188,7 @@ fn armored_single_key() {
 
 #[test]
 fn corrupted_armored_key() {
-    let mut controller_service = PrivateKeyService::new(MockLogger::new());
+    let mut controller_service = PGPPrivateKeyService::new(MockLogger::new());
     let mut context = MockControllerServiceContext::new();
 
     let file_content = std::fs::read_to_string(get_test_key_path("truncated_private.asc"))
@@ -204,7 +204,7 @@ fn corrupted_armored_key() {
 
 #[test]
 fn public_ascii_key() {
-    let mut controller_service = PrivateKeyService::new(MockLogger::new());
+    let mut controller_service = PGPPrivateKeyService::new(MockLogger::new());
     let mut context = MockControllerServiceContext::new();
 
     let file_content =

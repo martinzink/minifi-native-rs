@@ -8,7 +8,7 @@ pub use api::{
     HasProcessorDefinition, LogLevel, Logger, MinifiError, MultiThreadedProcessor, MutTrigger,
     OnTriggerResult, OutputAttribute, ProcessContext, ProcessSession, ProcessorInputRequirement,
     Property, RawMultiThreadedTrigger, RawProcessor, RawSingleThreadedTrigger, Relationship,
-    Schedule, SingleThreadedProcessor, StandardPropertyValidator, TransformedFlowFile,
+    Schedule, SingleThreadedProcessor, StandardPropertyValidator, TransformedFlowFile, IdentifyComponent, ComponentIdentifier
 };
 pub use c_ffi::{
     CffiControllerServiceList, CffiLogger, CffiProcessorList, ControllerServiceDefinition,

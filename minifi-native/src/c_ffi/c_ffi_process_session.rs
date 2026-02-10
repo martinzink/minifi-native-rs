@@ -116,7 +116,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
             process_attr,
         };
 
-        unsafe extern "C" fn cb<'b, F: FnMut(&str, &str)>(
+        unsafe extern "C" fn get_attributes_callback<'b, F: FnMut(&str, &str)>(
             user_ctx: *mut c_void,
             minifi_attr_key: MinifiStringView,
             minifi_attr_val: MinifiStringView,
@@ -127,7 +127,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                 let attr_value = minifi_attr_val.as_str();
                 if attr_key.is_err() || attr_value.is_err() {
                     helper.result = false;
-                    return; // TODO(mzink) better err handling
+                    return; // TODO(mzink) better err handling?
                 }
                 (helper.process_attr)(attr_key.unwrap(), attr_value.unwrap());
             }
@@ -137,7 +137,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
             MinifiFlowFileGetAttributes(
                 self.ptr,
                 flow_file.ptr,
-                Some(cb::<F>),
+                Some(get_attributes_callback::<F>),
                 &mut on_attr_helper as *mut _ as *mut c_void,
             )
         }
