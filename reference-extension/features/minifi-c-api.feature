@@ -1,3 +1,4 @@
+@SUPPORTS_WINDOWS
 Feature: Test Minifi Native C Api capabilities
 
   Background: The reference library is successfully built on linux

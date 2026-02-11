@@ -1,3 +1,4 @@
+@SUPPORTS_WINDOWS
 Feature: Test PGP extension's encryption and decryption capabilities
 
   Background: The pgp library is successfully built on linux
