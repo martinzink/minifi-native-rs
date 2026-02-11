@@ -18,7 +18,7 @@ import os
 from minifi_test_framework.core.hooks import common_before_scenario
 from minifi_test_framework.core.hooks import common_after_scenario
 
-# TODO(mzink) Move this into cargo build system
+# TODO(mzink) Move this into cargo build system (also windows?)
 def before_all(context):
     if os.name != 'nt':
         logging.info("Building extension in rockylinux:8")
