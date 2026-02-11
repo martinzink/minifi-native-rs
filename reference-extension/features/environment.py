@@ -19,10 +19,11 @@ from minifi_test_framework.core.hooks import common_before_scenario
 from minifi_test_framework.core.hooks import common_after_scenario
 
 def before_all(context):
-    logging.info("Building extension in rockylinux:8")
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    exit_code = os.system(dir_path + "/../../docker_builder/rockybuild.sh")
-    assert exit_code == 0
+    if os.name != 'nt':
+        logging.info("Building extension in rockylinux:8")
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        exit_code = os.system(dir_path + "/../../docker_builder/rockybuild.sh")
+        assert exit_code == 0
 
 
 def before_scenario(context, scenario):
