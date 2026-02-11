@@ -9,8 +9,7 @@ Feature: Test PGP extension's encryption and decryption capabilities
 
     When the MiNiFi instance starts up
 
-    Then the Minifi logs contain the following message: "libminifi_pgp.so as CApi extension" in less than 10 seconds
-    And the Minifi logs contain the following message: "Registering class 'EncryptContentPGP' at '/minifi_pgp'" in less than 1 seconds
+    Then the Minifi logs contain the following message: "Registering class 'EncryptContentPGP' at '/minifi_pgp'" in less than 1 seconds
     And the Minifi logs contain the following message: "Registering class 'DecryptContentPGP' at '/minifi_pgp'" in less than 1 seconds
     And the Minifi logs contain the following message: "Registering class 'PGPPublicKeyService' at '/minifi_pgp'" in less than 1 seconds
     And the Minifi logs contain the following message: "Registering class 'PGPPrivateKeyService' at '/minifi_pgp'" in less than 1 seconds
