@@ -1,7 +1,9 @@
 use crate::api::ControllerService;
 use crate::c_ffi::c_ffi_controller_service_context::CffiControllerServiceContext;
 use crate::c_ffi::c_ffi_property::CProperties;
-use crate::{ComponentIdentifier, ControllerServiceDefinition, LogLevel, Property, StaticStrAsMinifiCStr};
+use crate::{
+    ComponentIdentifier, ControllerServiceDefinition, LogLevel, Property, StaticStrAsMinifiCStr,
+};
 use minifi_native_sys::{
     MinifiControllerServiceCallbacks, MinifiControllerServiceClassDefinition,
     MinifiControllerServiceContext, MinifiControllerServiceMetadata, MinifiStatus,
@@ -24,10 +26,7 @@ impl<T> CffiControllerServiceDefinition<T>
 where
     T: ControllerService + ComponentIdentifier,
 {
-    pub fn new(
-        description_text: &'static str,
-        properties: &'static [Property],
-    ) -> Self {
+    pub fn new(description_text: &'static str, properties: &'static [Property]) -> Self {
         let c_properties = Property::create_c_properties(properties);
 
         Self {
@@ -118,7 +117,10 @@ pub trait RegisterableControllerService {
     fn get_definition() -> Box<dyn DynRawControllerServiceDefinition>;
 }
 
-impl<T> RegisterableControllerService for T where T: ComponentIdentifier + ControllerServiceDefinition + ControllerService + 'static {
+impl<T> RegisterableControllerService for T
+where
+    T: ComponentIdentifier + ControllerServiceDefinition + ControllerService + 'static,
+{
     fn get_definition() -> Box<dyn DynRawControllerServiceDefinition> {
         Box::new(CffiControllerServiceDefinition::<T>::new(
             T::DESCRIPTION,

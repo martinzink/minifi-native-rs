@@ -8,8 +8,8 @@ use minifi_native::{
 fn encrypt_with_processor(
     mut context: MockProcessContext,
 ) -> TransformedFlowFile<'static, MockFlowFile> {
-    let processor = EncryptContentPGP::schedule(&context, &MockLogger::new())
-        .expect("should schedule");
+    let processor =
+        EncryptContentPGP::schedule(&context, &MockLogger::new()).expect("should schedule");
     let res = processor
         .transform(
             &mut context,

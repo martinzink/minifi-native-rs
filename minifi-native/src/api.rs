@@ -1,3 +1,4 @@
+mod component_identifier;
 pub(crate) mod controller_service;
 mod controller_service_context;
 mod errors;
@@ -14,10 +15,9 @@ mod raw_processor;
 mod relationship;
 mod single_threaded_processor;
 mod threading_model;
-mod component_identifier;
 
-pub use component_identifier::IdentifyComponent;
 pub use component_identifier::ComponentIdentifier;
+pub use component_identifier::IdentifyComponent;
 pub use controller_service::ControllerService;
 pub use controller_service_context::ControllerServiceContext;
 pub use errors::MinifiError;
@@ -27,7 +27,9 @@ pub use multi_threaded_processor::MultiThreadedProcessor;
 pub use output_attribute::OutputAttribute;
 pub use process_context::ProcessContext;
 pub use process_session::ProcessSession;
-pub use processor_traits::{CalculateMetrics, ConstTrigger, MutTrigger, Schedule, ProcessorDefinition};
+pub use processor_traits::{
+    CalculateMetrics, ConstTrigger, MutTrigger, ProcessorDefinition, Schedule,
+};
 pub use raw_processor::{
     HasRawProcessorDefinition, OnTriggerResult, ProcessorInputRequirement, RawMultiThreadedTrigger,
     RawProcessor, RawSingleThreadedTrigger,

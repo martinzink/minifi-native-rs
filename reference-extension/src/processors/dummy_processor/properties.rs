@@ -1,6 +1,6 @@
+use crate::controller_services::dummy_controller_service::DummyControllerService;
 use minifi_native::ComponentIdentifier;
 use minifi_native::{Property, StandardPropertyValidator};
-use crate::controller_services::dummy_controller_service::DummyControllerService;
 
 pub(crate) const CONTROLLER_SERVICE: Property = Property {
     name: "Dummy Controller Service",
@@ -11,5 +11,5 @@ pub(crate) const CONTROLLER_SERVICE: Property = Property {
     default_value: None,
     validator: StandardPropertyValidator::AlwaysValidValidator,
     allowed_values: &[],
-    allowed_type: DummyControllerService::CLASS_NAME
+    allowed_type: DummyControllerService::CLASS_NAME,
 };

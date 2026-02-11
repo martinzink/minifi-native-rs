@@ -1,7 +1,7 @@
+use crate::controller_services::private_key_service::PGPPrivateKeyService;
 use minifi_native::ComponentIdentifier;
 use minifi_native::{Property, StandardPropertyValidator};
 use strum::VariantNames;
-use crate::controller_services::private_key_service::PGPPrivateKeyService;
 
 pub(crate) const DECRYPTION_STRATEGY: Property = Property {
     name: "Decryption Strategy",

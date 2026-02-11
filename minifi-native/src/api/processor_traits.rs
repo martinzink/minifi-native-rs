@@ -1,4 +1,7 @@
-use crate::{Logger, MinifiError, OnTriggerResult, OutputAttribute, ProcessContext, ProcessSession, ProcessorInputRequirement, Property, Relationship};
+use crate::{
+    Logger, MinifiError, OnTriggerResult, OutputAttribute, ProcessContext, ProcessSession,
+    ProcessorInputRequirement, Property, Relationship,
+};
 
 pub trait Schedule {
     fn schedule<P: ProcessContext, L: Logger>(context: &P, logger: &L) -> Result<Self, MinifiError>
@@ -49,4 +52,3 @@ pub trait ProcessorDefinition {
     const RELATIONSHIPS: &'static [Relationship];
     const PROPERTIES: &'static [Property];
 }
-

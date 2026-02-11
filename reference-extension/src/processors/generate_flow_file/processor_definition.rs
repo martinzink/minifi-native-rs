@@ -1,7 +1,8 @@
 use super::properties::*;
 use super::{GenerateFlowFile, relationships};
 use minifi_native::{
-    HasRawProcessorDefinition, MultiThreadedProcessor, RawProcessorDefinition, ProcessorInputRequirement,
+    HasRawProcessorDefinition, MultiThreadedProcessor, ProcessorInputRequirement,
+    RawProcessorDefinition,
 };
 
 impl HasRawProcessorDefinition for GenerateFlowFile {

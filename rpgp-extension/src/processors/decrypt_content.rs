@@ -1,11 +1,14 @@
 mod output_attributes;
-mod properties;
+pub(crate) mod properties;
 mod relationships;
 
 use crate::controller_services::private_key_service::PGPPrivateKeyService;
 use crate::processors::decrypt_content::properties::{PRIVATE_KEY_SERVICE, SYMMETRIC_PASSWORD};
 use crate::processors::decrypt_content::relationships::{FAILURE, SUCCESS};
-use minifi_native::{CalculateMetrics, FlowFileTransform, IdentifyComponent, Logger, MinifiError, ProcessContext, Schedule, TransformedFlowFile};
+use minifi_native::{
+    CalculateMetrics, FlowFileTransform, IdentifyComponent, Logger, MinifiError, ProcessContext,
+    Schedule, TransformedFlowFile,
+};
 use pgp::composed::{Message, TheRing};
 use std::collections::HashMap;
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};

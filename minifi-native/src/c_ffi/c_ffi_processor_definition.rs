@@ -7,7 +7,10 @@ use super::c_ffi_process_session::CffiProcessSession;
 use crate::api::{ProcessorInputRequirement, RawProcessor, ThreadingModel};
 use crate::c_ffi::c_ffi_output_attribute::COutputAttributes;
 use crate::c_ffi::c_ffi_property::CProperties;
-use crate::{Concurrent, Exclusive, LogLevel, OutputAttribute, Property, RawMultiThreadedTrigger, RawSingleThreadedTrigger};
+use crate::{
+    Concurrent, Exclusive, LogLevel, OutputAttribute, Property, RawMultiThreadedTrigger,
+    RawSingleThreadedTrigger,
+};
 use crate::{OnTriggerResult, Relationship};
 use minifi_native_sys::*;
 

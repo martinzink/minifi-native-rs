@@ -1,4 +1,7 @@
-use minifi_native::{CalculateMetrics, FlowFileTransform, IdentifyComponent, Logger, MinifiError, ProcessContext, Schedule, TransformedFlowFile};
+use minifi_native::{
+    CalculateMetrics, FlowFileTransform, IdentifyComponent, Logger, MinifiError, ProcessContext,
+    Schedule, TransformedFlowFile,
+};
 use pgp::composed::{ArmorOptions, MessageBuilder, SignedPublicKey};
 use pgp::types::StringToKey;
 use std::collections::HashMap;
@@ -76,8 +79,9 @@ impl Schedule for EncryptContentPGP {
             .expect("required property")
             .parse::<FileEncoding>()?;
 
-        let has_password = context.get_property(&PASSPHRASE,None)?.is_some();
-        let has_public_key = context.get_property(&PUBLIC_KEY_SERVICE, None)?.is_some() && context.get_property(&PUBLIC_KEY_SEARCH, None)?.is_some();
+        let has_password = context.get_property(&PASSPHRASE, None)?.is_some();
+        let has_public_key = context.get_property(&PUBLIC_KEY_SERVICE, None)?.is_some()
+            && context.get_property(&PUBLIC_KEY_SEARCH, None)?.is_some();
 
         if !has_password && !has_public_key {
             Err(MinifiError::ScheduleError("Either a password or Public Key Service with Public Key Search should be configured to encrypt files".to_string()))
@@ -120,23 +124,21 @@ impl FlowFileTransform for EncryptContentPGP {
             .ok_or_else(|| MinifiError::TriggerError("Failed to get content".to_string()))?;
 
         match self.encrypt_message(content, public_key.as_deref(), password.as_deref()) {
-            Ok(encrypted_content) => {
-                Ok(TransformedFlowFile::new(
-                    flow_file,
-                    &SUCCESS,
-                    Some(encrypted_content),
-                    HashMap::from([(
-                        FILE_ENCODING.name.to_string(),
-                        self.file_encoding.to_string(),
-                    )]),
-                ))
-            },
+            Ok(encrypted_content) => Ok(TransformedFlowFile::new(
+                flow_file,
+                &SUCCESS,
+                Some(encrypted_content),
+                HashMap::from([(
+                    FILE_ENCODING.name.to_string(),
+                    self.file_encoding.to_string(),
+                )]),
+            )),
             Err(e) => {
                 logger.debug(&format!("Failed to encrypt content {:?}", e));
                 Ok(TransformedFlowFile::route_without_changes(
                     flow_file, &FAILURE,
                 ))
-            },
+            }
         }
     }
 }

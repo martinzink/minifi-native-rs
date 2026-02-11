@@ -1,6 +1,6 @@
 use super::*;
 use minifi_native::{
-    HasRawProcessorDefinition, RawProcessorDefinition, ProcessorInputRequirement, Property,
+    HasRawProcessorDefinition, ProcessorInputRequirement, Property, RawProcessorDefinition,
     SingleThreadedProcessor,
 };
 

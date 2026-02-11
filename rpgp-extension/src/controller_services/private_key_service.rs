@@ -1,6 +1,10 @@
-pub(crate) mod properties;
+mod controller_service_definition;
+mod properties;
 
-use minifi_native::{ControllerService, ControllerServiceContext, DefaultLogger, IdentifyComponent, LogLevel, Logger, MinifiError};
+use minifi_native::{
+    ControllerService, ControllerServiceContext, DefaultLogger, IdentifyComponent, LogLevel,
+    Logger, MinifiError,
+};
 use pgp::composed::{Deserializable, SignedSecretKey, TheRing};
 use pgp::types::Password;
 
@@ -79,6 +83,3 @@ impl PGPPrivateKeyService {
 
 #[cfg(test)]
 mod tests;
-
-#[cfg(not(test))]
-mod controller_service_definition;

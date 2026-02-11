@@ -1,11 +1,16 @@
 use super::PGPPrivateKeyService;
 use crate::test_utils::get_test_key_path;
 use minifi_native::MinifiError::ControllerServiceError;
-use minifi_native::{ComponentIdentifier, ControllerService, MockControllerServiceContext, MockLogger};
+use minifi_native::{
+    ComponentIdentifier, ControllerService, MockControllerServiceContext, MockLogger,
+};
 
 #[test]
 fn test_component_id() {
-    assert_eq!(PGPPrivateKeyService::CLASS_NAME, "minifi_pgp::controller_services::private_key_service::PGPPrivateKeyService");  // TODO(mzink) or maybe just PGPPrivateKeyService?
+    assert_eq!(
+        PGPPrivateKeyService::CLASS_NAME,
+        "minifi_pgp::controller_services::private_key_service::PGPPrivateKeyService"
+    );
     assert_eq!(PGPPrivateKeyService::GROUP_NAME, "minifi_pgp");
     assert_eq!(PGPPrivateKeyService::VERSION, "0.1.0");
 }

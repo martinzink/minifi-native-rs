@@ -3,6 +3,7 @@ use super::properties::*;
 use minifi_native::{ControllerServiceDefinition, Property};
 
 impl ControllerServiceDefinition for PGPPrivateKeyService {
-    const DESCRIPTION: &'static str = "PGP Private Key Service provides Private Keys loaded from files or properties";
+    const DESCRIPTION: &'static str =
+        "PGP Private Key Service provides Private Keys loaded from files or properties";
     const PROPERTIES: &'static [Property] = &[KEY_FILE, KEY, KEY_PASSPHRASE];
 }

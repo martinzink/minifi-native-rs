@@ -1,6 +1,7 @@
 use super::*;
 use minifi_native::{
-    HasRawProcessorDefinition, MultiThreadedProcessor, RawProcessorDefinition, ProcessorInputRequirement,
+    HasRawProcessorDefinition, MultiThreadedProcessor, ProcessorInputRequirement,
+    RawProcessorDefinition,
 };
 
 impl HasRawProcessorDefinition for KamikazeProcessor {

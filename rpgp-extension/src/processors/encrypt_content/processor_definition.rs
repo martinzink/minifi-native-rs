@@ -1,5 +1,7 @@
 use super::{EncryptContentPGP, output_attributes, properties, relationships};
-use minifi_native::{ProcessorInputRequirement, ProcessorDefinition, OutputAttribute, Relationship, Property};
+use minifi_native::{
+    OutputAttribute, ProcessorDefinition, ProcessorInputRequirement, Property, Relationship,
+};
 
 impl ProcessorDefinition for EncryptContentPGP {
     const DESCRIPTION: &'static str = "Encrypt contents using OpenPGP. The processor reads input and detects OpenPGP messages to avoid unnecessary additional wrapping in Literal Data packets.";
@@ -7,7 +9,8 @@ impl ProcessorDefinition for EncryptContentPGP {
     const SUPPORTS_DYNAMIC_PROPERTIES: bool = false;
     const SUPPORTS_DYNAMIC_RELATIONSHIPS: bool = false;
     const OUTPUT_ATTRIBUTES: &'static [OutputAttribute] = &[output_attributes::FILE_ENCODING];
-    const RELATIONSHIPS: &'static [Relationship] = &[relationships::SUCCESS, relationships::FAILURE];
+    const RELATIONSHIPS: &'static [Relationship] =
+        &[relationships::SUCCESS, relationships::FAILURE];
     const PROPERTIES: &'static [Property] = &[
         properties::FILE_ENCODING,
         properties::PASSPHRASE,

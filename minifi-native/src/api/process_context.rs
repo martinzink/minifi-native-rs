@@ -1,9 +1,9 @@
 use crate::StandardPropertyValidator::*;
+use crate::api::component_identifier::ComponentIdentifier;
 use crate::api::flow_file::FlowFile;
 use crate::{ControllerService, MinifiError, Property};
 use std::str::FromStr;
 use std::time::Duration;
-use crate::api::component_identifier::ComponentIdentifier;
 
 pub trait ProcessContext {
     type FlowFile: FlowFile;

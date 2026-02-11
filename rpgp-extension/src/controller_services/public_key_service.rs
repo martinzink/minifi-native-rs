@@ -2,7 +2,10 @@ mod controller_service_definition;
 mod properties;
 
 use crate::controller_services::public_key_service::properties::{KEYRING, KEYRING_FILE};
-use minifi_native::{ControllerService, ControllerServiceContext, DefaultLogger, IdentifyComponent, LogLevel, Logger, MinifiError};
+use minifi_native::{
+    ControllerService, ControllerServiceContext, DefaultLogger, IdentifyComponent, LogLevel,
+    Logger, MinifiError,
+};
 use pgp::composed::{Deserializable, SignedPublicKey};
 
 #[derive(Debug, IdentifyComponent)]

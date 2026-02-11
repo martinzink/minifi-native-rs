@@ -1,4 +1,9 @@
-use crate::{CalculateMetrics, ComponentIdentifier, Concurrent, DefaultLogger, DynRawProcessorDefinition, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, ProcessorDefinition, RawMultiThreadedTrigger, RawProcessor, RawProcessorDefinition, RawRegisterableProcessor, Relationship, Schedule};
+use crate::{
+    CalculateMetrics, ComponentIdentifier, Concurrent, DefaultLogger, DynRawProcessorDefinition,
+    LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession,
+    ProcessorDefinition, RawMultiThreadedTrigger, RawProcessor, RawProcessorDefinition,
+    RawRegisterableProcessor, Relationship, Schedule,
+};
 use std::collections::HashMap;
 
 pub struct TransformedFlowFile<'a, FlowFileType> {
@@ -103,7 +108,8 @@ where
         if let Some(ref scheduled_impl) = self.scheduled_impl {
             scheduled_impl.calculate_metrics()
         } else {
-            self.logger.warn("Calculating metrics before processor is scheduled.");
+            self.logger
+                .warn("Calculating metrics before processor is scheduled.");
             vec![]
         }
     }
@@ -155,7 +161,12 @@ where
 
 impl<Implementation> RawRegisterableProcessor for FlowFileTransformer<Implementation>
 where
-    Implementation: Schedule + FlowFileTransform + CalculateMetrics + ComponentIdentifier + ProcessorDefinition + 'static
+    Implementation: Schedule
+        + FlowFileTransform
+        + CalculateMetrics
+        + ComponentIdentifier
+        + ProcessorDefinition
+        + 'static,
 {
     fn get_definition() -> Box<dyn DynRawProcessorDefinition> {
         Box::new(
@@ -168,9 +179,7 @@ where
                 Implementation::OUTPUT_ATTRIBUTES,
                 Implementation::RELATIONSHIPS,
                 Implementation::PROPERTIES,
-            )
+            ),
         )
     }
 }
-
-

@@ -21,10 +21,10 @@ def step_impl(context: MinifiTestContext):
 
 @step("the built rust extension library is inside minifi's extension folder")
 def step_impl(context: MinifiTestContext):
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    host_path = f"{dir_path}/../../../docker_builder/target/libminifi_pgp.so"
-    print(host_path)
-    context.get_or_create_default_minifi_container().host_files.append(HostFile("/opt/minifi/minifi-current/extensions/libminifi_pgp.so", host_path))
+    if os.name != 'nt':
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        host_path = f"{dir_path}/../../../docker_builder/target/libminifi_pgp.so"
+        context.get_or_create_default_minifi_container().host_files.append(HostFile("/opt/minifi/minifi-current/extensions/libminifi_pgp.so", host_path))
 
 @step("an EncryptContentPGP processor with a PGPPublicKeyService is set up")
 def step_impl(context: MinifiTestContext):

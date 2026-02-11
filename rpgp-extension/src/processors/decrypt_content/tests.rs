@@ -1,4 +1,3 @@
-use crate::controller_services::private_key_service;
 use crate::controller_services::private_key_service::PGPPrivateKeyService;
 use crate::processors::decrypt_content::DecryptContentPGP;
 use crate::test_utils;
@@ -10,7 +9,8 @@ use minifi_native::{
 
 #[test]
 fn fails_to_schedule_by_default() {
-    let decrypt_content = DecryptContentPGP::schedule(&MockProcessContext::new(), &MockLogger::new());
+    let decrypt_content =
+        DecryptContentPGP::schedule(&MockProcessContext::new(), &MockLogger::new());
     assert!(decrypt_content.is_err());
 }
 
@@ -46,14 +46,12 @@ impl PrivateKeyData {
     fn into_controller(self) -> PGPPrivateKeyService {
         let mut controller_service = PGPPrivateKeyService::new(MockLogger::new());
         let mut context = MockControllerServiceContext::new();
-        use private_key_service::properties::{KEY_FILE, KEY_PASSPHRASE};
-        context.properties.insert(
-            KEY_FILE.name,
-            test_utils::get_test_key_path(self.key_filename),
-        );
+        context
+            .properties
+            .insert("Key File", test_utils::get_test_key_path(self.key_filename));
 
         if let Some(passphrase) = self.passphrase {
-            context.properties.insert(KEY_PASSPHRASE.name, passphrase);
+            context.properties.insert("Key Passphrase", passphrase);
         }
 
         assert_eq!(controller_service.enable(&context), Ok(()));

@@ -1,7 +1,10 @@
 mod properties;
 
 use crate::controller_services::dummy_controller_service::properties::DATA;
-use minifi_native::{ControllerService, ControllerServiceContext, DefaultLogger, IdentifyComponent, LogLevel, Logger, MinifiError};
+use minifi_native::{
+    ControllerService, ControllerServiceContext, DefaultLogger, IdentifyComponent, LogLevel,
+    Logger, MinifiError,
+};
 
 #[derive(Debug, IdentifyComponent)]
 pub(crate) struct DummyControllerService {

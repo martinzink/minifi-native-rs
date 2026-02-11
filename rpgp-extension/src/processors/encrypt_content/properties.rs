@@ -1,8 +1,8 @@
-use minifi_native::ComponentIdentifier;
+use crate::controller_services::public_key_service::PGPPublicKeyService;
 use crate::processors::encrypt_content::FileEncoding;
+use minifi_native::ComponentIdentifier;
 use minifi_native::{Property, StandardPropertyValidator};
 use strum::VariantNames;
-use crate::controller_services::public_key_service::PGPPublicKeyService;
 
 pub(crate) const FILE_ENCODING: Property = Property {
     name: "File Encoding",
