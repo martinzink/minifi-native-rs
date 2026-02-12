@@ -169,3 +169,38 @@ fn decrypts_for_alice() {
         Err(()),
     );
 }
+
+#[test]
+fn decryption_of_not_encrypted_data() {
+    let alice_private_key = PrivateKeyData {
+        key_filename: "alice_private.asc",
+        passphrase: Some("whiterabbit"),
+    };
+
+    let mut processor_context = MockProcessContext::new();
+    processor_context.controller_services.insert(
+        "my_private_key_service".to_string(),
+        Box::new(alice_private_key.into_controller()),
+    );
+    processor_context.properties.insert(
+        super::properties::PRIVATE_KEY_SERVICE.name.to_string(),
+        "my_private_key_service".to_string(),
+    );
+
+    let logger = MockLogger::new();
+
+
+    let decrypt_content = DecryptContentPGP::schedule(&processor_context, &logger)
+        .expect("Should schedule without any properties");
+    let res = decrypt_content
+        .transform(
+            &mut processor_context,
+            MockFlowFile::new(),
+            |_ff| Some("something not encrypted".as_bytes().to_vec()),
+            &logger,
+        )
+        .expect("Should be able to transform");
+
+    assert_eq!(res.target_relationship(), &super::relationships::FAILURE);
+    assert!(res.new_content().is_none());
+}
