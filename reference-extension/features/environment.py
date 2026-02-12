@@ -12,13 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import logging
 import os
 from typing import List
 
 from minifi_test_framework.containers.docker_image_builder import DockerImageBuilder
-from minifi_test_framework.core.hooks import common_before_scenario, get_minifi_container_image
 from minifi_test_framework.core.hooks import common_after_scenario
+from minifi_test_framework.core.hooks import common_before_scenario, get_minifi_container_image
 from minifi_test_framework.core.minifi_test_context import MinifiTestContext
 
 
@@ -45,7 +44,6 @@ def add_extension_to_minifi_container(extension_name: str, possible_paths: List[
 
     base_img = get_minifi_container_image()
 
-    # 3. Generate Dockerfile content
     if is_windows:
         dockerfile = f"""
 FROM {base_img}
@@ -58,24 +56,23 @@ COPY --chown=minificpp:minificpp {lib_filename} {container_extension_dir}
 RUN chmod 755 {container_extension_dir}{lib_filename}
 """
 
-    print(dockerfile)
-    builder = DockerImageBuilder(
-        image_tag=new_container_name,
-        dockerfile_content=dockerfile,
-        files_on_context={lib_filename: lib_content}
-    )
+    builder = DockerImageBuilder(image_tag=new_container_name, dockerfile_content=dockerfile,
+        files_on_context={lib_filename: lib_content})
 
     builder.build()
     return new_container_name
+
 
 def before_all(context):
     dir_path = os.path.dirname(os.path.realpath(__file__))
     mac_path = os.path.normpath(os.path.join(dir_path, "../../docker_builder/target/"))
     add_extension_to_minifi_container("rust_reference_extension", [mac_path], context)
 
+
 def before_scenario(context, scenario):
-    context.minifi_container_image =  "apacheminificpp:rust_reference_extension"
+    context.minifi_container_image = "apacheminificpp:rust_reference_extension"
     common_before_scenario(context, scenario)
+
 
 def after_scenario(context, scenario):
     common_after_scenario(context, scenario)
