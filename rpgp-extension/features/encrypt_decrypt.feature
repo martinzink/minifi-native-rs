@@ -4,8 +4,7 @@ Feature: Test PGP extension's encryption and decryption capabilities
   Background: The pgp library is successfully built on linux
 
   Scenario: The pgp library is loaded into minifi
-    Given the built rust extension library is inside minifi's extension folder
-    And log property "logger.org::apache::nifi::minifi::core::extension::ExtensionManager" is set to "TRACE,stderr"
+    Given log property "logger.org::apache::nifi::minifi::core::extension::ExtensionManager" is set to "TRACE,stderr"
     And log property "logger.org::apache::nifi::minifi::core::ClassLoader" is set to "TRACE,stderr"
 
     When the MiNiFi instance starts up
@@ -18,9 +17,7 @@ Feature: Test PGP extension's encryption and decryption capabilities
     And the Minifi logs do not contain warnings
 
     Scenario: Encrypted for Alice but not for Bob
-    Given the built rust extension library is inside minifi's extension folder
-
-    And a GetFile processor with the "Input Directory" property set to "/tmp/input"
+    Given a GetFile processor with the "Input Directory" property set to "/tmp/input"
     And an EncryptContentPGP processor with a PGPPublicKeyService is set up
     And a DecryptContentPGP processor named DecryptAlice with a PGPPrivateKeyService is set up for Alice
     And a DecryptContentPGP processor named DecryptBob with a PGPPrivateKeyService is set up for Bob

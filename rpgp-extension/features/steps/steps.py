@@ -1,3 +1,5 @@
+from typing import List
+
 from behave import step, then, when
 import os
 import time
@@ -14,6 +16,51 @@ from minifi_test_framework.steps import core_steps
 from minifi_test_framework.steps import flow_building_steps
 from minifi_test_framework.core.minifi_test_context import MinifiTestContext
 from minifi_test_framework.containers.host_file import HostFile
+
+def create_container_with_extension(extension_name: str, possible_paths: List[str], context: MinifiTestContext):
+    is_windows = os.name == 'nt'
+    if is_windows:
+        lib_filename = f"{extension_name}.dll"
+        container_extension_dir = "C:\\Program Files\\ApacheNiFiMiNiFi\\nifi-minifi-cpp\\extensions"
+    else:
+        lib_filename = f"lib{extension_name}.so"
+        container_extension_dir = "/opt/minifi/minifi-current/extensions/"
+
+    host_path = None
+    for path in possible_paths:
+        if os.path.exists(path):
+            host_path = path
+            break
+
+    assert host_path is not None, f"Could not find {lib_filename} in {[p for p in possible_paths]}"
+
+    with open(host_path, 'rb') as f:
+        lib_content = f.read()
+
+    base_img = context.minifi_container_image
+
+    # 3. Generate Dockerfile content
+    if is_windows:
+        dockerfile = f"""
+FROM {base_img}
+COPY {lib_filename} "{container_extension_dir}\\{lib_filename}"
+"""
+    else:
+        dockerfile = f"""
+FROM {base_img}
+COPY --chown=minificpp:minificpp {lib_filename} {container_extension_dir}
+RUN chmod 755 {container_extension_dir}{lib_filename}
+"""
+
+    builder = DockerImageBuilder(
+        image_tag="apacheminificpp:rusty",
+        dockerfile_content=dockerfile,
+        files_on_context={lib_filename: lib_content}
+    )
+
+    builder.build()
+    context.minifi_container_image = "apacheminificpp:rusty"
+
 
 @when("MiNiFi is started")
 def step_impl(context: MinifiTestContext):

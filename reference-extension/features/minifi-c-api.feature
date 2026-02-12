@@ -4,8 +4,7 @@ Feature: Test Minifi Native C Api capabilities
   Background: The reference library is successfully built on linux
 
   Scenario: The rust library is loaded into minifi
-    Given the built rust extension library is inside minifi's extension folder
-    And log property "logger.org::apache::nifi::minifi::core::extension::ExtensionManager" is set to "TRACE,stderr"
+    Given log property "logger.org::apache::nifi::minifi::core::extension::ExtensionManager" is set to "TRACE,stderr"
     And log property "logger.org::apache::nifi::minifi::core::ClassLoader" is set to "TRACE,stderr"
 
     When the MiNiFi instance starts up
@@ -19,8 +18,7 @@ Feature: Test Minifi Native C Api capabilities
     And the Minifi logs do not contain warnings
 
   Scenario: Simple GenerateFlowFileRs -> PutFileRs
-    Given the built rust extension library is inside minifi's extension folder
-    And a GenerateFlowFileRs processor with the "Custom Text" property set to "Ferris the crab"
+    Given a GenerateFlowFileRs processor with the "Custom Text" property set to "Ferris the crab"
     And the "Data Format" property of the GenerateFlowFileRs processor is set to "Text"
     And the "Unique FlowFiles" property of the GenerateFlowFileRs processor is set to "false"
     And a PutFileRs processor with the "Directory" property set to "/tmp/output"
@@ -34,8 +32,7 @@ Feature: Test Minifi Native C Api capabilities
     And the Minifi logs do not contain warnings
 
   Scenario: Simple GetFileRs -> PutFileRs
-    Given the built rust extension library is inside minifi's extension folder
-    And a GetFileRs processor with the "Input Directory" property set to "/tmp/input"
+    Given a GetFileRs processor with the "Input Directory" property set to "/tmp/input"
     And a PutFileRs processor with the "Directory" property set to "/tmp/output"
     And the "success" relationship of the GetFileRs processor is connected to the PutFileRs
     And PutFileRs's success relationship is auto-terminated
@@ -51,8 +48,7 @@ Feature: Test Minifi Native C Api capabilities
     And the Minifi logs do not contain warnings
 
   Scenario Outline: The LogAttributeRs can read and log FlowFile content
-    Given the built rust extension library is inside minifi's extension folder
-    And a GenerateFlowFileRs processor with the "Custom Text" property set to "<custom_text>"
+    Given a GenerateFlowFileRs processor with the "Custom Text" property set to "<custom_text>"
     And the "Data Format" property of the GenerateFlowFileRs processor is set to "Text"
     And the "Unique FlowFiles" property of the GenerateFlowFileRs processor is set to "false"
     And a LogAttributeRs processor with the "Log Level" property set to "<log_level>"
@@ -74,8 +70,7 @@ Feature: Test Minifi Native C Api capabilities
       | Ant         | Trace     | [trace] Logging for flow file    | Ant            |
 
   Scenario: The Api handles empty flow-files
-    Given the built rust extension library is inside minifi's extension folder
-    And a GenerateFlowFileRs processor with the "Custom Text" property set to "${invalid_attribute}"
+    Given a GenerateFlowFileRs processor with the "Custom Text" property set to "${invalid_attribute}"
     And the "Data Format" property of the GenerateFlowFileRs processor is set to "Text"
     And the "Unique FlowFiles" property of the GenerateFlowFileRs processor is set to "false"
     And a LogAttributeRs processor with the "Log Level" property set to "Critical"
@@ -89,8 +84,7 @@ Feature: Test Minifi Native C Api capabilities
     And the Minifi logs do not contain warnings
 
   Scenario: Minifi handles errors from on_schedule
-    Given the built rust extension library is inside minifi's extension folder
-    And a KamikazeProcessorRs processor with the "On Schedule Behaviour" property set to "ReturnErr"
+    Given a KamikazeProcessorRs processor with the "On Schedule Behaviour" property set to "ReturnErr"
     And KamikazeProcessorRs's success relationship is auto-terminated
 
     When the MiNiFi instance starts up
@@ -98,16 +92,14 @@ Feature: Test Minifi Native C Api capabilities
     Then the Minifi logs contain the following message: "(KamikazeProcessorRs): Process Schedule Operation: Error while scheduling processor" in less than 3 seconds
 
   Scenario: Panic in extension's on_schedule crashes the agent aswell
-    Given the built rust extension library is inside minifi's extension folder
-    And a KamikazeProcessorRs processor with the "On Schedule Behaviour" property set to "Panic"
+    Given a KamikazeProcessorRs processor with the "On Schedule Behaviour" property set to "Panic"
     And KamikazeProcessorRs's success relationship is auto-terminated
 
     When the MiNiFi instance is started without assertions
     Then Minifi crashes with the following "KamikazeProcessor::on_schedule panic" in less than 5 seconds
 
   Scenario: Minifi handles errors from on_trigger
-    Given the built rust extension library is inside minifi's extension folder
-    And a KamikazeProcessorRs processor with the "On Schedule Behaviour" property set to "ReturnOk"
+    Given a KamikazeProcessorRs processor with the "On Schedule Behaviour" property set to "ReturnOk"
     And the "On Trigger Behaviour" property of the KamikazeProcessorRs processor is set to "ReturnErr"
     And KamikazeProcessorRs's success relationship is auto-terminated
 
@@ -116,8 +108,7 @@ Feature: Test Minifi Native C Api capabilities
     Then the Minifi logs contain the following message: "Trigger and commit failed for processor KamikazeProcessorRs" in less than 3 seconds
 
   Scenario: Panic in extension's on_trigger crashes the agent aswell
-    Given the built rust extension library is inside minifi's extension folder
-    And a KamikazeProcessorRs processor with the "On Schedule Behaviour" property set to "ReturnOk"
+    Given a KamikazeProcessorRs processor with the "On Schedule Behaviour" property set to "ReturnOk"
     And the "On Trigger Behaviour" property of the KamikazeProcessorRs processor is set to "Panic"
     And KamikazeProcessorRs's success relationship is auto-terminated
 
