@@ -1,10 +1,23 @@
 use crate::api::processor_traits::CalculateMetrics;
 use crate::api::raw_processor::HasRawProcessorDefinition;
 use crate::{
-    DefaultLogger, DynRawProcessorDefinition, Exclusive, LogLevel, Logger, MinifiError, MutTrigger,
+    DefaultLogger, DynRawProcessorDefinition, Exclusive, LogLevel, Logger, MinifiError,
     OnTriggerResult, ProcessContext, ProcessSession, RawProcessor, RawRegisterableProcessor,
     RawSingleThreadedTrigger, Schedule,
 };
+
+pub trait MutTrigger {
+    fn trigger<PC, PS, L>(
+        &mut self,
+        context: &mut PC,
+        session: &mut PS,
+        logger: &L,
+    ) -> Result<OnTriggerResult, MinifiError>
+    where
+        PC: ProcessContext,
+        PS: ProcessSession<FlowFile = PC::FlowFile>,
+        L: Logger;
+}
 
 #[derive(Debug)]
 pub struct SingleThreadedProcessor<Implementation>

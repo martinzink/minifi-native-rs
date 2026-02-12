@@ -2,8 +2,8 @@ mod properties;
 
 use crate::controller_services::dummy_controller_service::properties::DATA;
 use minifi_native::{
-    ControllerService, ControllerServiceContext, DefaultLogger, IdentifyComponent, LogLevel,
-    Logger, MinifiError,
+    ControllerServiceContext, DefaultLogger, IdentifyComponent, LogLevel, Logger, MinifiError,
+    RawControllerService,
 };
 
 #[derive(Debug, IdentifyComponent)]
@@ -12,7 +12,7 @@ pub(crate) struct DummyControllerService {
     data: Option<String>,
 }
 
-impl ControllerService for DummyControllerService {
+impl RawControllerService for DummyControllerService {
     fn new(logger: DefaultLogger) -> Self {
         DummyControllerService { logger, data: None }
     }

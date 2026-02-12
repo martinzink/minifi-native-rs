@@ -1,16 +1,16 @@
-pub trait ThreadingModel: sealed::Sealed {
+pub trait RawThreadingModel: sealed::Sealed {
     const IS_EXCLUSIVE: bool;
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Concurrent;
-impl ThreadingModel for Concurrent {
+impl RawThreadingModel for Concurrent {
     const IS_EXCLUSIVE: bool = false;
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Exclusive;
-impl ThreadingModel for Exclusive {
+impl RawThreadingModel for Exclusive {
     const IS_EXCLUSIVE: bool = true;
 }
 

@@ -1,6 +1,6 @@
 use crate::controller_services::dummy_controller_service::DummyControllerService;
 use minifi_native::MinifiError::MissingRequiredProperty;
-use minifi_native::{ControllerService, MockControllerServiceContext, MockLogger};
+use minifi_native::{MockControllerServiceContext, MockLogger, RawControllerService};
 
 #[test]
 fn enable_fails_without_data_property() {

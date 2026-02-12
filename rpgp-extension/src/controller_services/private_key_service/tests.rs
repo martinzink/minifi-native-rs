@@ -2,7 +2,7 @@ use super::PGPPrivateKeyService;
 use crate::test_utils::get_test_key_path;
 use minifi_native::MinifiError::ControllerServiceError;
 use minifi_native::{
-    ComponentIdentifier, ControllerService, MockControllerServiceContext, MockLogger,
+    ComponentIdentifier, MockControllerServiceContext, MockLogger, RawControllerService,
 };
 
 #[test]

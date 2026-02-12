@@ -1,8 +1,9 @@
+use crate::api::ProcessorDefinition;
 use crate::{
     CalculateMetrics, ComponentIdentifier, Concurrent, DefaultLogger, DynRawProcessorDefinition,
     LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession,
-    ProcessorDefinition, RawMultiThreadedTrigger, RawProcessor, RawProcessorDefinition,
-    RawRegisterableProcessor, Relationship, Schedule,
+    RawMultiThreadedTrigger, RawProcessor, RawProcessorDefinition, RawRegisterableProcessor,
+    Relationship, Schedule,
 };
 use std::collections::HashMap;
 

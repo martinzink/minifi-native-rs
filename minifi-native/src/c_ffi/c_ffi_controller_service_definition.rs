@@ -1,4 +1,4 @@
-use crate::api::ControllerService;
+use crate::api::RawControllerService;
 use crate::c_ffi::c_ffi_controller_service_context::CffiControllerServiceContext;
 use crate::c_ffi::c_ffi_property::CProperties;
 use crate::{
@@ -12,7 +12,7 @@ use std::ffi::c_void;
 
 pub struct CffiControllerServiceDefinition<T>
 where
-    T: ControllerService + ComponentIdentifier,
+    T: RawControllerService + ComponentIdentifier,
 {
     name: &'static str,
     description_text: &'static str,
@@ -24,7 +24,7 @@ where
 
 impl<T> CffiControllerServiceDefinition<T>
 where
-    T: ControllerService + ComponentIdentifier,
+    T: RawControllerService + ComponentIdentifier,
 {
     pub fn new(description_text: &'static str, properties: &'static [Property]) -> Self {
         let c_properties = Property::create_c_properties(properties);
@@ -93,7 +93,7 @@ pub trait DynRawControllerServiceDefinition {
 
 impl<T> DynRawControllerServiceDefinition for CffiControllerServiceDefinition<T>
 where
-    T: ControllerService + ComponentIdentifier,
+    T: RawControllerService + ComponentIdentifier,
 {
     unsafe fn class_description(&self) -> MinifiControllerServiceClassDefinition {
         unsafe {
@@ -119,7 +119,7 @@ pub trait RegisterableControllerService {
 
 impl<T> RegisterableControllerService for T
 where
-    T: ComponentIdentifier + ControllerServiceDefinition + ControllerService + 'static,
+    T: ComponentIdentifier + ControllerServiceDefinition + RawControllerService + 'static,
 {
     fn get_definition() -> Box<dyn DynRawControllerServiceDefinition> {
         Box::new(CffiControllerServiceDefinition::<T>::new(

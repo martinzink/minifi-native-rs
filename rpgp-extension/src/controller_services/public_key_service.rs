@@ -3,8 +3,8 @@ mod properties;
 
 use crate::controller_services::public_key_service::properties::{KEYRING, KEYRING_FILE};
 use minifi_native::{
-    ControllerService, ControllerServiceContext, DefaultLogger, IdentifyComponent, LogLevel,
-    Logger, MinifiError,
+    ControllerServiceContext, DefaultLogger, IdentifyComponent, LogLevel, Logger, MinifiError,
+    RawControllerService,
 };
 use pgp::composed::{Deserializable, SignedPublicKey};
 
@@ -14,7 +14,7 @@ pub(crate) struct PGPPublicKeyService {
     public_keys: Vec<SignedPublicKey>,
 }
 
-impl ControllerService for PGPPublicKeyService {
+impl RawControllerService for PGPPublicKeyService {
     fn new(logger: DefaultLogger) -> Self {
         PGPPublicKeyService {
             logger,

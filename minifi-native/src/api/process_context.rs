@@ -1,7 +1,7 @@
 use crate::StandardPropertyValidator::*;
-use crate::api::component_identifier::ComponentIdentifier;
+use crate::api::component_definition_traits::ComponentIdentifier;
 use crate::api::flow_file::FlowFile;
-use crate::{ControllerService, MinifiError, Property};
+use crate::{MinifiError, Property, RawControllerService};
 use std::str::FromStr;
 use std::time::Duration;
 
@@ -78,5 +78,5 @@ pub trait ProcessContext {
 
     fn get_controller_service<Cs>(&self, property: &Property) -> Result<Option<&Cs>, MinifiError>
     where
-        Cs: ControllerService + ComponentIdentifier + 'static;
+        Cs: RawControllerService + ComponentIdentifier + 'static;
 }

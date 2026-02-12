@@ -1,8 +1,8 @@
 use super::*;
 use crate::test_utils;
 use minifi_native::{
-    ControllerService, MockControllerServiceContext, MockFlowFile, MockLogger, MockProcessContext,
-    TransformedFlowFile,
+    MockControllerServiceContext, MockFlowFile, MockLogger, MockProcessContext,
+    RawControllerService, TransformedFlowFile,
 };
 
 fn encrypt_with_processor(

@@ -1,5 +1,5 @@
 use crate::api::errors::MinifiError;
-use crate::api::threading_model::{Concurrent, Exclusive, ThreadingModel};
+use crate::api::raw_threading_model::{Concurrent, Exclusive, RawThreadingModel};
 use crate::{DefaultLogger, DynRawProcessorDefinition, LogLevel, ProcessContext, ProcessSession};
 
 pub enum ProcessorInputRequirement {
@@ -15,7 +15,7 @@ pub enum OnTriggerResult {
 }
 
 pub trait RawProcessor: Sized {
-    type Threading: ThreadingModel;
+    type Threading: RawThreadingModel;
 
     fn new(logger: DefaultLogger) -> Self;
     fn restore(&self) -> bool {

@@ -1,5 +1,5 @@
 use crate::api::ProcessContext;
-use crate::{ControllerService, MinifiError, MockFlowFile, Property};
+use crate::{MinifiError, MockFlowFile, Property, RawControllerService};
 use std::any::Any;
 use std::collections::HashMap;
 
@@ -71,7 +71,7 @@ impl ProcessContext for MockProcessContext {
 
     fn get_controller_service<Cs>(&self, property: &Property) -> Result<Option<&Cs>, MinifiError>
     where
-        Cs: ControllerService + 'static,
+        Cs: RawControllerService + 'static,
     {
         if let Some(service_name) = self.get_property(property, None)? {
             Ok(self

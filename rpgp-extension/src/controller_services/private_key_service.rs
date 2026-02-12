@@ -2,8 +2,8 @@ mod controller_service_definition;
 mod properties;
 
 use minifi_native::{
-    ControllerService, ControllerServiceContext, DefaultLogger, IdentifyComponent, LogLevel,
-    Logger, MinifiError,
+    ControllerServiceContext, DefaultLogger, IdentifyComponent, LogLevel, Logger, MinifiError,
+    RawControllerService,
 };
 use pgp::composed::{Deserializable, SignedSecretKey, TheRing};
 use pgp::types::Password;
@@ -15,7 +15,7 @@ pub(crate) struct PGPPrivateKeyService {
     passphrase: Password,
 }
 
-impl ControllerService for PGPPrivateKeyService {
+impl RawControllerService for PGPPrivateKeyService {
     fn new(logger: DefaultLogger) -> Self {
         PGPPrivateKeyService {
             logger,

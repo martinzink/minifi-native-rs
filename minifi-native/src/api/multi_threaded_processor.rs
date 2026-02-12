@@ -2,10 +2,23 @@ use crate::api::RawProcessor;
 use crate::api::processor_traits::CalculateMetrics;
 use crate::api::raw_processor::HasRawProcessorDefinition;
 use crate::{
-    Concurrent, ConstTrigger, DefaultLogger, DynRawProcessorDefinition, LogLevel, Logger,
-    MinifiError, OnTriggerResult, ProcessContext, ProcessSession, RawMultiThreadedTrigger,
+    Concurrent, DefaultLogger, DynRawProcessorDefinition, LogLevel, Logger, MinifiError,
+    OnTriggerResult, ProcessContext, ProcessSession, RawMultiThreadedTrigger,
     RawRegisterableProcessor, Schedule,
 };
+
+pub trait ConstTrigger {
+    fn trigger<PC, PS, L>(
+        &self,
+        context: &mut PC,
+        session: &mut PS,
+        logger: &L,
+    ) -> Result<OnTriggerResult, MinifiError>
+    where
+        PC: ProcessContext,
+        PS: ProcessSession<FlowFile = PC::FlowFile>,
+        L: Logger;
+}
 
 #[derive(Debug)]
 pub struct MultiThreadedProcessor<Implementation>

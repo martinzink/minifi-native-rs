@@ -3,8 +3,8 @@ use crate::processors::decrypt_content::DecryptContentPGP;
 use crate::test_utils;
 use crate::test_utils::get_test_message;
 use minifi_native::{
-    ControllerService, FlowFileTransform, MockControllerServiceContext, MockFlowFile, MockLogger,
-    MockProcessContext, Schedule,
+    FlowFileTransform, MockControllerServiceContext, MockFlowFile, MockLogger, MockProcessContext,
+    RawControllerService, Schedule,
 };
 
 #[test]

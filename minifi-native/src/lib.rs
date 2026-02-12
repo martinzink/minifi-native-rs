@@ -2,16 +2,22 @@ mod api;
 mod c_ffi;
 mod mock;
 
-pub use api::controller_service::{ControllerService, ControllerServiceDefinition};
+pub use api::raw_controller_service::RawControllerService; // TODO(mzink) replace with more user friendly API
 
+pub use api::component_definition_traits::{
+    ComponentIdentifier, ControllerServiceDefinition, IdentifyComponent, ProcessorDefinition,
+};
+pub use api::errors::MinifiError;
+pub use api::processor_traits::{CalculateMetrics, Schedule};
+
+// TODO(mzink) clean this up
 pub use api::{
-    CalculateMetrics, ComponentIdentifier, Concurrent, ConstTrigger, ControllerServiceContext,
-    DefaultLogger, Exclusive, FlowFile, FlowFileTransform, FlowFileTransformer,
-    HasRawProcessorDefinition, IdentifyComponent, LogLevel, Logger, MinifiError,
+    Concurrent, ConstTrigger, ControllerServiceContext, DefaultLogger, Exclusive, FlowFile,
+    FlowFileTransform, FlowFileTransformer, HasRawProcessorDefinition, LogLevel, Logger,
     MultiThreadedProcessor, MutTrigger, OnTriggerResult, OutputAttribute, ProcessContext,
-    ProcessSession, ProcessorDefinition, ProcessorInputRequirement, Property,
-    RawMultiThreadedTrigger, RawProcessor, RawSingleThreadedTrigger, Relationship, Schedule,
-    SingleThreadedProcessor, StandardPropertyValidator, TransformedFlowFile,
+    ProcessSession, ProcessorInputRequirement, Property, RawMultiThreadedTrigger, RawProcessor,
+    RawSingleThreadedTrigger, Relationship, SingleThreadedProcessor, StandardPropertyValidator,
+    TransformedFlowFile,
 };
 pub use c_ffi::{
     CffiControllerServiceDefinition, CffiControllerServiceList, CffiLogger, CffiProcessorList,
