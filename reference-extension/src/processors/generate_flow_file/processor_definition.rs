@@ -1,12 +1,15 @@
 use super::properties::*;
 use super::{GenerateFlowFile, relationships};
 use minifi_native::{
-    CffiLogger, ProcessorDefinition, ProcessorInputRequirement, RegisterableProcessor,
+    HasRawProcessorDefinition, MultiThreadedProcessor, ProcessorInputRequirement,
+    RawProcessorDefinition,
 };
 
-impl RegisterableProcessor for GenerateFlowFile<CffiLogger> {
-    fn get_definition() -> Box<dyn minifi_native::DynProcessorDefinition> {
-        Box::new(ProcessorDefinition::<GenerateFlowFile<CffiLogger>>::new(
+impl HasRawProcessorDefinition for GenerateFlowFile {
+    fn get_definition() -> Box<dyn minifi_native::DynRawProcessorDefinition> {
+        Box::new(RawProcessorDefinition::<
+            MultiThreadedProcessor<GenerateFlowFile>,
+        >::new(
             "rs::GenerateFlowFileRs",
             "This processor creates FlowFiles with random data or custom content. GenerateFlowFile is useful for load testing, configuration, and simulation.",
             ProcessorInputRequirement::Forbidden,

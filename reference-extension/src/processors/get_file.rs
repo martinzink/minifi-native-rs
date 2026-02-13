@@ -6,8 +6,8 @@ use crate::processors::get_file::properties::{
     MIN_SIZE, RECURSE,
 };
 use minifi_native::{
-    Concurrent, ConcurrentOnTrigger, LogLevel, Logger, MinifiError, OnTriggerResult,
-    ProcessContext, ProcessSession, Processor,
+    CalculateMetrics, ConstTrigger, Logger, MinifiError, OnTriggerResult, ProcessContext,
+    ProcessSession, Schedule,
 };
 use std::collections::VecDeque;
 use std::error;
@@ -41,7 +41,7 @@ impl DirectoryListing {
 }
 
 #[derive(Debug)]
-struct ScheduledMembers {
+pub(crate) struct GetFile {
     recursive: bool,
     keep_source_file: bool,
     input_directory: PathBuf,
@@ -56,28 +56,14 @@ struct ScheduledMembers {
     metrics: Mutex<GetFileMetrics>,
 }
 
-#[derive(Debug)]
-pub(crate) struct GetFile<L: Logger> {
-    logger: L,
-    scheduled_members: Option<ScheduledMembers>,
-}
-
-impl<L: Logger> GetFile<L> {
+impl GetFile {
     fn is_listing_empty(&self) -> bool {
-        let get_file = self
-            .scheduled_members
-            .as_ref()
-            .expect("on_schedule should create GetFileImpl");
-        let directory_listing = get_file.directory_listing.lock().unwrap();
+        let directory_listing = self.directory_listing.lock().unwrap();
         directory_listing.paths.is_empty()
     }
 
     fn poll_listing(&self, batch_size: u64) -> VecDeque<PathBuf> {
-        let get_file = self
-            .scheduled_members
-            .as_ref()
-            .expect("on_schedule should create GetFileImpl");
-        let mut directory_listings = get_file.directory_listing.lock().unwrap();
+        let mut directory_listings = self.directory_listing.lock().unwrap();
 
         let mut res = VecDeque::new();
         for _ in 0..batch_size {
@@ -92,31 +78,22 @@ impl<L: Logger> GetFile<L> {
     }
 
     fn should_poll(&self) -> bool {
-        let get_file = self
-            .scheduled_members
-            .as_ref()
-            .expect("on_schedule should create GetFileImpl");
-        if get_file.poll_interval.is_none() {
+        if self.poll_interval.is_none() {
             return true;
         }
-        let directory_listings = get_file.directory_listing.lock().unwrap();
+        let directory_listings = self.directory_listing.lock().unwrap();
 
         if directory_listings.last_polling_time.is_none() {
             return true;
         }
-        Instant::now() - directory_listings.last_polling_time.unwrap()
-            > get_file.poll_interval.unwrap()
+        Instant::now() - directory_listings.last_polling_time.unwrap() > self.poll_interval.unwrap()
     }
 
     fn perform_listing(&self) {
-        let get_file = self
-            .scheduled_members
-            .as_ref()
-            .expect("on_schedule should create GetFileImpl");
-        let mut directory_listings = get_file.directory_listing.lock().unwrap();
-        let mut walker = WalkDir::new(&get_file.input_directory);
+        let mut directory_listings = self.directory_listing.lock().unwrap();
+        let mut walker = WalkDir::new(&self.input_directory);
 
-        if !get_file.recursive {
+        if !self.recursive {
             walker = walker.max_depth(1);
         }
 
@@ -130,18 +107,13 @@ impl<L: Logger> GetFile<L> {
                 bytes_added += file_size;
             }
         }
-        let mut metrics = get_file.metrics.lock().unwrap();
+        let mut metrics = self.metrics.lock().unwrap();
         metrics.accepted_files += files_added;
         metrics.input_bytes += bytes_added;
         directory_listings.last_polling_time = Some(Instant::now());
     }
 
     fn entry_matches_criteria(&self, dir_entry: &DirEntry) -> Result<bool, Box<dyn error::Error>> {
-        let get_file = self
-            .scheduled_members
-            .as_ref()
-            .expect("on_schedule should create GetFileImpl");
-
         let metadata = dir_entry.metadata()?;
         if !metadata.is_file() {
             return Ok(false);
@@ -149,16 +121,16 @@ impl<L: Logger> GetFile<L> {
         let age = SystemTime::now().duration_since(metadata.modified()?)?;
         let size = metadata.len();
 
-        if get_file.min_age.is_some() && age < get_file.min_age.unwrap() {
+        if self.min_age.is_some() && age < self.min_age.unwrap() {
             return Ok(false);
         }
-        if get_file.max_age.is_some() && age > get_file.max_age.unwrap() {
+        if self.max_age.is_some() && age > self.max_age.unwrap() {
             return Ok(false);
         }
-        if get_file.min_size.is_some() && size < get_file.min_size.unwrap() {
+        if self.min_size.is_some() && size < self.min_size.unwrap() {
             return Ok(false);
         }
-        if get_file.max_size.is_some() && size > get_file.max_size.unwrap() {
+        if self.max_size.is_some() && size > self.max_size.unwrap() {
             return Ok(false);
         }
 
@@ -169,24 +141,20 @@ impl<L: Logger> GetFile<L> {
                 .map_or(false, |f| f.starts_with('.'))
         }
 
-        if get_file.ignore_hidden_files && is_hidden(dir_entry.path().to_path_buf()) {
+        if self.ignore_hidden_files && is_hidden(dir_entry.path().to_path_buf()) {
             return Ok(false);
         }
 
         Ok(true)
     }
 
-    fn get_single_file<PS>(&self, session: &mut PS, path: PathBuf)
-    where
-        PS: ProcessSession,
-    {
-        let get_file = self
-            .scheduled_members
-            .as_ref()
-            .expect("on_schedule should create GetFileImpl");
-
-        self.logger
-            .info(format!("GetFile process {:?}", &path).as_str());
+    fn get_single_file<PS: ProcessSession, L: Logger>(
+        &self,
+        session: &mut PS,
+        logger: &L,
+        path: PathBuf,
+    ) {
+        logger.info(format!("GetFile process {:?}", &path).as_str());
         let mut ff = session
             .create()
             .expect("Successful FlowFile creation is expected");
@@ -194,8 +162,7 @@ impl<L: Logger> GetFile<L> {
         if let Some(file_name) = path.file_name().and_then(|f| f.to_str()) {
             session.set_attribute(&mut ff, FILENAME_OUTPUT_ATTRIBUTE.name, file_name);
         } else {
-            self.logger
-                .warn(format!("Couldnt get filename of {:?}", path).as_str());
+            logger.warn(format!("Couldnt get filename of {:?}", path).as_str());
         }
         session.set_attribute(
             &mut ff,
@@ -206,12 +173,11 @@ impl<L: Logger> GetFile<L> {
 
         let contents = std::fs::read_to_string(&path).expect("Failed to read file");
         session.write(&mut ff, contents.as_bytes()); // TODO(return value)
-        if !get_file.keep_source_file {
+        if !self.keep_source_file {
             match std::fs::remove_file(&path) {
                 Ok(_) => {}
                 Err(err) => {
-                    self.logger
-                        .warn(format!("Failed to remove source file {:?}", err).as_str());
+                    logger.warn(format!("Failed to remove source file {:?}", err).as_str());
                 }
             }
         }
@@ -219,23 +185,10 @@ impl<L: Logger> GetFile<L> {
     }
 }
 
-impl<L: Logger> Processor<L> for GetFile<L> {
-    type Threading = Concurrent;
-
-    fn new(logger: L) -> Self {
-        Self {
-            logger,
-            scheduled_members: None,
-        }
-    }
-
-    fn log(&self, log_level: LogLevel, message: &str) {
-        self.logger.log(log_level, message);
-    }
-
-    fn on_schedule<P>(&mut self, context: &P) -> Result<(), MinifiError>
+impl Schedule for GetFile {
+    fn schedule<P: ProcessContext, L: Logger>(context: &P, _logger: &L) -> Result<Self, MinifiError>
     where
-        P: ProcessContext,
+        Self: Sized,
     {
         let input_directory: PathBuf = context
             .get_property(&DIRECTORY, None)?
@@ -268,7 +221,7 @@ impl<L: Logger> Processor<L> for GetFile<L> {
             .get_bool_property(&IGNORE_HIDDEN_FILES, None)?
             .expect("required property");
 
-        self.scheduled_members = Some(ScheduledMembers {
+        Ok(GetFile {
             recursive,
             keep_source_file,
             input_directory,
@@ -284,44 +237,26 @@ impl<L: Logger> Processor<L> for GetFile<L> {
                 accepted_files: 0,
                 input_bytes: 0,
             }),
-        });
-
-        Ok(())
-    }
-
-    fn calculate_metrics(&self) -> Vec<(String, f64)> {
-        let get_file = self
-            .scheduled_members
-            .as_ref()
-            .expect("on_schedule should create GetFileImpl");
-        let metrics = get_file.metrics.lock().unwrap();
-        vec![
-            ("accepted_files".to_string(), metrics.accepted_files as f64),
-            ("input_bytes".to_string(), metrics.input_bytes as f64),
-        ]
+        })
     }
 }
 
-impl<L: Logger> ConcurrentOnTrigger<L> for GetFile<L> {
-    fn on_trigger<P, S>(
+impl ConstTrigger for GetFile {
+    fn trigger<PC, PS, L>(
         &self,
-        _context: &mut P,
-        session: &mut S,
+        _context: &mut PC,
+        session: &mut PS,
+        logger: &L,
     ) -> Result<OnTriggerResult, MinifiError>
     where
-        P: ProcessContext,
-        S: ProcessSession,
+        PC: ProcessContext,
+        PS: ProcessSession<FlowFile = PC::FlowFile>,
+        L: Logger,
     {
-        let get_file = self
-            .scheduled_members
-            .as_ref()
-            .expect("on_schedule should create GetFileImpl");
-
-        self.logger
-            .trace(format!("on_trigger: {:?}", self).as_str());
+        logger.trace(format!("on_trigger: {:?}", self).as_str());
         {
             let is_dir_empty_before_poll = self.is_listing_empty();
-            self.logger.debug(
+            logger.debug(
                 format!(
                     "Listing is {} before polling directory",
                     is_dir_empty_before_poll
@@ -336,7 +271,7 @@ impl<L: Logger> ConcurrentOnTrigger<L> for GetFile<L> {
         }
         {
             let is_dir_empty_after_poll = self.is_listing_empty();
-            self.logger.debug(
+            logger.debug(
                 format!(
                     "Listing is {} after polling directory",
                     is_dir_empty_after_poll
@@ -348,11 +283,21 @@ impl<L: Logger> ConcurrentOnTrigger<L> for GetFile<L> {
             }
         }
 
-        let files = self.poll_listing(get_file.batch_size);
+        let files = self.poll_listing(self.batch_size);
         for file in files {
-            self.get_single_file(session, file);
+            self.get_single_file(session, logger, file);
         }
         Ok(OnTriggerResult::Ok)
+    }
+}
+
+impl CalculateMetrics for GetFile {
+    fn calculate_metrics(&self) -> Vec<(String, f64)> {
+        let metrics = self.metrics.lock().unwrap();
+        vec![
+            ("accepted_files".to_string(), metrics.accepted_files as f64),
+            ("input_bytes".to_string(), metrics.input_bytes as f64),
+        ]
     }
 }
 

@@ -20,7 +20,7 @@ pub(crate) const CONFLICT_RESOLUTION: Property = Property {
     is_required: true,
     is_sensitive: false,
     supports_expr_lang: false,
-    default_value: Some("fail"), // TODO(from enum)
+    default_value: Some(ConflictResolutionStrategy::Fail.into_str()),
     validator: StandardPropertyValidator::AlwaysValidValidator,
     allowed_values: &ConflictResolutionStrategy::VARIANTS,
     allowed_type: "",

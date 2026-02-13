@@ -1,7 +1,7 @@
 use super::c_ffi_flow_file::CffiFlowFile;
-use super::c_ffi_primitives::StringView;
+use super::c_ffi_primitives::{ConvertMinifiStringView, FfiConversionError, StringView};
 use crate::api::ProcessContext;
-use crate::{MinifiError, Property};
+use crate::{ComponentIdentifier, MinifiError, Property, RawControllerService};
 use minifi_native_sys::*;
 use std::ffi::c_void;
 
@@ -20,7 +20,7 @@ impl<'a> CffiProcessContext<'a> {
     }
 }
 
-unsafe extern "C" fn property_callback(
+unsafe extern "C" fn get_property_callback(
     output_option: *mut c_void,
     property_c_value: MinifiStringView,
 ) {
@@ -32,12 +32,58 @@ unsafe extern "C" fn property_callback(
             return;
         }
 
-        let value_slice = std::slice::from_raw_parts(
-            property_c_value.data as *const u8,
-            property_c_value.length as usize,
-        );
+        let value_slice =
+            std::slice::from_raw_parts(property_c_value.data as *const u8, property_c_value.length);
         if let Ok(string_value) = String::from_utf8(value_slice.to_vec()) {
             *result_target = Some(string_value);
+        }
+    }
+}
+
+#[derive(Debug)]
+struct ControllerServiceHelper {
+    result: Option<*mut c_void>,
+    class_name_str: &'static str,
+    group_name_str: &'static str,
+    version_str: &'static str,
+}
+
+impl ControllerServiceHelper {
+    fn is_valid(
+        &self,
+        class: &MinifiStringView,
+        grp: &MinifiStringView,
+        version: &MinifiStringView,
+    ) -> Result<bool, FfiConversionError> {
+        unsafe {
+            Ok(self
+                .class_name_str
+                .ends_with(class.as_str()?)
+                && self.group_name_str == grp.as_str()?
+                && self.version_str == version.as_str()?)
+        }
+    }
+}
+
+unsafe extern "C" fn get_controller_service_callback(
+    controller_service_helper_ptr: *mut c_void,
+    controller_ptr: *mut c_void,
+    class_name: MinifiStringView,
+    group_name: MinifiStringView,
+    version: MinifiStringView,
+) -> MinifiStatus {
+    unsafe {
+        let controller_service_helper =
+            &mut *(controller_service_helper_ptr as *mut ControllerServiceHelper);
+
+        // TODO(mzink) maybe do some logging?
+        match controller_service_helper.is_valid(&class_name, &group_name, &version) {
+            Ok(false) => MinifiStatus_MINIFI_STATUS_VALIDATION_FAILED,
+            Ok(true) => {
+                controller_service_helper.result = Some(controller_ptr);
+                MinifiStatus_MINIFI_STATUS_SUCCESS
+            },
+            Err(_e) => MinifiStatus_MINIFI_STATUS_UNKNOWN_ERROR
         }
     }
 }
@@ -59,7 +105,7 @@ impl<'a> ProcessContext for CffiProcessContext<'a> {
                 self.ptr,
                 property_name.as_raw(),
                 ff_ptr,
-                Some(property_callback),
+                Some(get_property_callback),
                 &mut result as *mut _ as *mut c_void,
             )
         };
@@ -71,6 +117,46 @@ impl<'a> ProcessContext for CffiProcessContext<'a> {
                 true => Err(MinifiError::MissingRequiredProperty(property.name)),
                 false => Ok(None),
             },
+        }
+    }
+
+    fn get_controller_service<Cs>(&self, property: &Property) -> Result<Option<&Cs>, MinifiError>
+    where
+        Cs: RawControllerService + ComponentIdentifier,
+    {
+        if let Some(service_name) = self.get_property(property, None)? {
+            let str_view = StringView::new(service_name.as_str());
+            let mut helper = ControllerServiceHelper {
+                result: None,
+                class_name_str: Cs::CLASS_NAME,
+                group_name_str: Cs::GROUP_NAME,
+                version_str: Cs::VERSION,
+            };
+            unsafe {
+                let get_cs_status = MinifiProcessContextGetControllerService(
+                    self.ptr,
+                    str_view.as_raw(),
+                    Some(get_controller_service_callback),
+                    &mut helper as *mut _ as *mut c_void,
+                );
+                if get_cs_status != MinifiStatus_MINIFI_STATUS_SUCCESS {
+                    return Err(MinifiError::UnknownError);  // TODO(mzink) err from get_cs_status
+                }
+            }
+
+            match helper.result {
+                Some(result) => {
+                    let foo_ref: &Cs = unsafe {
+                        (result as *const Cs)
+                            .as_ref()
+                            .expect("C returned a null pointer")
+                    };
+                    Ok(Some(foo_ref))
+                }
+                None => Ok(None),
+            }
+        } else {
+            Ok(None)
         }
     }
 }

@@ -15,4 +15,11 @@ impl MockFlowFile {
             attributes: HashMap::new(),
         }
     }
+
+    pub fn with_content(content: Vec<u8>) -> MockFlowFile {
+        Self {
+            content,
+            attributes: HashMap::new(),
+        }
+    }
 }

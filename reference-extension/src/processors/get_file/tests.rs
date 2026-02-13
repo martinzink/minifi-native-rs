@@ -5,23 +5,27 @@ use minifi_native::{MockLogger, MockProcessContext, MockProcessSession};
 use tempfile::TempDir;
 
 #[test]
-fn schedule_fails_without_valid_directory() {
-    let mut processor = GetFile::new(MockLogger::new());
-    let mut context = MockProcessContext::new();
-
+fn schedule_fails_without_input_dir() {
     assert_eq!(
-        processor.on_schedule(&context),
-        Err(MinifiError::MissingRequiredProperty("Input Directory"))
+        GetFile::schedule(&MockProcessContext::new(), &MockLogger::new())
+            .err()
+            .unwrap(),
+        MinifiError::MissingRequiredProperty("Input Directory")
     );
+}
+
+#[test]
+fn schedule_fails_with_invalid_input_dir() {
+    let mut context = MockProcessContext::new();
     context.properties.insert(
         "Input Directory".to_string(),
         "/invalid_directory".to_string(),
     );
     assert_eq!(
-        processor.on_schedule(&context),
-        Err(MinifiError::ScheduleError(
-            "\"/invalid_directory\" is not a valid directory".to_string()
-        ))
+        GetFile::schedule(&context, &MockLogger::new())
+            .err()
+            .unwrap(),
+        MinifiError::ScheduleError("\"/invalid_directory\" is not a valid directory".to_string())
     );
 }
 
@@ -31,16 +35,20 @@ fn simple_get_file_test() {
     let file_path = temp_dir.path().join("input_file");
     std::fs::write(&file_path, "test").unwrap();
 
-    let mut processor = GetFile::new(MockLogger::new());
     let mut context = MockProcessContext::new();
     context.properties.insert(
         "Input Directory".to_string(),
         temp_dir.path().to_str().unwrap().to_string(),
     );
 
+    let get_file = GetFile::schedule(&context, &MockLogger::new()).unwrap();
+
     let mut session = MockProcessSession::new();
-    assert!(processor.on_schedule(&context).is_ok());
-    assert!(processor.on_trigger(&mut context, &mut session).is_ok());
+    assert!(
+        get_file
+            .trigger(&mut context, &mut session, &MockLogger::new())
+            .is_ok()
+    );
     assert_eq!(session.transferred_flow_files.len(), 1);
 }
 
@@ -66,7 +74,6 @@ fn create_test_directory() -> TempDir {
 fn complex_dir_without_filters() {
     let test_directory = create_test_directory();
 
-    let mut processor = GetFile::new(MockLogger::new());
     let mut context = MockProcessContext::new();
     context.properties.insert(
         "Input Directory".to_string(),
@@ -77,8 +84,12 @@ fn complex_dir_without_filters() {
         .insert("Batch Size".to_string(), "10".to_string());
 
     let mut session = MockProcessSession::new();
-    assert!(processor.on_schedule(&context).is_ok());
-    assert!(processor.on_trigger(&mut context, &mut session).is_ok());
+    let get_file = GetFile::schedule(&context, &MockLogger::new()).unwrap();
+    assert!(
+        get_file
+            .trigger(&mut context, &mut session, &MockLogger::new())
+            .is_ok()
+    );
     assert_eq!(session.transferred_flow_files.len(), 4);
 }
 
@@ -89,7 +100,6 @@ fn test_complex_dir_with_filter(
 ) {
     let test_directory = create_test_directory();
 
-    let mut processor = GetFile::new(MockLogger::new());
     let mut context = MockProcessContext::new();
     context.properties.insert(
         DIRECTORY.name.to_string(),
@@ -104,8 +114,12 @@ fn test_complex_dir_with_filter(
         .insert(property_name.to_string(), property_vale.to_string());
 
     let mut session = MockProcessSession::new();
-    assert!(processor.on_schedule(&context).is_ok());
-    assert!(processor.on_trigger(&mut context, &mut session).is_ok());
+    let get_file = GetFile::schedule(&context, &MockLogger::new()).unwrap();
+    assert!(
+        get_file
+            .trigger(&mut context, &mut session, &MockLogger::new())
+            .is_ok()
+    );
     assert_eq!(session.transferred_flow_files.len(), 2);
     assert!(session.transferred_flow_files.iter().all(|transfer| {
         transfer.relationship == SUCCESS.name
@@ -121,7 +135,7 @@ fn test_complex_dir_with_filter(
         .iter()
         .fold(0, |acc, transfer| acc + transfer.flow_file.content.len());
 
-    let metrics = processor.calculate_metrics();
+    let metrics = get_file.calculate_metrics();
     assert_eq!(metrics.len(), 2);
     assert_eq!(metrics[0].0, "accepted_files".to_string());
     assert_eq!(metrics[0].1, 2.0);
@@ -144,7 +158,6 @@ fn test_hidden_files_and_batch_size() {
     make_file(&temp_dir, ".two", 10, Duration::from_secs(0));
     make_file(&temp_dir, ".three", 10, Duration::from_secs(0));
 
-    let mut processor = GetFile::new(MockLogger::new());
     let mut context = MockProcessContext::new();
     context.properties.insert(
         DIRECTORY.name.to_string(),
@@ -159,7 +172,11 @@ fn test_hidden_files_and_batch_size() {
         .insert(IGNORE_HIDDEN_FILES.name.to_string(), "false".to_string());
 
     let mut session = MockProcessSession::new();
-    assert!(processor.on_schedule(&context).is_ok());
-    assert!(processor.on_trigger(&mut context, &mut session).is_ok());
+    let get_file = GetFile::schedule(&context, &MockLogger::new()).unwrap();
+    assert!(
+        get_file
+            .trigger(&mut context, &mut session, &MockLogger::new())
+            .is_ok()
+    );
     assert_eq!(session.transferred_flow_files.len(), 2);
 }

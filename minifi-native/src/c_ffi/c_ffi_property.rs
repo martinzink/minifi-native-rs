@@ -10,7 +10,7 @@ use minifi_native_sys::{
 };
 use std::ptr;
 
-#[allow(dead_code)] // the c_ vecs are holding the values referenced from the properties
+#[allow(dead_code)] // these c_ vecs are holding the values referenced from the properties, so they live long enough for registration
 pub struct CProperties {
     c_default_values: Vec<MinifiStringView>,
     c_allowed_values: Vec<Vec<MinifiStringView>>,

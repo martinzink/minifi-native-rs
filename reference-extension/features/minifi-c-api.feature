@@ -1,0 +1,116 @@
+@SUPPORTS_WINDOWS
+Feature: Test Minifi Native C Api capabilities
+
+  Background: The reference library is successfully built on linux
+
+  Scenario: The rust library is loaded into minifi
+    Given log property "logger.org::apache::nifi::minifi::core::extension::ExtensionManager" is set to "TRACE,stderr"
+    And log property "logger.org::apache::nifi::minifi::core::ClassLoader" is set to "TRACE,stderr"
+
+    When the MiNiFi instance starts up
+
+    Then the Minifi logs contain the following message: "Registering class 'GenerateFlowFileRs' at '/rust-reference-extension'" in less than 10 seconds
+    And the Minifi logs contain the following message: "Registering class 'GetFileRs' at '/rust-reference-extension'" in less than 1 seconds
+    And the Minifi logs contain the following message: "Registering class 'KamikazeProcessorRs' at '/rust-reference-extension'" in less than 1 seconds
+    And the Minifi logs contain the following message: "Registering class 'LogAttributeRs' at '/rust-reference-extension'" in less than 1 seconds
+    And the Minifi logs contain the following message: "Registering class 'PutFileRs' at '/rust-reference-extension'" in less than 1 seconds
+    And the Minifi logs do not contain errors
+    And the Minifi logs do not contain warnings
+
+  Scenario: Simple GenerateFlowFileRs -> PutFileRs
+    Given a GenerateFlowFileRs processor with the "Custom Text" property set to "Ferris the crab"
+    And the "Data Format" property of the GenerateFlowFileRs processor is set to "Text"
+    And the "Unique FlowFiles" property of the GenerateFlowFileRs processor is set to "false"
+    And a PutFileRs processor with the "Directory" property set to "/tmp/output"
+    And the "success" relationship of the GenerateFlowFileRs processor is connected to the PutFileRs
+    And PutFileRs's success relationship is auto-terminated
+
+    When the MiNiFi instance starts up
+
+    Then at least one file with the content "Ferris the crab" is placed in the "/tmp/output" directory in less than 10 seconds
+    And the Minifi logs do not contain errors
+    And the Minifi logs do not contain warnings
+
+  Scenario: Simple GetFileRs -> PutFileRs
+    Given a GetFileRs processor with the "Input Directory" property set to "/tmp/input"
+    And a PutFileRs processor with the "Directory" property set to "/tmp/output"
+    And the "success" relationship of the GetFileRs processor is connected to the PutFileRs
+    And PutFileRs's success relationship is auto-terminated
+    And PutFileRs's failure relationship is auto-terminated
+    And a directory at "/tmp/input" has a file ("test_file.log") with the content "test content"
+    And log property "logger.rs::PutFileRs" is set to "TRACE,stderr"
+    And log property "logger.rs::GetFileRs" is set to "TRACE,stderr"
+
+    When the MiNiFi instance starts up
+
+    Then at least one file with the content "test content" is placed in the "/tmp/output" directory in less than 10 seconds
+    And the Minifi logs do not contain errors
+    And the Minifi logs do not contain warnings
+
+  Scenario Outline: The LogAttributeRs can read and log FlowFile content
+    Given a GenerateFlowFileRs processor with the "Custom Text" property set to "<custom_text>"
+    And the "Data Format" property of the GenerateFlowFileRs processor is set to "Text"
+    And the "Unique FlowFiles" property of the GenerateFlowFileRs processor is set to "false"
+    And a LogAttributeRs processor with the "Log Level" property set to "<log_level>"
+    And the "Log Payload" property of the LogAttributeRs processor is set to "true"
+    And the "success" relationship of the GenerateFlowFileRs processor is connected to the LogAttributeRs
+    And LogAttributeRs's success relationship is auto-terminated
+    And log property "logger.rs::LogAttributeRs" is set to "TRACE,stderr"
+
+    When the MiNiFi instance starts up
+
+    Then the Minifi logs contain the following message: "<expected_log_1>" in less than 20 seconds
+    And the Minifi logs contain the following message: "<expected_log_2>" in less than 1 seconds
+    And the Minifi logs do not contain errors
+    And the Minifi logs do not contain warnings
+    Examples:
+      | custom_text | log_level | expected_log_1                   | expected_log_2 |
+      | Elephant    | Critical  | [critical] Logging for flow file | Elephant       |
+      | Lynx        | Info      | [info] Logging for flow file     | Lynx           |
+      | Ant         | Trace     | [trace] Logging for flow file    | Ant            |
+
+  Scenario: The Api handles empty flow-files
+    Given a GenerateFlowFileRs processor with the "Custom Text" property set to "${invalid_attribute}"
+    And the "Data Format" property of the GenerateFlowFileRs processor is set to "Text"
+    And the "Unique FlowFiles" property of the GenerateFlowFileRs processor is set to "false"
+    And a LogAttributeRs processor with the "Log Level" property set to "Critical"
+    And the "success" relationship of the GenerateFlowFileRs processor is connected to the LogAttributeRs
+    And LogAttributeRs's success relationship is auto-terminated
+
+    When the MiNiFi instance starts up
+
+    Then after 3 sec have passed
+    And the Minifi logs do not contain errors
+    And the Minifi logs do not contain warnings
+
+  Scenario: Minifi handles errors from on_schedule
+    Given a KamikazeProcessorRs processor with the "On Schedule Behaviour" property set to "ReturnErr"
+    And KamikazeProcessorRs's success relationship is auto-terminated
+
+    When the MiNiFi instance starts up
+
+    Then the Minifi logs contain the following message: "(KamikazeProcessorRs): Process Schedule Operation: Error while scheduling processor" in less than 3 seconds
+
+  Scenario: Panic in extension's on_schedule crashes the agent aswell
+    Given a KamikazeProcessorRs processor with the "On Schedule Behaviour" property set to "Panic"
+    And KamikazeProcessorRs's success relationship is auto-terminated
+
+    When the MiNiFi instance is started without assertions
+    Then Minifi crashes with the following "KamikazeProcessor::on_schedule panic" in less than 10 seconds
+
+  Scenario: Minifi handles errors from on_trigger
+    Given a KamikazeProcessorRs processor with the "On Schedule Behaviour" property set to "ReturnOk"
+    And the "On Trigger Behaviour" property of the KamikazeProcessorRs processor is set to "ReturnErr"
+    And KamikazeProcessorRs's success relationship is auto-terminated
+
+    When the MiNiFi instance starts up
+
+    Then the Minifi logs contain the following message: "Trigger and commit failed for processor KamikazeProcessorRs" in less than 3 seconds
+
+  Scenario: Panic in extension's on_trigger crashes the agent aswell
+    Given a KamikazeProcessorRs processor with the "On Schedule Behaviour" property set to "ReturnOk"
+    And the "On Trigger Behaviour" property of the KamikazeProcessorRs processor is set to "Panic"
+    And KamikazeProcessorRs's success relationship is auto-terminated
+
+    When the MiNiFi instance is started without assertions
+    Then Minifi crashes with the following "KamikazeProcessor::on_trigger panic" in less than 10 seconds

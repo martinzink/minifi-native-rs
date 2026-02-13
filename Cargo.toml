@@ -1,0 +1,9 @@
+[workspace]
+resolver = "3"
+members = ["minifi-native-sys", "minifi-native", "minifi-macros", "reference-extension", "rpgp-extension"]
+
+[profile.release]
+panic = "abort"
+
+[profile.dev]
+panic = "abort"

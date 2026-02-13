@@ -2,25 +2,43 @@ mod api;
 mod c_ffi;
 mod mock;
 
+pub use api::raw_controller_service::RawControllerService; // TODO(mzink) replace with more user friendly API
+
+pub use api::component_definition_traits::{
+    ComponentIdentifier, ControllerServiceDefinition, IdentifyComponent, ProcessorDefinition,
+};
+pub use api::errors::MinifiError;
+pub use api::processor_traits::{CalculateMetrics, Schedule};
+
+// TODO(mzink) clean this up
 pub use api::{
-    Concurrent, ConcurrentOnTrigger, Exclusive, ExclusiveOnTrigger, FlowFile, LogLevel, Logger,
-    MinifiError, OnTriggerResult, OutputAttribute, ProcessContext, ProcessSession, Processor,
-    ProcessorInputRequirement, Property, Relationship, StandardPropertyValidator,
+    Concurrent, ConstTrigger, ControllerServiceContext, DefaultLogger, Exclusive, FlowFile,
+    FlowFileTransform, FlowFileTransformer, HasRawProcessorDefinition, LogLevel, Logger,
+    MultiThreadedProcessor, MutTrigger, OnTriggerResult, OutputAttribute, ProcessContext,
+    ProcessSession, ProcessorInputRequirement, Property, RawMultiThreadedTrigger, RawProcessor,
+    RawSingleThreadedTrigger, Relationship, SingleThreadedProcessor, StandardPropertyValidator,
+    TransformedFlowFile,
 };
 pub use c_ffi::{
-    CffiLogger, CffiProcessorList, DynProcessorDefinition, ProcessorDefinition,
-    RegisterableProcessor, StaticStrAsMinifiCStr,
+    CffiControllerServiceDefinition, CffiControllerServiceList, CffiLogger, CffiProcessorList,
+    DynRawControllerServiceDefinition, DynRawProcessorDefinition, RawProcessorDefinition,
+    RawRegisterableProcessor, RegisterableControllerService, StaticStrAsMinifiCStr,
 };
-pub use mock::{MockFlowFile, MockLogger, MockProcessContext, MockProcessSession};
+pub use mock::{
+    MockControllerServiceContext, MockFlowFile, MockLogger, MockProcessContext, MockProcessSession,
+    StdLogger,
+};
 
-use minifi_native_sys::{MINIFI_API_MAJOR_VERSION, MINIFI_API_MINOR_VERSION, MINIFI_API_PATCH_VERSION};
 pub use minifi_native_sys as sys;
+use minifi_native_sys::{
+    MINIFI_API_MAJOR_VERSION, MINIFI_API_MINOR_VERSION, MINIFI_API_PATCH_VERSION,
+};
 
 #[unsafe(no_mangle)]
 #[cfg_attr(target_os = "linux", unsafe(link_section = ".rodata"))]
 #[cfg_attr(target_os = "macos", unsafe(link_section = "__DATA,__const"))]
 #[cfg_attr(target_os = "windows", unsafe(link_section = ".rdata"))]
-pub static API_VERSION_STRING: &str = const_format::concatcp!(
+pub static MINIFI_C_API_VERSION: &str = const_format::concatcp!(
     "MINIFI_API_VERSION=[",
     MINIFI_API_MAJOR_VERSION,
     ".",
@@ -32,11 +50,14 @@ pub static API_VERSION_STRING: &str = const_format::concatcp!(
 
 #[macro_export]
 macro_rules! declare_minifi_extension {
-    ([ $($proc:path),* $(,)? ]) => {
+    (
+        processors: [ $($proc:path),* $(,)? ],
+        controllers: [ $($ctrl:path),* $(,)? ]
+    ) => {
 
         #[unsafe(no_mangle)]
         #[allow(non_snake_case)]
-        pub extern "C" fn InitExtension(
+        pub extern "C" fn MinifiInitExtension(
             _config: *mut minifi_native::sys::MinifiConfig,
         ) -> *mut minifi_native::sys::MinifiExtension {
 
@@ -47,8 +68,15 @@ macro_rules! declare_minifi_extension {
 
                 $(
                     {
-                        use $proc as ProcessorTemplate;
-                        processor_list.add::<ProcessorTemplate<minifi_native::CffiLogger>>();
+                        processor_list.add::<$proc>();
+                    }
+                )*
+
+                let mut controller_list = minifi_native::CffiControllerServiceList::new();
+
+                $(
+                    {
+                        controller_list.add::<$ctrl>();
                     }
                 )*
 
@@ -59,9 +87,11 @@ macro_rules! declare_minifi_extension {
                     user_data: std::ptr::null_mut(),
                     processors_count: processor_list.get_processor_count(),
                     processors_ptr: processor_list.get_processor_ptr(),
+                    controller_services_count: controller_list.get_controller_service_count(),
+                    controller_services_ptr: controller_list.get_controller_service_ptr(),
                 };
 
-                minifi_native::sys::MinifiCreateExtension(minifi_native::API_VERSION_STRING.as_minifi_c_type(), &extension_create_info)
+                minifi_native::sys::MinifiCreateExtension_0_1(minifi_native::MINIFI_C_API_VERSION.as_minifi_c_type(), &extension_create_info)
             }
         }
     };
