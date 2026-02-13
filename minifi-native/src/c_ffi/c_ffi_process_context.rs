@@ -133,12 +133,15 @@ impl<'a> ProcessContext for CffiProcessContext<'a> {
                 version_str: Cs::VERSION,
             };
             unsafe {
-                MinifiProcessContextGetControllerService(
+                let get_cs_status = MinifiProcessContextGetControllerService(
                     self.ptr,
                     str_view.as_raw(),
                     Some(get_controller_service_callback),
                     &mut helper as *mut _ as *mut c_void,
                 );
+                if get_cs_status != MinifiStatus_MINIFI_STATUS_SUCCESS {
+                    return Err(MinifiError::UnknownError);  // TODO(mzink) err from get_cs_status
+                }
             }
 
             match helper.result {
