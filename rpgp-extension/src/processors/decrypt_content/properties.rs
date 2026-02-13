@@ -7,7 +7,7 @@ pub(crate) const DECRYPTION_STRATEGY: Property = Property {
     name: "Decryption Strategy",
     description: "Strategy for writing files to success after decryption",
     is_required: false,
-    is_sensitive: true,
+    is_sensitive: false,
     supports_expr_lang: false,
     default_value: Some(super::DecryptionStrategy::Decrypted.into_str()),
     validator: StandardPropertyValidator::AlwaysValidValidator,

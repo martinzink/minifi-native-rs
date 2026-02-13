@@ -4,12 +4,12 @@ from pathlib import Path
 import humanfriendly
 from behave import step, then, when
 
+from minifi_test_framework.steps import checking_steps        # noqa: F401
+from minifi_test_framework.steps import configuration_steps   # noqa: F401
+from minifi_test_framework.steps import core_steps            # noqa: F401
+from minifi_test_framework.steps import flow_building_steps   # noqa: F401
 from minifi_test_framework.containers.docker_image_builder import DockerImageBuilder
 from minifi_test_framework.core.helpers import wait_for_condition
-from minifi_test_framework.steps import checking_steps
-from minifi_test_framework.steps import configuration_steps
-from minifi_test_framework.steps import core_steps
-from minifi_test_framework.steps import flow_building_steps
 from minifi_test_framework.core.minifi_test_context import MinifiTestContext
 from minifi_test_framework.minifi.controller_service import ControllerService
 from minifi_test_framework.minifi.processor import Processor
@@ -18,32 +18,6 @@ from minifi_test_framework.minifi.processor import Processor
 @when("MiNiFi is started")
 def step_impl(context: MinifiTestContext):
     context.get_or_create_default_minifi_container().deploy(context)  # without assert
-
-
-@step("the built rust extension library is inside minifi's extension folder")
-def step_impl(context: MinifiTestContext):
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    host_path = os.path.normpath(os.path.join(dir_path, "../../../docker_builder/target/libminifi_pgp.so"))
-    lib_filename = "libminifi_pgp.so"
-
-    with open(host_path, 'rb') as f:
-        lib_content = f.read()
-
-    base_img = context.minifi_container_image
-    container_extension_dir = "/opt/minifi/minifi-current/extensions/"
-
-    dockerfile = f"""
-FROM {base_img}
-COPY --chown=minificpp:minificpp {lib_filename} {container_extension_dir}
-RUN chmod 755 {container_extension_dir}{lib_filename}
-"""
-
-    builder = DockerImageBuilder(image_tag="apacheminificpp:rusty", dockerfile_content=dockerfile,
-        files_on_context={lib_filename: lib_content})
-
-    builder.build()
-    context.minifi_container_image = "apacheminificpp:rusty"
-
 
 @step("an EncryptContentPGP processor with a PGPPublicKeyService is set up")
 def step_impl(context: MinifiTestContext):
