@@ -71,19 +71,20 @@ unsafe extern "C" fn get_controller_service_callback(
     class_name: MinifiStringView,
     group_name: MinifiStringView,
     version: MinifiStringView,
-) {
+) -> MinifiStatus {
     unsafe {
         let controller_service_helper =
             &mut *(controller_service_helper_ptr as *mut ControllerServiceHelper);
 
-        if !controller_service_helper
-            .is_valid(&group_name, &class_name, &version)
-            .unwrap_or(false)
-        {
-            return;
+        // TODO(mzink) maybe do some logging?
+        match controller_service_helper.is_valid(&class_name, &group_name, &version) {
+            Ok(false) => MinifiStatus_MINIFI_STATUS_VALIDATION_FAILED,
+            Ok(true) => {
+                controller_service_helper.result = Some(controller_ptr);
+                MinifiStatus_MINIFI_STATUS_SUCCESS
+            },
+            Err(_e) => MinifiStatus_MINIFI_STATUS_UNKNOWN_ERROR
         }
-
-        controller_service_helper.result = Some(controller_ptr);
     }
 }
 
