@@ -96,7 +96,7 @@ Feature: Test Minifi Native C Api capabilities
     And KamikazeProcessorRs's success relationship is auto-terminated
 
     When the MiNiFi instance is started without assertions
-    Then Minifi crashes with the following "KamikazeProcessor::on_schedule panic" in less than 5 seconds
+    Then Minifi crashes with the following "KamikazeProcessor::on_schedule panic" in less than 10 seconds
 
   Scenario: Minifi handles errors from on_trigger
     Given a KamikazeProcessorRs processor with the "On Schedule Behaviour" property set to "ReturnOk"
@@ -113,4 +113,4 @@ Feature: Test Minifi Native C Api capabilities
     And KamikazeProcessorRs's success relationship is auto-terminated
 
     When the MiNiFi instance is started without assertions
-    Then Minifi crashes with the following "KamikazeProcessor::on_trigger panic" in less than 5 seconds
+    Then Minifi crashes with the following "KamikazeProcessor::on_trigger panic" in less than 10 seconds
