@@ -65,8 +65,9 @@ RUN chmod 755 {container_extension_dir}{lib_filename}
 
 def before_all(context):
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    mac_path = os.path.normpath(os.path.join(dir_path, "../../docker_builder/target/"))
-    add_extension_to_minifi_container("rust_reference_extension", [mac_path], context)
+    build_path = os.path.normpath(os.path.join(dir_path, "../../target/release/"))
+    from_docker_build_path = os.path.normpath(os.path.join(dir_path, "../../docker_builder/target/"))
+    add_extension_to_minifi_container("rust_reference_extension", [build_path, from_docker_build_path], context)
 
 
 def before_scenario(context, scenario):
