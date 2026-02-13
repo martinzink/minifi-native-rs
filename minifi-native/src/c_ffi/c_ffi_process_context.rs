@@ -43,23 +43,23 @@ unsafe extern "C" fn get_property_callback(
 #[derive(Debug)]
 struct ControllerServiceHelper {
     result: Option<*mut c_void>,
-    controller_service_class_name: &'static str,
-    group_name: &'static str,
+    class_name_str: &'static str,
+    group_name_str: &'static str,
     version_str: &'static str,
 }
 
 impl ControllerServiceHelper {
     fn is_valid(
         &self,
-        grp: &MinifiStringView,
         class: &MinifiStringView,
+        grp: &MinifiStringView,
         version: &MinifiStringView,
     ) -> Result<bool, FfiConversionError> {
         unsafe {
             Ok(self
-                .controller_service_class_name
+                .class_name_str
                 .ends_with(class.as_str()?)
-                && self.group_name == grp.as_str()?
+                && self.group_name_str == grp.as_str()?
                 && self.version_str == version.as_str()?)
         }
     }
@@ -75,10 +75,6 @@ unsafe extern "C" fn get_controller_service_callback(
     unsafe {
         let controller_service_helper =
             &mut *(controller_service_helper_ptr as *mut ControllerServiceHelper);
-
-        if controller_ptr.is_null() {
-            return;
-        }
 
         if !controller_service_helper
             .is_valid(&group_name, &class_name, &version)
@@ -131,8 +127,8 @@ impl<'a> ProcessContext for CffiProcessContext<'a> {
             let str_view = StringView::new(service_name.as_str());
             let mut helper = ControllerServiceHelper {
                 result: None,
-                controller_service_class_name: Cs::CLASS_NAME,
-                group_name: Cs::GROUP_NAME,
+                class_name_str: Cs::CLASS_NAME,
+                group_name_str: Cs::GROUP_NAME,
                 version_str: Cs::VERSION,
             };
             unsafe {
