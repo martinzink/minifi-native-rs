@@ -10,7 +10,10 @@ from minifi_test_framework.steps import configuration_steps
 from minifi_test_framework.steps import core_steps
 from minifi_test_framework.steps import flow_building_steps
 from minifi_test_framework.core.minifi_test_context import MinifiTestContext
-from minifi_test_framework.containers.host_file import HostFile
+
+@when("the MiNiFi instance is started without assertions")
+def step_impl(context: MinifiTestContext):
+    context.get_or_create_default_minifi_container().deploy(context)
 
 @then('Minifi crashes with the following "{crash_msg}" in less than {duration}')
 def step_impl(context: MinifiTestContext, crash_msg: str, duration: str):
