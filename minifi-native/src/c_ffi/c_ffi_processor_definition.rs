@@ -114,16 +114,10 @@ where
         }
     }
 
-    #[cfg(not(feature = "mock-logger"))]
     unsafe extern "C" fn create_processor(metadata: MinifiProcessorMetadata) -> *mut c_void {
         let logger = super::c_ffi_logger::CffiLogger::new(metadata.logger);
         let processor = Box::new(T::new(logger));
         Box::into_raw(processor) as *mut c_void
-    }
-
-    #[cfg(feature = "mock-logger")]
-    unsafe extern "C" fn create_processor(_metadata: MinifiProcessorMetadata) -> *mut c_void {
-        panic!("mock-logger feature is on we should not create c processors")
     }
 
     unsafe extern "C" fn destroy_processor(processor_ptr: *mut c_void) {

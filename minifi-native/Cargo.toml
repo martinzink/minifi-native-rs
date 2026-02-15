@@ -5,9 +5,6 @@ edition = "2024"
 description = "A safe, idiomatic Rust wrapper for the Apache MiNiFi Native C API"
 license = "Apache-2.0"
 
-[features]
-mock-logger = []
-
 [dependencies]
 const_format = "0.2.34"
 minifi-native-sys = { path = "../minifi-native-sys" }

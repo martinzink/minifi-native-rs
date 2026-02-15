@@ -1,10 +1,5 @@
 use crate::api::ProcessorDefinition;
-use crate::{
-    CalculateMetrics, ComponentIdentifier, Concurrent, DefaultLogger, DynRawProcessorDefinition,
-    LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession,
-    RawMultiThreadedTrigger, RawProcessor, RawProcessorDefinition, RawRegisterableProcessor,
-    Relationship, Schedule,
-};
+use crate::{CalculateMetrics, CffiLogger, ComponentIdentifier, Concurrent, DynRawProcessorDefinition, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, RawMultiThreadedTrigger, RawProcessor, RawProcessorDefinition, RawRegisterableProcessor, Relationship, Schedule};
 use std::collections::HashMap;
 
 pub struct TransformedFlowFile<'a, FlowFileType> {
@@ -73,7 +68,7 @@ pub struct FlowFileTransformer<Implementation>
 where
     Implementation: Schedule + FlowFileTransform + CalculateMetrics,
 {
-    logger: DefaultLogger,
+    logger: CffiLogger,
     scheduled_impl: Option<Implementation>,
 }
 
@@ -83,7 +78,7 @@ where
 {
     type Threading = Concurrent;
 
-    fn new(logger: DefaultLogger) -> Self {
+    fn new(logger: CffiLogger) -> Self {
         Self {
             logger,
             scheduled_impl: None,

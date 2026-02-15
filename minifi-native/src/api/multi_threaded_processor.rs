@@ -1,11 +1,7 @@
 use crate::api::RawProcessor;
 use crate::api::processor_traits::CalculateMetrics;
 use crate::api::raw::raw_processor::HasRawProcessorDefinition;
-use crate::{
-    Concurrent, DefaultLogger, DynRawProcessorDefinition, LogLevel, Logger, MinifiError,
-    OnTriggerResult, ProcessContext, ProcessSession, RawMultiThreadedTrigger,
-    RawRegisterableProcessor, Schedule,
-};
+use crate::{CffiLogger, Concurrent, DynRawProcessorDefinition, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, RawMultiThreadedTrigger, RawRegisterableProcessor, Schedule};
 
 pub trait ConstTrigger {
     fn trigger<PC, PS, L>(
@@ -25,7 +21,7 @@ pub struct MultiThreadedProcessor<Implementation>
 where
     Implementation: Schedule + ConstTrigger + HasRawProcessorDefinition + CalculateMetrics,
 {
-    logger: DefaultLogger,
+    logger: CffiLogger,
     scheduled_impl: Option<Implementation>,
 }
 
@@ -35,7 +31,7 @@ where
 {
     type Threading = Concurrent;
 
-    fn new(logger: DefaultLogger) -> Self {
+    fn new(logger: CffiLogger) -> Self {
         Self {
             logger,
             scheduled_impl: None,

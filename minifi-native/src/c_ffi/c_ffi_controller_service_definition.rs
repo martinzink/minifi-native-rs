@@ -37,20 +37,12 @@ where
         }
     }
 
-    #[cfg(not(feature = "mock-logger"))]
     unsafe extern "C" fn create_controller_service(
         metadata: MinifiControllerServiceMetadata,
     ) -> *mut c_void {
         let logger = super::c_ffi_logger::CffiLogger::new(metadata.logger);
         let controller_service = Box::new(T::new(logger));
         Box::into_raw(controller_service) as *mut c_void
-    }
-
-    #[cfg(feature = "mock-logger")]
-    unsafe extern "C" fn create_controller_service(
-        _metadata: MinifiControllerServiceMetadata,
-    ) -> *mut c_void {
-        panic!("mock-logger feature is on we should not create c controller services")
     }
 
     unsafe extern "C" fn destroy_controller_service(controller_service_ptr: *mut c_void) {

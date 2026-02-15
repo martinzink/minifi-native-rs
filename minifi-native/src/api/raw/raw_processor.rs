@@ -1,6 +1,6 @@
 use crate::api::errors::MinifiError;
 use crate::api::raw::raw_threading_model::{Concurrent, Exclusive, RawThreadingModel};
-use crate::{DefaultLogger, DynRawProcessorDefinition, LogLevel, ProcessContext, ProcessSession};
+use crate::{CffiLogger, DynRawProcessorDefinition, LogLevel, ProcessContext, ProcessSession};
 
 pub enum ProcessorInputRequirement {
     Required,
@@ -17,7 +17,7 @@ pub enum OnTriggerResult {
 pub trait RawProcessor: Sized {
     type Threading: RawThreadingModel;
 
-    fn new(logger: DefaultLogger) -> Self;
+    fn new(logger: CffiLogger) -> Self;
     fn restore(&self) -> bool {
         false
     } // TODO(mzink)

@@ -13,7 +13,7 @@ pub use api::controller_service::{EnableControllerService, ControllerService};
 
 // TODO(mzink) clean this up
 pub use api::{
-    Concurrent, ConstTrigger, ControllerServiceContext, DefaultLogger, Exclusive, FlowFile,
+    Concurrent, ConstTrigger, ControllerServiceContext, Exclusive, FlowFile,
     FlowFileTransform, FlowFileTransformer, HasRawProcessorDefinition, LogLevel, Logger,
     MultiThreadedProcessor, MutTrigger, OnTriggerResult, OutputAttribute, ProcessContext,
     ProcessSession, ProcessorInputRequirement, Property, RawMultiThreadedTrigger, RawProcessor,

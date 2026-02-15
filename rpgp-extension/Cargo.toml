@@ -14,4 +14,4 @@ pgp = "0.18.0"
 rand = "0.8.5"
 
 [dev-dependencies]
-minifi-native = { path = "../minifi-native", features = ["mock-logger"] }
+minifi-native = { path = "../minifi-native" }

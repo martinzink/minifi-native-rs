@@ -19,7 +19,7 @@ pub use component_definition_traits::ProcessorDefinition;
 
 pub use controller_service_context::ControllerServiceContext;
 pub use flow_file::FlowFile;
-pub use logger::{DefaultLogger, LogLevel, Logger};
+pub use logger::{LogLevel, Logger};
 pub use multi_threaded_processor::{ConstTrigger, MultiThreadedProcessor};
 pub use output_attribute::OutputAttribute;
 pub use process_context::ProcessContext;

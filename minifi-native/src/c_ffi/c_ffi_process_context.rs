@@ -121,7 +121,7 @@ impl<'a> ProcessContext for CffiProcessContext<'a> {
         }
     }
 
-    fn get_raw_controller_service<Cs>(&self, property: &Property) -> Result<Option<&Cs>, MinifiError>
+    fn get_raw_controller_service<Cs>(&self, property: &Property) -> Result<Option<&'a Cs>, MinifiError>
     where
         Cs: RawControllerService + ComponentIdentifier + 'static
     {
