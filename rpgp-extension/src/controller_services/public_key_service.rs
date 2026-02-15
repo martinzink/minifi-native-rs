@@ -2,52 +2,42 @@ mod controller_service_definition;
 mod properties;
 
 use crate::controller_services::public_key_service::properties::{KEYRING, KEYRING_FILE};
-use minifi_native::{
-    ControllerServiceContext, DefaultLogger, IdentifyComponent, LogLevel, Logger, MinifiError,
-    RawControllerService,
-};
+use minifi_native::{ControllerServiceContext, EnableControllerService, IdentifyComponent, Logger, MinifiError};
 use pgp::composed::{Deserializable, SignedPublicKey};
 
 #[derive(Debug, IdentifyComponent)]
+#[derive(PartialEq)]
 pub(crate) struct PGPPublicKeyService {
-    logger: DefaultLogger,
     public_keys: Vec<SignedPublicKey>,
 }
 
-impl RawControllerService for PGPPublicKeyService {
-    fn new(logger: DefaultLogger) -> Self {
-        PGPPublicKeyService {
-            logger,
-            public_keys: Vec::new(),
-        }
-    }
-
-    fn log(&self, log_level: LogLevel, message: &str) {
-        self.logger.log(log_level, message);
-    }
-
-    fn enable<P: ControllerServiceContext>(&mut self, context: &P) -> Result<(), MinifiError> {
+impl EnableControllerService for PGPPublicKeyService {
+    fn enable<P: ControllerServiceContext, L: Logger>(context: &P, _logger: &L) -> Result<Self, MinifiError>
+    where
+        Self: Sized
+    {
+        let mut public_keys = vec![];
         if let Some(keyring_file_path) = context.get_property(&KEYRING_FILE)? {
             if let Ok((keys, _headers)) = SignedPublicKey::from_armor_file_many(&keyring_file_path)
             {
-                self.public_keys.extend(keys.filter_map(|key| key.ok()));
+                public_keys.extend(keys.filter_map(|key| key.ok()));
             } else if let Ok(keys) = SignedPublicKey::from_file_many(keyring_file_path) {
-                self.public_keys.extend(keys.filter_map(|key| key.ok()));
+                public_keys.extend(keys.filter_map(|key| key.ok()));
             }
         }
         if let Some(keyring_ascii) = context.get_property(&KEYRING)? {
             if let Ok((keys, _headers)) = SignedPublicKey::from_armor_many(keyring_ascii.as_bytes())
             {
-                self.public_keys.extend(keys.filter_map(|key| key.ok()));
+                public_keys.extend(keys.filter_map(|key| key.ok()));
             }
         }
 
-        if self.public_keys.is_empty() {
+        if public_keys.is_empty() {
             return Err(MinifiError::ControllerServiceError(
                 "Could not load any valid keys",
             ));
         }
-        Ok(())
+        Ok(Self{public_keys})
     }
 }
 

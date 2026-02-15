@@ -8,8 +8,8 @@ minifi_native::declare_minifi_extension!(
         minifi_native::FlowFileTransformer::<processors::decrypt_content::DecryptContentPGP>,
     ],
     controllers: [
-        controller_services::public_key_service::PGPPublicKeyService,
-        controller_services::private_key_service::PGPPrivateKeyService,
+        minifi_native::ControllerService::<controller_services::public_key_service::PGPPublicKeyService>,
+        minifi_native::ControllerService::<controller_services::private_key_service::PGPPrivateKeyService>,
     ]
 );
 

@@ -1,5 +1,5 @@
 use crate::api::processor_traits::CalculateMetrics;
-use crate::api::raw_processor::HasRawProcessorDefinition;
+use crate::api::raw::raw_processor::HasRawProcessorDefinition;
 use crate::{
     DefaultLogger, DynRawProcessorDefinition, Exclusive, LogLevel, Logger, MinifiError,
     OnTriggerResult, ProcessContext, ProcessSession, RawProcessor, RawRegisterableProcessor,

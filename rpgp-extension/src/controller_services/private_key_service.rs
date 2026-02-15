@@ -1,59 +1,49 @@
 mod controller_service_definition;
 mod properties;
 
-use minifi_native::{
-    ControllerServiceContext, DefaultLogger, IdentifyComponent, LogLevel, Logger, MinifiError,
-    RawControllerService,
-};
+use minifi_native::{ControllerServiceContext, EnableControllerService, IdentifyComponent, Logger, MinifiError};
 use pgp::composed::{Deserializable, SignedSecretKey, TheRing};
 use pgp::types::Password;
 
 #[derive(Debug, IdentifyComponent)]
 pub(crate) struct PGPPrivateKeyService {
-    logger: DefaultLogger,
     private_keys: Vec<SignedSecretKey>,
     passphrase: Password,
 }
 
-impl RawControllerService for PGPPrivateKeyService {
-    fn new(logger: DefaultLogger) -> Self {
-        PGPPrivateKeyService {
-            logger,
-            private_keys: Vec::new(),
-            passphrase: Password::empty(),
-        }
-    }
-
-    fn log(&self, log_level: LogLevel, message: &str) {
-        self.logger.log(log_level, message);
-    }
-
-    fn enable<P: ControllerServiceContext>(&mut self, context: &P) -> Result<(), MinifiError> {
+impl EnableControllerService for PGPPrivateKeyService {
+    fn enable<P: ControllerServiceContext, L: Logger>(context: &P, _logger: &L) -> Result<Self, MinifiError>
+    where
+        Self: Sized
+    {
+        let mut private_keys = vec![];
         if let Some(keyring_file_path) = context.get_property(&properties::KEY_FILE)? {
             if let Ok((keys, _headers)) = SignedSecretKey::from_armor_file_many(&keyring_file_path)
             {
-                self.private_keys.extend(keys.filter_map(|key| key.ok()));
+                private_keys.extend(keys.filter_map(|key| key.ok()));
             } else if let Ok(keys) = SignedSecretKey::from_file_many(keyring_file_path) {
-                self.private_keys.extend(keys.filter_map(|key| key.ok()));
+                private_keys.extend(keys.filter_map(|key| key.ok()));
             }
         }
         if let Some(keyring_ascii) = context.get_property(&properties::KEY)? {
             if let Ok((keys, _headers)) = SignedSecretKey::from_armor_many(keyring_ascii.as_bytes())
             {
-                self.private_keys.extend(keys.filter_map(|key| key.ok()));
+                private_keys.extend(keys.filter_map(|key| key.ok()));
             }
         }
 
-        if let Some(passphrase_str) = context.get_property(&properties::KEY_PASSPHRASE)? {
-            self.passphrase = Password::from(passphrase_str);
-        }
+        let passphrase = if let Some(passphrase_str) = context.get_property(&properties::KEY_PASSPHRASE)? {
+            Password::from(passphrase_str)
+        } else {
+            Password::empty()
+        };
 
-        if self.private_keys.is_empty() {
+        if private_keys.is_empty() {
             return Err(MinifiError::ControllerServiceError(
                 "Could not load any valid keys",
             ));
         }
-        Ok(())
+        Ok(Self{private_keys, passphrase})
     }
 }
 

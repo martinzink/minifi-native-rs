@@ -1,9 +1,10 @@
 use super::c_ffi_flow_file::CffiFlowFile;
 use super::c_ffi_primitives::{ConvertMinifiStringView, FfiConversionError, StringView};
 use crate::api::ProcessContext;
-use crate::{ComponentIdentifier, MinifiError, Property, RawControllerService};
+use crate::{ComponentIdentifier, EnableControllerService, MinifiError, Property, RawControllerService};
 use minifi_native_sys::*;
 use std::ffi::c_void;
+use crate::api::controller_service::ControllerService;
 
 /// A safe wrapper around a `MinifiProcessContext` pointer.
 pub struct CffiProcessContext<'a> {
@@ -120,9 +121,9 @@ impl<'a> ProcessContext for CffiProcessContext<'a> {
         }
     }
 
-    fn get_controller_service<Cs>(&self, property: &Property) -> Result<Option<&Cs>, MinifiError>
+    fn get_raw_controller_service<Cs>(&self, property: &Property) -> Result<Option<&Cs>, MinifiError>
     where
-        Cs: RawControllerService + ComponentIdentifier,
+        Cs: RawControllerService + ComponentIdentifier + 'static
     {
         if let Some(service_name) = self.get_property(property, None)? {
             let str_view = StringView::new(service_name.as_str());
@@ -157,6 +158,18 @@ impl<'a> ProcessContext for CffiProcessContext<'a> {
             }
         } else {
             Ok(None)
+        }
+    }
+
+    fn get_controller_service<Cs>(&self, property: &Property) -> Result<Option<&Cs>, MinifiError>
+    where
+        Cs: EnableControllerService + ComponentIdentifier + 'static
+    {
+        match self.get_raw_controller_service::<ControllerService<Cs>>(property)? {
+            None => Ok(None),
+            Some(f) => {
+                Ok(f.get_implementation())
+            }
         }
     }
 }

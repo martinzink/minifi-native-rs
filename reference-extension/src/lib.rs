@@ -12,5 +12,5 @@ processors: [
     minifi_native::SingleThreadedProcessor::<processors::put_file::PutFile>,
 ],
 controllers: [
-    controller_services::dummy_controller_service::DummyControllerService,
+    minifi_native::ControllerService::<controller_services::dummy_controller_service::DummyControllerService>
 ]);

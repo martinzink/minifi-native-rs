@@ -1,9 +1,7 @@
 use super::PGPPrivateKeyService;
 use crate::test_utils::get_test_key_path;
 use minifi_native::MinifiError::ControllerServiceError;
-use minifi_native::{
-    ComponentIdentifier, MockControllerServiceContext, MockLogger, RawControllerService,
-};
+use minifi_native::{ComponentIdentifier, EnableControllerService, MockControllerServiceContext, MockLogger};
 
 #[test]
 fn test_component_id() {
@@ -17,32 +15,29 @@ fn test_component_id() {
 
 #[test]
 fn default_fails() {
-    let mut controller_service = PGPPrivateKeyService::new(MockLogger::new());
     let context = MockControllerServiceContext::new();
 
     assert_eq!(
-        controller_service.enable(&context),
-        Err(ControllerServiceError("Could not load any valid keys"))
+        PGPPrivateKeyService::enable(&context, &MockLogger::new()).expect_err("should fail"),
+        ControllerServiceError("Could not load any valid keys")
     );
 }
 
 #[test]
 fn corrupted_binary_keyring_file() {
-    let mut controller_service = PGPPrivateKeyService::new(MockLogger::new());
     let mut context = MockControllerServiceContext::new();
     context
         .properties
         .insert("Key File".to_string(), get_test_key_path("garbage.gpg"));
 
     assert_eq!(
-        controller_service.enable(&context),
-        Err(ControllerServiceError("Could not load any valid keys"))
+        PGPPrivateKeyService::enable(&context, &MockLogger::new()).expect_err("should fail"),
+        ControllerServiceError("Could not load any valid keys")
     );
 }
 
 #[test]
 fn armored_public_key_file() {
-    let mut controller_service = PGPPrivateKeyService::new(MockLogger::new());
     let mut context = MockControllerServiceContext::new();
     context.properties.insert(
         "Key File".to_string(),
@@ -50,14 +45,13 @@ fn armored_public_key_file() {
     );
 
     assert_eq!(
-        controller_service.enable(&context),
-        Err(ControllerServiceError("Could not load any valid keys"))
+        PGPPrivateKeyService::enable(&context, &MockLogger::new()).expect_err("should fail"),
+        ControllerServiceError("Could not load any valid keys")
     );
 }
 
 #[test]
 fn corrupted_armored_key_file() {
-    let mut controller_service = PGPPrivateKeyService::new(MockLogger::new());
     let mut context = MockControllerServiceContext::new();
     context.properties.insert(
         "Key File".to_string(),
@@ -65,14 +59,13 @@ fn corrupted_armored_key_file() {
     );
 
     assert_eq!(
-        controller_service.enable(&context),
-        Err(ControllerServiceError("Could not load any valid keys"))
+        PGPPrivateKeyService::enable(&context, &MockLogger::new()).expect_err("should fail"),
+        ControllerServiceError("Could not load any valid keys")
     );
 }
 
 #[test]
 fn non_existent_keyfile() {
-    let mut controller_service = PGPPrivateKeyService::new(MockLogger::new());
     let mut context = MockControllerServiceContext::new();
     context.properties.insert(
         "Key File".to_string(),
@@ -80,21 +73,20 @@ fn non_existent_keyfile() {
     );
 
     assert_eq!(
-        controller_service.enable(&context),
-        Err(ControllerServiceError("Could not load any valid keys"))
+        PGPPrivateKeyService::enable(&context, &MockLogger::new()).expect_err("should fail"),
+        ControllerServiceError("Could not load any valid keys")
     );
 }
 
 #[test]
 fn single_armored_key_file() {
-    let mut controller_service = PGPPrivateKeyService::new(MockLogger::new());
     let mut context = MockControllerServiceContext::new();
     context.properties.insert(
         "Key File".to_string(),
         get_test_key_path("alice_private.asc"),
     );
 
-    assert_eq!(controller_service.enable(&context), Ok(()));
+    let controller_service = PGPPrivateKeyService::enable(&context, &MockLogger::new()).expect("should enable");
     assert!(controller_service.get_secret_key("Alice").is_some());
     assert!(
         controller_service
@@ -108,14 +100,13 @@ fn single_armored_key_file() {
 
 #[test]
 fn single_binary_key_file() {
-    let mut controller_service = PGPPrivateKeyService::new(MockLogger::new());
     let mut context = MockControllerServiceContext::new();
     context.properties.insert(
         "Key File".to_string(),
         get_test_key_path("alice_private.gpg"),
     );
 
-    assert_eq!(controller_service.enable(&context), Ok(()));
+    let controller_service = PGPPrivateKeyService::enable(&context, &MockLogger::new()).expect("should enable");
     assert!(controller_service.get_secret_key("A").is_some());
     assert!(controller_service.get_secret_key("Alice").is_some());
     assert!(
@@ -132,14 +123,13 @@ fn single_binary_key_file() {
 
 #[test]
 fn armored_keyring_key_file() {
-    let mut controller_service = PGPPrivateKeyService::new(MockLogger::new());
     let mut context = MockControllerServiceContext::new();
     context.properties.insert(
         "Key File".to_string(),
         get_test_key_path("secret_keyring.asc"),
     );
 
-    assert_eq!(controller_service.enable(&context), Ok(()));
+    let controller_service = PGPPrivateKeyService::enable(&context, &MockLogger::new()).expect("should enable");
     assert!(controller_service.get_secret_key("Alice").is_some());
     assert!(controller_service.get_secret_key("Bob").is_some());
     assert!(controller_service.get_secret_key("bob@home.io").is_some());
@@ -149,14 +139,13 @@ fn armored_keyring_key_file() {
 
 #[test]
 fn binary_keyring_key_file() {
-    let mut controller_service = PGPPrivateKeyService::new(MockLogger::new());
     let mut context = MockControllerServiceContext::new();
     context.properties.insert(
         "Key File".to_string(),
         get_test_key_path("secret_keyring.gpg"),
     );
 
-    assert_eq!(controller_service.enable(&context), Ok(()));
+    let controller_service = PGPPrivateKeyService::enable(&context, &MockLogger::new()).expect("should enable");
     assert!(controller_service.get_secret_key("Alice").is_some());
     assert!(controller_service.get_secret_key("Bob").is_some());
     assert!(controller_service.get_secret_key("bob@home.io").is_some());
@@ -166,7 +155,6 @@ fn binary_keyring_key_file() {
 
 #[test]
 fn armored_keyring() {
-    let mut controller_service = PGPPrivateKeyService::new(MockLogger::new());
     let mut context = MockControllerServiceContext::new();
 
     let file_content = std::fs::read_to_string(get_test_key_path("secret_keyring.asc"))
@@ -174,7 +162,7 @@ fn armored_keyring() {
 
     context.properties.insert("Key".to_string(), file_content);
 
-    assert_eq!(controller_service.enable(&context), Ok(()));
+    let controller_service = PGPPrivateKeyService::enable(&context, &MockLogger::new()).expect("should enable");
     assert!(controller_service.get_secret_key("Alice").is_some());
     assert!(controller_service.get_secret_key("Bob").is_some());
     assert!(controller_service.get_secret_key("bob@home.io").is_some());
@@ -184,7 +172,6 @@ fn armored_keyring() {
 
 #[test]
 fn armored_single_key() {
-    let mut controller_service = PGPPrivateKeyService::new(MockLogger::new());
     let mut context = MockControllerServiceContext::new();
 
     let file_content =
@@ -192,7 +179,7 @@ fn armored_single_key() {
 
     context.properties.insert("Key".to_string(), file_content);
 
-    assert_eq!(controller_service.enable(&context), Ok(()));
+    let controller_service = PGPPrivateKeyService::enable(&context, &MockLogger::new()).expect("should enable");
     assert!(controller_service.get_secret_key("Alice").is_some());
     assert!(controller_service.get_secret_key("Bob").is_none());
     assert!(controller_service.get_secret_key("Carol").is_none());
@@ -200,7 +187,6 @@ fn armored_single_key() {
 
 #[test]
 fn corrupted_armored_key() {
-    let mut controller_service = PGPPrivateKeyService::new(MockLogger::new());
     let mut context = MockControllerServiceContext::new();
 
     let file_content = std::fs::read_to_string(get_test_key_path("truncated_private.asc"))
@@ -209,14 +195,13 @@ fn corrupted_armored_key() {
     context.properties.insert("Key".to_string(), file_content);
 
     assert_eq!(
-        controller_service.enable(&context),
-        Err(ControllerServiceError("Could not load any valid keys"))
+        PGPPrivateKeyService::enable(&context, &MockLogger::new()).expect_err("should fail"),
+        ControllerServiceError("Could not load any valid keys")
     );
 }
 
 #[test]
 fn public_ascii_key() {
-    let mut controller_service = PGPPrivateKeyService::new(MockLogger::new());
     let mut context = MockControllerServiceContext::new();
 
     let file_content =
@@ -225,7 +210,7 @@ fn public_ascii_key() {
     context.properties.insert("Key".to_string(), file_content);
 
     assert_eq!(
-        controller_service.enable(&context),
-        Err(ControllerServiceError("Could not load any valid keys"))
+        PGPPrivateKeyService::enable(&context, &MockLogger::new()).expect_err("should fail"),
+        ControllerServiceError("Could not load any valid keys")
     );
 }

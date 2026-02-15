@@ -41,7 +41,7 @@ impl ConstTrigger for DummyProcessor {
                 logger.info(
                     format!(
                         "The data in the DummyControllerService is {:?}",
-                        dummy_controller.get_data()
+                        dummy_controller.data
                     )
                     .as_str(),
                 );

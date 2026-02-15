@@ -1,9 +1,6 @@
 use super::*;
 use crate::test_utils;
-use minifi_native::{
-    MockControllerServiceContext, MockFlowFile, MockLogger, MockProcessContext,
-    RawControllerService, TransformedFlowFile,
-};
+use minifi_native::{EnableControllerService, MockControllerServiceContext, MockFlowFile, MockLogger, MockProcessContext, TransformedFlowFile};
 
 fn encrypt_with_processor(
     mut context: MockProcessContext,
@@ -45,14 +42,14 @@ fn encrypts_via_passphrase() {
 }
 
 fn public_key_service() -> PGPPublicKeyService {
-    let mut controller_service = PGPPublicKeyService::new(MockLogger::new());
     let mut context = MockControllerServiceContext::new();
     context.properties.insert(
         "Keyring File".to_string(),
         test_utils::get_test_key_path("keyring.asc"),
     );
-    assert_eq!(controller_service.enable(&context), Ok(()));
-    controller_service
+    let service = PGPPublicKeyService::enable(&context, &MockLogger::new()).expect("should enable");
+    service
+
 }
 
 #[test]

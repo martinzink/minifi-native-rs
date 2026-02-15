@@ -1,6 +1,6 @@
 use crate::api::RawProcessor;
 use crate::api::processor_traits::CalculateMetrics;
-use crate::api::raw_processor::HasRawProcessorDefinition;
+use crate::api::raw::raw_processor::HasRawProcessorDefinition;
 use crate::{
     Concurrent, DefaultLogger, DynRawProcessorDefinition, LogLevel, Logger, MinifiError,
     OnTriggerResult, ProcessContext, ProcessSession, RawMultiThreadedTrigger,
