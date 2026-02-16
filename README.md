@@ -34,13 +34,13 @@ Processors self-register when the library is loaded by the C++ host, using the c
 A full suite of mock objects allows for fast and reliable unit testing of all processor logic.
 
 
-## [reference-extension](reference-extension)
+## [rust_reference_extension](reference-extension)
 A concrete example of a processor extension built using the minifi-native crate.
   - Demonstrates how to implement the Processor traits. Shows how to define properties and relationships.
-  - Uses a #[ctor] function for self-registration, so the C++ host can load it without needing to call an explicit initialization function.
   - Includes comprehensive unit tests using the mocking framework.
   - Includes integration testing that verifies the processor works as expected in a real MiNiFi environment.
      
+## [minifi_pgp]
 
 #### Use the Library in the MiNiFi C++ Application
 Copy the shared library (.so, .dll, or .dylib) to the MiNiFi C++ application's extensions/ directory.
