@@ -1,12 +1,13 @@
 mod properties;
 use crate::controller_services::dummy_controller_service::DummyControllerService;
 use crate::processors::dummy_processor::properties::CONTROLLER_SERVICE;
+use minifi_native::macros::ComponentIdentifier;
 use minifi_native::{
     CalculateMetrics, ConstTrigger, Logger, MinifiError, OnTriggerResult, ProcessContext,
     ProcessSession, Schedule,
 };
 
-#[derive(Debug)]
+#[derive(Debug, ComponentIdentifier)]
 pub(crate) struct DummyProcessor {}
 
 impl Schedule for DummyProcessor {

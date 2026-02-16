@@ -1,4 +1,8 @@
-use crate::{CffiControllerServiceDefinition, CffiLogger, ComponentIdentifier, ControllerServiceContext, ControllerServiceDefinition, DynRawControllerServiceDefinition, LogLevel, Logger, MinifiError, RawControllerService, RegisterableControllerService};
+use crate::{
+    CffiControllerServiceDefinition, CffiLogger, ComponentIdentifier, ControllerServiceContext,
+    ControllerServiceDefinition, DynRawControllerServiceDefinition, LogLevel, Logger, MinifiError,
+    RawControllerService, RegisterableControllerService,
+};
 
 pub trait EnableControllerService {
     fn enable<P: ControllerServiceContext, L: Logger>(
@@ -59,12 +63,14 @@ where
 
 impl<Implementation> RegisterableControllerService for ControllerService<Implementation>
 where
-    Implementation: EnableControllerService + ComponentIdentifier + ControllerServiceDefinition + 'static,
+    Implementation:
+        EnableControllerService + ComponentIdentifier + ControllerServiceDefinition + 'static,
 {
     fn get_definition() -> Box<dyn DynRawControllerServiceDefinition> {
-        Box::new(CffiControllerServiceDefinition::<ControllerService<Implementation>>::new(
-            Implementation::DESCRIPTION,
-            Implementation::PROPERTIES,
+        Box::new(CffiControllerServiceDefinition::<
+            ControllerService<Implementation>,
+        >::new(
+            Implementation::DESCRIPTION, Implementation::PROPERTIES
         ))
     }
 }

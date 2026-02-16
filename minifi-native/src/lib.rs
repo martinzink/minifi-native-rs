@@ -5,15 +5,15 @@ mod mock;
 pub use api::raw::raw_controller_service::RawControllerService; // TODO(mzink) replace with more user friendly API
 
 pub use api::component_definition_traits::{
-    ComponentIdentifier, ControllerServiceDefinition, IdentifyComponent, ProcessorDefinition,
+    ComponentIdentifier, ControllerServiceDefinition, ProcessorDefinition,
 };
+pub use api::controller_service::{ControllerService, EnableControllerService};
 pub use api::errors::MinifiError;
 pub use api::processor_traits::{CalculateMetrics, Schedule};
-pub use api::controller_service::{EnableControllerService, ControllerService};
 
 // TODO(mzink) clean this up
 pub use api::{
-    Concurrent, ConstTrigger, ControllerServiceContext, Exclusive, FlowFile,
+    Concurrent, ConstTrigger, Content, ControllerServiceContext, Exclusive, FlowFile,
     FlowFileTransform, FlowFileTransformer, HasRawProcessorDefinition, LogLevel, Logger,
     MultiThreadedProcessor, MutTrigger, OnTriggerResult, OutputAttribute, ProcessContext,
     ProcessSession, ProcessorInputRequirement, Property, RawMultiThreadedTrigger, RawProcessor,
@@ -30,6 +30,7 @@ pub use mock::{
     StdLogger,
 };
 
+pub use minifi_macros as macros;
 pub use minifi_native_sys as sys;
 use minifi_native_sys::{
     MINIFI_API_MAJOR_VERSION, MINIFI_API_MINOR_VERSION, MINIFI_API_PATCH_VERSION,

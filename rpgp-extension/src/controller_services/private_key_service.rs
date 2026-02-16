@@ -1,20 +1,24 @@
 mod controller_service_definition;
 mod properties;
 
-use minifi_native::{ControllerServiceContext, EnableControllerService, IdentifyComponent, Logger, MinifiError};
+use minifi_native::macros::ComponentIdentifier;
+use minifi_native::{ControllerServiceContext, EnableControllerService, Logger, MinifiError};
 use pgp::composed::{Deserializable, SignedSecretKey, TheRing};
 use pgp::types::Password;
 
-#[derive(Debug, IdentifyComponent)]
+#[derive(Debug, ComponentIdentifier)]
 pub(crate) struct PGPPrivateKeyService {
     private_keys: Vec<SignedSecretKey>,
     passphrase: Password,
 }
 
 impl EnableControllerService for PGPPrivateKeyService {
-    fn enable<P: ControllerServiceContext, L: Logger>(context: &P, _logger: &L) -> Result<Self, MinifiError>
+    fn enable<P: ControllerServiceContext, L: Logger>(
+        context: &P,
+        _logger: &L,
+    ) -> Result<Self, MinifiError>
     where
-        Self: Sized
+        Self: Sized,
     {
         let mut private_keys = vec![];
         if let Some(keyring_file_path) = context.get_property(&properties::KEY_FILE)? {
@@ -32,18 +36,22 @@ impl EnableControllerService for PGPPrivateKeyService {
             }
         }
 
-        let passphrase = if let Some(passphrase_str) = context.get_property(&properties::KEY_PASSPHRASE)? {
-            Password::from(passphrase_str)
-        } else {
-            Password::empty()
-        };
+        let passphrase =
+            if let Some(passphrase_str) = context.get_property(&properties::KEY_PASSPHRASE)? {
+                Password::from(passphrase_str)
+            } else {
+                Password::empty()
+            };
 
         if private_keys.is_empty() {
             return Err(MinifiError::ControllerServiceError(
                 "Could not load any valid keys",
             ));
         }
-        Ok(Self{private_keys, passphrase})
+        Ok(Self {
+            private_keys,
+            passphrase,
+        })
     }
 }
 

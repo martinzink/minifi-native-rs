@@ -1,6 +1,7 @@
 mod properties;
 mod relationships;
 
+use minifi_native::macros::ComponentIdentifier;
 use minifi_native::{
     CalculateMetrics, ConstTrigger, Logger, MinifiError, OnTriggerResult, ProcessContext,
     ProcessSession, Schedule,
@@ -15,7 +16,7 @@ enum KamikazeBehaviour {
     Panic,
 }
 
-#[derive(Debug)]
+#[derive(Debug, ComponentIdentifier)]
 pub(crate) struct KamikazeProcessor {
     on_trigger_behaviour: KamikazeBehaviour,
     read_behaviour: Option<KamikazeBehaviour>,

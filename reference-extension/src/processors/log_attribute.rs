@@ -1,4 +1,5 @@
 use crate::processors::log_attribute::properties::{FLOW_FILES_TO_LOG, LOG_LEVEL, LOG_PAYLOAD};
+use minifi_native::macros::ComponentIdentifier;
 use minifi_native::{
     CalculateMetrics, ConstTrigger, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext,
     ProcessSession, Property, Schedule,
@@ -7,7 +8,7 @@ use minifi_native::{
 mod properties;
 mod relationships;
 
-#[derive(Debug)]
+#[derive(Debug, ComponentIdentifier)]
 pub(crate) struct LogAttribute {
     log_level: LogLevel,
     attributes_to_log: Option<Vec<String>>,

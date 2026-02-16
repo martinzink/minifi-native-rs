@@ -1,6 +1,9 @@
-use std::any::Any;
 use crate::api::ProcessContext;
-use crate::{ComponentIdentifier, EnableControllerService, MinifiError, MockFlowFile, Property, RawControllerService};
+use crate::{
+    ComponentIdentifier, EnableControllerService, MinifiError, MockFlowFile, Property,
+    RawControllerService,
+};
+use std::any::Any;
 use std::collections::HashMap;
 
 pub struct MockPropertyMap {
@@ -69,16 +72,19 @@ impl ProcessContext for MockProcessContext {
         self.properties.get_property(property, _flow_file)
     }
 
-    fn get_raw_controller_service<Cs>(&self, _property: &Property) -> Result<Option<&Cs>, MinifiError>
+    fn get_raw_controller_service<Cs>(
+        &self,
+        _property: &Property,
+    ) -> Result<Option<&Cs>, MinifiError>
     where
-        Cs: RawControllerService + ComponentIdentifier + 'static
+        Cs: RawControllerService + ComponentIdentifier + 'static,
     {
         panic!("Not implemented yet");
     }
 
     fn get_controller_service<Cs>(&self, property: &Property) -> Result<Option<&Cs>, MinifiError>
     where
-        Cs: EnableControllerService + ComponentIdentifier + 'static
+        Cs: EnableControllerService + ComponentIdentifier + 'static,
     {
         if let Some(service_name) = self.get_property(property, None)? {
             Ok(self
@@ -99,4 +105,3 @@ impl MockProcessContext {
         }
     }
 }
-

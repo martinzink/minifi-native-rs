@@ -36,4 +36,3 @@ pub trait Logger: Debug {
         self.log(LogLevel::Critical, message);
     }
 }
-

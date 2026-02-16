@@ -1,6 +1,9 @@
 use super::*;
 use crate::test_utils;
-use minifi_native::{EnableControllerService, MockControllerServiceContext, MockFlowFile, MockLogger, MockProcessContext, TransformedFlowFile};
+use minifi_native::{
+    Content, EnableControllerService, MockControllerServiceContext, MockFlowFile, MockLogger,
+    MockProcessContext, TransformedFlowFile,
+};
 
 fn encrypt_with_processor(
     mut context: MockProcessContext,
@@ -31,7 +34,14 @@ fn encrypts_via_passphrase() {
     let transformed_ff = encrypt_with_processor(context);
 
     assert_eq!(transformed_ff.target_relationship(), &SUCCESS);
-    assert!(transformed_ff.new_content().is_some());
+    match transformed_ff.new_content() {
+        Content::Buffer(content) => {
+            assert!(!content.is_ascii());
+        }
+        _ => {
+            panic!("should be buffer content");
+        }
+    }
     assert_eq!(
         transformed_ff
             .attributes_to_add()
@@ -49,7 +59,6 @@ fn public_key_service() -> PGPPublicKeyService {
     );
     let service = PGPPublicKeyService::enable(&context, &MockLogger::new()).expect("should enable");
     service
-
 }
 
 #[test]
@@ -68,8 +77,14 @@ fn encrypts_ascii_for_alice() {
 
     let transformed_ff = encrypt_with_processor(context);
     assert_eq!(transformed_ff.target_relationship(), &SUCCESS);
-    assert!(transformed_ff.new_content().is_some());
-    assert!(transformed_ff.new_content().unwrap().is_ascii());
+    match transformed_ff.new_content() {
+        Content::Buffer(content) => {
+            assert!(content.is_ascii());
+        }
+        _ => {
+            panic!("should be buffer content");
+        }
+    }
     assert_eq!(
         transformed_ff
             .attributes_to_add()
@@ -95,8 +110,14 @@ fn encrypts_binary_for_bob() {
 
     let transformed_ff = encrypt_with_processor(context);
     assert_eq!(transformed_ff.target_relationship(), &SUCCESS);
-    assert!(transformed_ff.new_content().is_some());
-    assert!(!transformed_ff.new_content().unwrap().is_ascii());
+    match transformed_ff.new_content() {
+        Content::Buffer(content) => {
+            assert!(!content.is_ascii());
+        }
+        _ => {
+            panic!("should be buffer content");
+        }
+    }
     assert_eq!(
         transformed_ff
             .attributes_to_add()
@@ -121,6 +142,9 @@ fn cannot_encrypt_for_carol() {
 
     let transformed_ff = encrypt_with_processor(context);
     assert_eq!(transformed_ff.target_relationship(), &FAILURE);
-    assert!(transformed_ff.new_content().is_none());
+    assert!(std::matches!(
+        transformed_ff.new_content(),
+        Content::NoChange
+    ));
     assert!(transformed_ff.attributes_to_add().is_empty());
 }

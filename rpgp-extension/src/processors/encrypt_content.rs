@@ -1,6 +1,5 @@
 use minifi_native::{
-    CalculateMetrics, FlowFileTransform, IdentifyComponent, Logger, MinifiError, ProcessContext,
-    Schedule, TransformedFlowFile,
+    FlowFileTransform, Logger, MinifiError, ProcessContext, Schedule, TransformedFlowFile,
 };
 use pgp::composed::{ArmorOptions, MessageBuilder, SignedPublicKey};
 use pgp::types::StringToKey;
@@ -16,6 +15,7 @@ use crate::processors::encrypt_content::properties::{
     PASSPHRASE, PUBLIC_KEY_SEARCH, PUBLIC_KEY_SERVICE,
 };
 use crate::processors::encrypt_content::relationships::{FAILURE, SUCCESS};
+use minifi_native::macros::{ComponentIdentifier, DefaultMetrics};
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
 
 #[derive(Debug, Clone, Copy, PartialEq, Display, EnumString, VariantNames, IntoStaticStr)]
@@ -25,7 +25,7 @@ enum FileEncoding {
     Binary,
 }
 
-#[derive(Debug, IdentifyComponent)]
+#[derive(Debug, ComponentIdentifier, DefaultMetrics)]
 pub(crate) struct EncryptContentPGP {
     file_encoding: FileEncoding,
 }
@@ -142,8 +142,6 @@ impl FlowFileTransform for EncryptContentPGP {
         }
     }
 }
-
-impl CalculateMetrics for EncryptContentPGP {}
 
 #[cfg(test)]
 mod tests;

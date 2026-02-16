@@ -1,11 +1,34 @@
 use crate::api::ProcessorDefinition;
-use crate::{CalculateMetrics, CffiLogger, ComponentIdentifier, Concurrent, DynRawProcessorDefinition, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, RawMultiThreadedTrigger, RawProcessor, RawProcessorDefinition, RawRegisterableProcessor, Relationship, Schedule};
+use crate::{
+    CalculateMetrics, CffiLogger, ComponentIdentifier, Concurrent, DynRawProcessorDefinition,
+    LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession,
+    RawMultiThreadedTrigger, RawProcessor, RawProcessorDefinition, RawRegisterableProcessor,
+    Relationship, Schedule,
+};
 use std::collections::HashMap;
+
+pub enum Content {
+    Buffer(Vec<u8>),
+    Stream(Box<dyn std::io::Read>),
+    NoChange,
+}
+
+impl From<Vec<u8>> for Content {
+    fn from(v: Vec<u8>) -> Self {
+        Content::Buffer(v)
+    }
+}
+
+impl From<String> for Content {
+    fn from(s: String) -> Self {
+        Content::Buffer(s.into_bytes())
+    }
+}
 
 pub struct TransformedFlowFile<'a, FlowFileType> {
     flow_file: FlowFileType,
     target_relationship: &'a Relationship,
-    new_content: Option<Vec<u8>>,
+    new_content: Content,
     attributes_to_add: HashMap<String, String>,
 }
 
@@ -17,7 +40,7 @@ impl<'a, FlowFileType> TransformedFlowFile<'a, FlowFileType> {
         Self {
             flow_file,
             target_relationship,
-            new_content: None,
+            new_content: Content::NoChange,
             attributes_to_add: HashMap::new(),
         }
     }
@@ -30,13 +53,13 @@ impl<'a, FlowFileType> TransformedFlowFile<'a, FlowFileType> {
         Self {
             flow_file,
             target_relationship,
-            new_content,
+            new_content: Content::Buffer(new_content.unwrap_or_default()),
             attributes_to_add,
         }
     }
 
-    pub fn new_content(&self) -> Option<&Vec<u8>> {
-        self.new_content.as_ref()
+    pub fn new_content(&self) -> &Content {
+        &self.new_content
     }
 
     pub fn target_relationship(&self) -> &Relationship {
@@ -45,6 +68,19 @@ impl<'a, FlowFileType> TransformedFlowFile<'a, FlowFileType> {
 
     pub fn attributes_to_add(&self) -> &HashMap<String, String> {
         &self.attributes_to_add
+    }
+
+    #[cfg(test)]
+    pub fn content_as_bytes(&mut self) -> Vec<u8> {
+        match &mut self.new_content {
+            Content::Buffer(content) => content.clone(),
+            Content::NoChange => Vec::new(),
+            Content::Stream(stream) => {
+                let mut result = Vec::new();
+                std::io::copy(stream, &mut result).expect("should be readable during testing");
+                result
+            }
+        }
     }
 }
 
@@ -135,8 +171,14 @@ where
                 for (k, v) in &transformed_ff.attributes_to_add {
                     session.set_attribute(&mut transformed_ff.flow_file, k, v);
                 }
-                if let Some(new_content) = &transformed_ff.new_content {
-                    session.write(&mut transformed_ff.flow_file, new_content);
+                match transformed_ff.new_content {
+                    Content::Buffer(buffer) => {
+                        session.write(&mut transformed_ff.flow_file, &buffer);
+                    }
+                    Content::Stream(_stream) => {
+                        todo!("not yet implemented")
+                    }
+                    Content::NoChange => {}
                 }
                 session.transfer(
                     transformed_ff.flow_file,

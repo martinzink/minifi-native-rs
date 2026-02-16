@@ -1,7 +1,9 @@
 use super::PGPPrivateKeyService;
 use crate::test_utils::get_test_key_path;
 use minifi_native::MinifiError::ControllerServiceError;
-use minifi_native::{ComponentIdentifier, EnableControllerService, MockControllerServiceContext, MockLogger};
+use minifi_native::{
+    ComponentIdentifier, EnableControllerService, MockControllerServiceContext, MockLogger,
+};
 
 #[test]
 fn test_component_id() {
@@ -86,7 +88,8 @@ fn single_armored_key_file() {
         get_test_key_path("alice_private.asc"),
     );
 
-    let controller_service = PGPPrivateKeyService::enable(&context, &MockLogger::new()).expect("should enable");
+    let controller_service =
+        PGPPrivateKeyService::enable(&context, &MockLogger::new()).expect("should enable");
     assert!(controller_service.get_secret_key("Alice").is_some());
     assert!(
         controller_service
@@ -106,7 +109,8 @@ fn single_binary_key_file() {
         get_test_key_path("alice_private.gpg"),
     );
 
-    let controller_service = PGPPrivateKeyService::enable(&context, &MockLogger::new()).expect("should enable");
+    let controller_service =
+        PGPPrivateKeyService::enable(&context, &MockLogger::new()).expect("should enable");
     assert!(controller_service.get_secret_key("A").is_some());
     assert!(controller_service.get_secret_key("Alice").is_some());
     assert!(
@@ -129,7 +133,8 @@ fn armored_keyring_key_file() {
         get_test_key_path("secret_keyring.asc"),
     );
 
-    let controller_service = PGPPrivateKeyService::enable(&context, &MockLogger::new()).expect("should enable");
+    let controller_service =
+        PGPPrivateKeyService::enable(&context, &MockLogger::new()).expect("should enable");
     assert!(controller_service.get_secret_key("Alice").is_some());
     assert!(controller_service.get_secret_key("Bob").is_some());
     assert!(controller_service.get_secret_key("bob@home.io").is_some());
@@ -145,7 +150,8 @@ fn binary_keyring_key_file() {
         get_test_key_path("secret_keyring.gpg"),
     );
 
-    let controller_service = PGPPrivateKeyService::enable(&context, &MockLogger::new()).expect("should enable");
+    let controller_service =
+        PGPPrivateKeyService::enable(&context, &MockLogger::new()).expect("should enable");
     assert!(controller_service.get_secret_key("Alice").is_some());
     assert!(controller_service.get_secret_key("Bob").is_some());
     assert!(controller_service.get_secret_key("bob@home.io").is_some());
@@ -162,7 +168,8 @@ fn armored_keyring() {
 
     context.properties.insert("Key".to_string(), file_content);
 
-    let controller_service = PGPPrivateKeyService::enable(&context, &MockLogger::new()).expect("should enable");
+    let controller_service =
+        PGPPrivateKeyService::enable(&context, &MockLogger::new()).expect("should enable");
     assert!(controller_service.get_secret_key("Alice").is_some());
     assert!(controller_service.get_secret_key("Bob").is_some());
     assert!(controller_service.get_secret_key("bob@home.io").is_some());
@@ -179,7 +186,8 @@ fn armored_single_key() {
 
     context.properties.insert("Key".to_string(), file_content);
 
-    let controller_service = PGPPrivateKeyService::enable(&context, &MockLogger::new()).expect("should enable");
+    let controller_service =
+        PGPPrivateKeyService::enable(&context, &MockLogger::new()).expect("should enable");
     assert!(controller_service.get_secret_key("Alice").is_some());
     assert!(controller_service.get_secret_key("Bob").is_none());
     assert!(controller_service.get_secret_key("Carol").is_none());

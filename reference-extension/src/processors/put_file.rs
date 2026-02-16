@@ -1,3 +1,4 @@
+use minifi_native::macros::ComponentIdentifier;
 use minifi_native::{
     CalculateMetrics, Logger, MinifiError, MutTrigger, OnTriggerResult, ProcessContext,
     ProcessSession, Schedule,
@@ -59,7 +60,7 @@ impl PutFileUnixPermissions {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, ComponentIdentifier)]
 pub(crate) struct PutFile {
     conflict_resolution_strategy: ConflictResolutionStrategy,
     try_make_dirs: bool,

@@ -1,10 +1,12 @@
 use super::c_ffi_flow_file::CffiFlowFile;
 use super::c_ffi_primitives::{ConvertMinifiStringView, FfiConversionError, StringView};
 use crate::api::ProcessContext;
-use crate::{ComponentIdentifier, EnableControllerService, MinifiError, Property, RawControllerService};
+use crate::api::controller_service::ControllerService;
+use crate::{
+    ComponentIdentifier, EnableControllerService, MinifiError, Property, RawControllerService,
+};
 use minifi_native_sys::*;
 use std::ffi::c_void;
-use crate::api::controller_service::ControllerService;
 
 /// A safe wrapper around a `MinifiProcessContext` pointer.
 pub struct CffiProcessContext<'a> {
@@ -57,9 +59,7 @@ impl ControllerServiceHelper {
         version: &MinifiStringView,
     ) -> Result<bool, FfiConversionError> {
         unsafe {
-            Ok(self
-                .class_name_str
-                .ends_with(class.as_str()?)
+            Ok(self.class_name_str.ends_with(class.as_str()?)
                 && self.group_name_str == grp.as_str()?
                 && self.version_str == version.as_str()?)
         }
@@ -83,8 +83,8 @@ unsafe extern "C" fn get_controller_service_callback(
             Ok(true) => {
                 controller_service_helper.result = Some(controller_ptr);
                 MinifiStatus_MINIFI_STATUS_SUCCESS
-            },
-            Err(_e) => MinifiStatus_MINIFI_STATUS_UNKNOWN_ERROR
+            }
+            Err(_e) => MinifiStatus_MINIFI_STATUS_UNKNOWN_ERROR,
         }
     }
 }
@@ -121,9 +121,12 @@ impl<'a> ProcessContext for CffiProcessContext<'a> {
         }
     }
 
-    fn get_raw_controller_service<Cs>(&self, property: &Property) -> Result<Option<&'a Cs>, MinifiError>
+    fn get_raw_controller_service<Cs>(
+        &self,
+        property: &Property,
+    ) -> Result<Option<&'a Cs>, MinifiError>
     where
-        Cs: RawControllerService + ComponentIdentifier + 'static
+        Cs: RawControllerService + ComponentIdentifier + 'static,
     {
         if let Some(service_name) = self.get_property(property, None)? {
             let str_view = StringView::new(service_name.as_str());
@@ -141,7 +144,7 @@ impl<'a> ProcessContext for CffiProcessContext<'a> {
                     &mut helper as *mut _ as *mut c_void,
                 );
                 if get_cs_status != MinifiStatus_MINIFI_STATUS_SUCCESS {
-                    return Err(MinifiError::UnknownError);  // TODO(mzink) err from get_cs_status
+                    return Err(MinifiError::UnknownError); // TODO(mzink) err from get_cs_status
                 }
             }
 
@@ -163,13 +166,11 @@ impl<'a> ProcessContext for CffiProcessContext<'a> {
 
     fn get_controller_service<Cs>(&self, property: &Property) -> Result<Option<&Cs>, MinifiError>
     where
-        Cs: EnableControllerService + ComponentIdentifier + 'static
+        Cs: EnableControllerService + ComponentIdentifier + 'static,
     {
         match self.get_raw_controller_service::<ControllerService<Cs>>(property)? {
             None => Ok(None),
-            Some(f) => {
-                Ok(f.get_implementation())
-            }
+            Some(f) => Ok(f.get_implementation()),
         }
     }
 }

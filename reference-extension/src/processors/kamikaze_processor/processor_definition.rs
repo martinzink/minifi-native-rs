@@ -1,26 +1,18 @@
 use super::*;
 use minifi_native::{
-    HasRawProcessorDefinition, MultiThreadedProcessor, ProcessorInputRequirement,
-    RawProcessorDefinition,
+    OutputAttribute, ProcessorDefinition, ProcessorInputRequirement, Property, Relationship,
 };
 
-impl HasRawProcessorDefinition for KamikazeProcessor {
-    fn get_definition() -> Box<dyn minifi_native::DynRawProcessorDefinition> {
-        Box::new(RawProcessorDefinition::<
-            MultiThreadedProcessor<KamikazeProcessor>,
-        >::new(
-            "rs::KamikazeProcessorRs",
-            "This processor can fail or panic in on_trigger and on_schedule calls based on configuration. Only for testing purposes.",
-            ProcessorInputRequirement::Allowed,
-            false,
-            false,
-            &[],
-            &[relationships::SUCCESS],
-            &[
-                properties::ON_SCHEDULE_BEHAVIOUR,
-                properties::ON_TRIGGER_BEHAVIOUR,
-                properties::READ_BEHAVIOUR,
-            ],
-        ))
-    }
+impl ProcessorDefinition for KamikazeProcessor {
+    const DESCRIPTION: &'static str = "This processor can fail or panic in on_trigger and on_schedule calls based on configuration. Only for testing purposes.";
+    const INPUT_REQUIREMENT: ProcessorInputRequirement = ProcessorInputRequirement::Allowed;
+    const SUPPORTS_DYNAMIC_PROPERTIES: bool = false;
+    const SUPPORTS_DYNAMIC_RELATIONSHIPS: bool = false;
+    const OUTPUT_ATTRIBUTES: &'static [OutputAttribute] = &[];
+    const RELATIONSHIPS: &'static [Relationship] = &[relationships::SUCCESS];
+    const PROPERTIES: &'static [Property] = &[
+        properties::ON_SCHEDULE_BEHAVIOUR,
+        properties::ON_TRIGGER_BEHAVIOUR,
+        properties::READ_BEHAVIOUR,
+    ];
 }

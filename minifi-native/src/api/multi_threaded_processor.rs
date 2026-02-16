@@ -1,7 +1,10 @@
 use crate::api::RawProcessor;
 use crate::api::processor_traits::CalculateMetrics;
-use crate::api::raw::raw_processor::HasRawProcessorDefinition;
-use crate::{CffiLogger, Concurrent, DynRawProcessorDefinition, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession, RawMultiThreadedTrigger, RawRegisterableProcessor, Schedule};
+use crate::{
+    CffiLogger, ComponentIdentifier, Concurrent, DynRawProcessorDefinition, LogLevel, Logger,
+    MinifiError, OnTriggerResult, ProcessContext, ProcessSession, ProcessorDefinition,
+    RawMultiThreadedTrigger, RawProcessorDefinition, RawRegisterableProcessor, Schedule,
+};
 
 pub trait ConstTrigger {
     fn trigger<PC, PS, L>(
@@ -19,7 +22,8 @@ pub trait ConstTrigger {
 #[derive(Debug)]
 pub struct MultiThreadedProcessor<Implementation>
 where
-    Implementation: Schedule + ConstTrigger + HasRawProcessorDefinition + CalculateMetrics,
+    Implementation:
+        Schedule + ConstTrigger + ComponentIdentifier + ProcessorDefinition + CalculateMetrics,
 {
     logger: CffiLogger,
     scheduled_impl: Option<Implementation>,
@@ -27,7 +31,8 @@ where
 
 impl<Implementation> RawProcessor for MultiThreadedProcessor<Implementation>
 where
-    Implementation: Schedule + ConstTrigger + HasRawProcessorDefinition + CalculateMetrics,
+    Implementation:
+        Schedule + ConstTrigger + ComponentIdentifier + ProcessorDefinition + CalculateMetrics,
 {
     type Threading = Concurrent;
 
@@ -66,7 +71,8 @@ where
 
 impl<Implementation> RawMultiThreadedTrigger for MultiThreadedProcessor<Implementation>
 where
-    Implementation: Schedule + ConstTrigger + HasRawProcessorDefinition + CalculateMetrics,
+    Implementation:
+        Schedule + ConstTrigger + ComponentIdentifier + ProcessorDefinition + CalculateMetrics,
 {
     fn on_trigger<PC, PS>(
         &self,
@@ -89,9 +95,25 @@ where
 
 impl<Implementation> RawRegisterableProcessor for MultiThreadedProcessor<Implementation>
 where
-    Implementation: Schedule + ConstTrigger + HasRawProcessorDefinition + CalculateMetrics,
+    Implementation: Schedule
+        + ConstTrigger
+        + ComponentIdentifier
+        + ProcessorDefinition
+        + CalculateMetrics
+        + 'static,
 {
     fn get_definition() -> Box<dyn DynRawProcessorDefinition> {
-        Implementation::get_definition()
+        Box::new(RawProcessorDefinition::<
+            MultiThreadedProcessor<Implementation>,
+        >::new(
+            Implementation::CLASS_NAME,
+            Implementation::DESCRIPTION,
+            Implementation::INPUT_REQUIREMENT,
+            Implementation::SUPPORTS_DYNAMIC_PROPERTIES,
+            Implementation::SUPPORTS_DYNAMIC_RELATIONSHIPS,
+            Implementation::OUTPUT_ATTRIBUTES,
+            Implementation::RELATIONSHIPS,
+            Implementation::PROPERTIES,
+        ))
     }
 }

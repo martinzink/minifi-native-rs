@@ -1,5 +1,4 @@
 use crate::{OutputAttribute, ProcessorInputRequirement, Property, Relationship};
-pub use minifi_macros::IdentifyComponent;
 
 pub trait ComponentIdentifier {
     const CLASS_NAME: &'static str;

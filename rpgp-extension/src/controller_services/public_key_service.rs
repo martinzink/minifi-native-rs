@@ -2,19 +2,22 @@ mod controller_service_definition;
 mod properties;
 
 use crate::controller_services::public_key_service::properties::{KEYRING, KEYRING_FILE};
-use minifi_native::{ControllerServiceContext, EnableControllerService, IdentifyComponent, Logger, MinifiError};
+use minifi_native::macros::ComponentIdentifier;
+use minifi_native::{ControllerServiceContext, EnableControllerService, Logger, MinifiError};
 use pgp::composed::{Deserializable, SignedPublicKey};
 
-#[derive(Debug, IdentifyComponent)]
-#[derive(PartialEq)]
+#[derive(Debug, ComponentIdentifier, PartialEq)]
 pub(crate) struct PGPPublicKeyService {
     public_keys: Vec<SignedPublicKey>,
 }
 
 impl EnableControllerService for PGPPublicKeyService {
-    fn enable<P: ControllerServiceContext, L: Logger>(context: &P, _logger: &L) -> Result<Self, MinifiError>
+    fn enable<P: ControllerServiceContext, L: Logger>(
+        context: &P,
+        _logger: &L,
+    ) -> Result<Self, MinifiError>
     where
-        Self: Sized
+        Self: Sized,
     {
         let mut public_keys = vec![];
         if let Some(keyring_file_path) = context.get_property(&KEYRING_FILE)? {
@@ -37,7 +40,7 @@ impl EnableControllerService for PGPPublicKeyService {
                 "Could not load any valid keys",
             ));
         }
-        Ok(Self{public_keys})
+        Ok(Self { public_keys })
     }
 }
 

@@ -2,7 +2,10 @@ use crate::controller_services::private_key_service::PGPPrivateKeyService;
 use crate::processors::decrypt_content::DecryptContentPGP;
 use crate::test_utils;
 use crate::test_utils::get_test_message;
-use minifi_native::{EnableControllerService, FlowFileTransform, MockControllerServiceContext, MockFlowFile, MockLogger, MockProcessContext, Schedule};
+use minifi_native::{
+    Content, EnableControllerService, FlowFileTransform, MockControllerServiceContext,
+    MockFlowFile, MockLogger, MockProcessContext, Schedule,
+};
 
 #[test]
 fn fails_to_schedule_by_default() {
@@ -90,13 +93,13 @@ fn test_decryption(
         .expect("Should be able to transform");
 
     match expected_result {
-        Ok(result_bytes) => {
+        Ok(_result_bytes) => {
             assert_eq!(res.target_relationship(), &super::relationships::SUCCESS);
-            assert_eq!(res.new_content().unwrap(), result_bytes);
+            assert!(!std::matches!(res.new_content(), Content::NoChange));
         }
         Err(_) => {
             assert_eq!(res.target_relationship(), &super::relationships::FAILURE);
-            assert!(res.new_content().is_none());
+            assert!(std::matches!(res.new_content(), Content::NoChange));
         }
     }
 }
@@ -184,7 +187,6 @@ fn decryption_of_not_encrypted_data() {
 
     let logger = MockLogger::new();
 
-
     let decrypt_content = DecryptContentPGP::schedule(&processor_context, &logger)
         .expect("Should schedule without any properties");
     let res = decrypt_content
@@ -197,5 +199,5 @@ fn decryption_of_not_encrypted_data() {
         .expect("Should be able to transform");
 
     assert_eq!(res.target_relationship(), &super::relationships::FAILURE);
-    assert!(res.new_content().is_none());
+    assert!(std::matches!(res.new_content(), Content::NoChange));
 }

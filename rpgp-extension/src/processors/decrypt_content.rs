@@ -5,9 +5,9 @@ mod relationships;
 use crate::controller_services::private_key_service::PGPPrivateKeyService;
 use crate::processors::decrypt_content::properties::{PRIVATE_KEY_SERVICE, SYMMETRIC_PASSWORD};
 use crate::processors::decrypt_content::relationships::{FAILURE, SUCCESS};
+use minifi_native::macros::{ComponentIdentifier, DefaultMetrics};
 use minifi_native::{
-    CalculateMetrics, FlowFileTransform, IdentifyComponent, Logger, MinifiError, ProcessContext,
-    Schedule, TransformedFlowFile,
+    FlowFileTransform, Logger, MinifiError, ProcessContext, Schedule, TransformedFlowFile,
 };
 use pgp::composed::{Message, TheRing};
 use std::collections::HashMap;
@@ -20,7 +20,7 @@ enum DecryptionStrategy {
     Packaged,
 }
 
-#[derive(Debug, IdentifyComponent)]
+#[derive(Debug, ComponentIdentifier, DefaultMetrics)]
 pub(crate) struct DecryptContentPGP {
     decompress_data: bool,
     symmetric_password: Option<pgp::types::Password>,
@@ -169,8 +169,6 @@ impl FlowFileTransform for DecryptContentPGP {
         ))
     }
 }
-
-impl CalculateMetrics for DecryptContentPGP {}
 
 #[cfg(test)]
 mod tests;
