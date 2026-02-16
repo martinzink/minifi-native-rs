@@ -32,6 +32,8 @@ pub enum MinifiError {
     Parse(ParseError),
     ScheduleError(String),
     TriggerError(String),
+    IoError,
+    StatusError(u32)
 }
 
 impl From<strum::ParseError> for MinifiError {

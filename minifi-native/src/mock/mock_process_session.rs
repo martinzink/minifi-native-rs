@@ -53,14 +53,14 @@ impl ProcessSession for MockProcessSession {
         flow_file.content = data.to_vec();
     }
 
-    fn write_in_batches<'b, F: FnMut() -> Option<&'b [u8]>>(
-        &mut self,
-        flow_file: &mut Self::FlowFile,
-        mut produce_batch: F,
-    ) -> bool {
+    fn write_in_batches<F>(&mut self, flow_file: &mut Self::FlowFile, mut produce_batch: F) -> bool
+    where
+        F: FnMut(&mut [u8]) -> Option<usize>
+    {
         flow_file.content.clear();
-        while let Some(batch) = produce_batch() {
-            flow_file.content.append(&mut batch.to_vec());
+        let mut buffer = Vec::new();
+        while let Some(_batch) = produce_batch(&mut buffer) {
+            flow_file.content.append(&mut buffer);
         }
         true
     }

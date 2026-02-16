@@ -10,8 +10,8 @@ crate-type = ["cdylib"]
 minifi-native = { path = "../minifi-native" }
 strum_macros = "0.27.2"
 strum = "0.27.2"
-pgp = "0.18.0"
-rand = "0.8.5"
+pgp = "0.19.0"
+rand = "0.8.5" # pgp 0.19.0 doesnt support >= 0.9 rand yet
 
 [dev-dependencies]
 minifi-native = { path = "../minifi-native" }

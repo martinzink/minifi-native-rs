@@ -17,11 +17,10 @@ pub trait ProcessSession {
     ) -> bool; // TODO(mzink) Result
 
     fn write(&mut self, flow_file: &mut Self::FlowFile, data: &[u8]);
-    fn write_in_batches<'b, F: FnMut() -> Option<&'b [u8]>>(
-        &mut self,
-        flow_file: &mut Self::FlowFile,
-        produce_batch: F,
-    ) -> bool;
+    fn write_in_batches<F>(&mut self, flow_file: &mut Self::FlowFile, produce_batch: F) -> bool
+    where
+        F: FnMut(&mut [u8]) -> Option<usize>;
+
     fn read(&mut self, flow_file: &Self::FlowFile) -> Option<Vec<u8>>;
     fn read_in_batches<F>(
         &mut self,

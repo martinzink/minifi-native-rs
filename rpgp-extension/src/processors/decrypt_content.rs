@@ -96,7 +96,7 @@ impl DecryptContentPGP {
             }
             attributes_to_add.insert(
                 output_attributes::LITERAL_DATA_MODIFIED.name.to_string(),
-                literal_data_header.created().to_string(),
+                literal_data_header.created().as_secs().to_string(),
             );
         }
         attributes_to_add

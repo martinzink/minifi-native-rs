@@ -69,19 +69,6 @@ impl<'a, FlowFileType> TransformedFlowFile<'a, FlowFileType> {
     pub fn attributes_to_add(&self) -> &HashMap<String, String> {
         &self.attributes_to_add
     }
-
-    #[cfg(test)]
-    pub fn content_as_bytes(&mut self) -> Vec<u8> {
-        match &mut self.new_content {
-            Content::Buffer(content) => content.clone(),
-            Content::NoChange => Vec::new(),
-            Content::Stream(stream) => {
-                let mut result = Vec::new();
-                std::io::copy(stream, &mut result).expect("should be readable during testing");
-                result
-            }
-        }
-    }
 }
 
 pub trait FlowFileTransform {
@@ -175,8 +162,18 @@ where
                     Content::Buffer(buffer) => {
                         session.write(&mut transformed_ff.flow_file, &buffer);
                     }
-                    Content::Stream(_stream) => {
-                        todo!("not yet implemented")
+                    Content::Stream(mut stream) => {
+                        let success = session.write_in_batches(&mut transformed_ff.flow_file, |buffer| {
+                            match stream.read(buffer) {
+                                Ok(0) => None, // EOF
+                                Ok(n) => Some(n),
+                                Err(_e) => None, // Signal failure/EOF
+                            }
+                        });
+
+                        if !success {
+                            return Err(MinifiError::IoError);
+                        }
                     }
                     Content::NoChange => {}
                 }

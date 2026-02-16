@@ -2,13 +2,7 @@ use super::c_ffi_flow_file::CffiFlowFile;
 use crate::MinifiError;
 use crate::api::ProcessSession;
 use crate::c_ffi::c_ffi_primitives::{ConvertMinifiStringView, StringView};
-use minifi_native_sys::{
-    MinifiFlowFileGetAttribute, MinifiFlowFileGetAttributes, MinifiFlowFileSetAttribute,
-    MinifiInputStream, MinifiInputStreamRead, MinifiInputStreamSize, MinifiOutputStream,
-    MinifiOutputStreamWrite, MinifiProcessSession, MinifiProcessSessionCreate,
-    MinifiProcessSessionGet, MinifiProcessSessionRead, MinifiProcessSessionTransfer,
-    MinifiProcessSessionWrite, MinifiStringView,
-};
+use minifi_native_sys::{MinifiFlowFileGetAttribute, MinifiFlowFileGetAttributes, MinifiFlowFileSetAttribute, MinifiInputStream, MinifiInputStreamRead, MinifiInputStreamSize, MinifiOutputStream, MinifiOutputStreamWrite, MinifiProcessSession, MinifiProcessSessionCreate, MinifiProcessSessionGet, MinifiProcessSessionRead, MinifiProcessSessionTransfer, MinifiProcessSessionWrite, MinifiStatus_MINIFI_STATUS_SUCCESS, MinifiStringView};
 use std::ffi::{CString, c_void};
 use std::os::raw::c_char;
 
@@ -171,31 +165,47 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                 Some(cb),
                 &mut dt as *mut _ as *mut c_void,
             ) {
-                0 => {} // TODO(replace with const)
-                _ => {}
+                #[allow(non_upper_case_globals)]
+                MinifiStatus_MINIFI_STATUS_SUCCESS => {}
+                _ => {} // todo! return the error code (change signature)
             }
         }
     }
 
-    fn write_in_batches<'b, F: FnMut() -> Option<&'b [u8]>>(
-        &mut self,
-        flow_file: &mut Self::FlowFile,
-        mut produce_batch: F,
-    ) -> bool {
+    fn write_in_batches<F>(&mut self, flow_file: &mut Self::FlowFile, produce_batch: F) -> bool
+    where
+        F: FnMut(&mut [u8]) -> Option<usize>
+    {
         unsafe {
-            unsafe extern "C" fn cb<'b, F: FnMut() -> Option<&'b [u8]>>(
+            struct State<'b, F: FnMut(&mut [u8]) -> Option<usize>> {
+                callback: F,
+                buffer: &'b mut [u8],
+            }
+
+            let mut buffer = [0u8; 8192];
+            let mut state = State {
+                callback: produce_batch,
+                buffer: &mut buffer,
+            };
+
+            unsafe extern "C" fn cb<F: FnMut(&mut [u8]) -> Option<usize>>(
                 user_ctx: *mut c_void,
                 output_stream: *mut MinifiOutputStream,
             ) -> i64 {
                 unsafe {
-                    let produce_batch = &mut *(user_ctx as *mut F);
+                    let state = &mut *(user_ctx as *mut State<F>);
                     let mut overall_writes = 0;
-                    while let Some(batch) = produce_batch() {
-                        overall_writes += MinifiOutputStreamWrite(
+
+                    // The user fills our provided buffer
+                    while let Some(n) = (state.callback)(state.buffer) {
+                        let written = MinifiOutputStreamWrite(
                             output_stream,
-                            batch.as_ptr() as *const c_char,
-                            batch.len(),
-                        )
+                            state.buffer.as_ptr() as *const c_char,
+                            n,
+                        );
+
+                        if written < 0 { return -1; }
+                        overall_writes += written;
                     }
                     overall_writes
                 }
@@ -205,10 +215,11 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                 self.ptr,
                 flow_file.ptr,
                 Some(cb::<F>),
-                &mut produce_batch as *mut _ as *mut c_void,
+                &mut state as *mut _ as *mut c_void,
             ) {
-                0 => true, // TODO(replace with const)
-                _ => false,
+                #[allow(non_upper_case_globals)]
+                MinifiStatus_MINIFI_STATUS_SUCCESS => true,
+                _ => false,  // todo! better err handling
             }
         }
     }
@@ -327,8 +338,9 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                 Some(cb::<F>),
                 &mut batch_helper as *mut _ as *mut c_void,
             ) {
-                0 => Ok(()),
-                _ => Err(MinifiError::UnknownError), // TODO(MinifiStatusError?)
+                #[allow(non_upper_case_globals)]
+                MinifiStatus_MINIFI_STATUS_SUCCESS => Ok(()),
+                status_code => Err(MinifiError::StatusError(status_code))
             }
         }
     }
