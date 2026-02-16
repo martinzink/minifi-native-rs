@@ -1,9 +1,18 @@
 use super::*;
-use minifi_native::{MockFlowFile, MockLogger, MockProcessContext, MockProcessSession};
+use minifi_native::{ComponentIdentifier, MockFlowFile, MockLogger, MockProcessContext, MockProcessSession};
 
 #[test]
+fn test_component_id() {
+    assert_eq!(
+        LogAttributeRs::CLASS_NAME,
+        "rust_reference_extension::processors::log_attribute::LogAttributeRs"
+    );
+    assert_eq!(LogAttributeRs::GROUP_NAME, "rust_reference_extension");
+    assert_eq!(LogAttributeRs::VERSION, "0.1.0");
+}
+#[test]
 fn schedule_succeeds_with_default_values() {
-    assert!(LogAttribute::schedule(&MockProcessContext::new(), &MockLogger::new()).is_ok());
+    assert!(LogAttributeRs::schedule(&MockProcessContext::new(), &MockLogger::new()).is_ok());
 }
 
 fn tester(
@@ -18,7 +27,7 @@ fn tester(
         context.properties.insert(k.to_string(), v.to_string());
     }
 
-    let processor = LogAttribute::schedule(&context, &logger).unwrap();
+    let processor = LogAttributeRs::schedule(&context, &logger).unwrap();
 
     let mut session = MockProcessSession::new();
     for flow_file in input_flow_files {

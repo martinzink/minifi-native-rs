@@ -2,12 +2,12 @@ use crate::processors::get_file::output_attributes::{
     ABSOLUTE_PATH_OUTPUT_ATTRIBUTE, FILENAME_OUTPUT_ATTRIBUTE,
 };
 use crate::processors::get_file::properties::*;
-use crate::processors::get_file::{GetFile, relationships};
+use crate::processors::get_file::{GetFileRs, relationships};
 use minifi_native::{
     OutputAttribute, ProcessorDefinition, ProcessorInputRequirement, Property, Relationship,
 };
 
-impl ProcessorDefinition for GetFile {
+impl ProcessorDefinition for GetFileRs {
     const DESCRIPTION: &'static str = "Creates FlowFiles from files in a directory. MiNiFi will ignore files for which it doesn't have read permissions.";
     const INPUT_REQUIREMENT: ProcessorInputRequirement = ProcessorInputRequirement::Forbidden;
     const SUPPORTS_DYNAMIC_PROPERTIES: bool = false;

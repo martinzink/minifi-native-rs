@@ -3,7 +3,7 @@ use minifi_native::{
     OutputAttribute, ProcessorDefinition, ProcessorInputRequirement, Property, Relationship,
 };
 
-impl ProcessorDefinition for KamikazeProcessor {
+impl ProcessorDefinition for KamikazeProcessorRs {
     const DESCRIPTION: &'static str = "This processor can fail or panic in on_trigger and on_schedule calls based on configuration. Only for testing purposes.";
     const INPUT_REQUIREMENT: ProcessorInputRequirement = ProcessorInputRequirement::Allowed;
     const SUPPORTS_DYNAMIC_PROPERTIES: bool = false;

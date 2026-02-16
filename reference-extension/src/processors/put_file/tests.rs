@@ -4,7 +4,7 @@ use minifi_native::{MockFlowFile, MockLogger, MockProcessContext, MockProcessSes
 
 #[test]
 fn schedule_succeeds_with_default_values() {
-    assert!(PutFile::schedule(&MockProcessContext::new(), &MockLogger::new()).is_ok());
+    assert!(PutFileRs::schedule(&MockProcessContext::new(), &MockLogger::new()).is_ok());
 }
 
 #[test]
@@ -17,7 +17,7 @@ fn simple_put_file_test() {
         "Directory".to_string(),
         put_file_dir.to_str().unwrap().to_string(),
     );
-    let mut put_file = PutFile::schedule(&context, &MockLogger::new()).expect("Should succeed");
+    let mut put_file = PutFileRs::schedule(&context, &MockLogger::new()).expect("Should succeed");
 
     let mut session = MockProcessSession::new();
     let mut flow_file = MockFlowFile::new();
@@ -57,7 +57,7 @@ fn put_file_without_create_dirs() {
         "false".to_string(),
     );
 
-    let mut put_file = PutFile::schedule(&context, &MockLogger::new()).expect("Should succeed");
+    let mut put_file = PutFileRs::schedule(&context, &MockLogger::new()).expect("Should succeed");
 
     let mut session = MockProcessSession::new();
     let mut flow_file = MockFlowFile::new();
@@ -99,7 +99,7 @@ fn put_file_test_permissions() {
     context
         .properties
         .insert("Permissions".to_string(), "0777".to_string());
-    let mut put_file = PutFile::schedule(&context, &MockLogger::new()).expect("Should succeed");
+    let mut put_file = PutFileRs::schedule(&context, &MockLogger::new()).expect("Should succeed");
 
     let mut session = MockProcessSession::new();
     let mut flow_file = MockFlowFile::new();

@@ -61,14 +61,14 @@ impl PutFileUnixPermissions {
 }
 
 #[derive(Debug, ComponentIdentifier)]
-pub(crate) struct PutFile {
+pub(crate) struct PutFileRs {
     conflict_resolution_strategy: ConflictResolutionStrategy,
     try_make_dirs: bool,
     maximum_file_count: Option<u64>,
     unix_permissions: PutFileUnixPermissions,
 }
 
-impl PutFile {
+impl PutFileRs {
     pub(crate) fn directory_is_full(&self, p0: &Path) -> bool {
         if let Some(max_file_count) = self.maximum_file_count
             && let Some(parent) = p0.parent()
@@ -171,7 +171,7 @@ impl PutFile {
     }
 }
 
-impl Schedule for PutFile {
+impl Schedule for PutFileRs {
     fn schedule<P: ProcessContext, L: Logger>(
         context: &P,
         _logger: &L,
@@ -189,7 +189,7 @@ impl Schedule for PutFile {
 
         let unix_permissions = Self::parse_unix_permissions(context)?;
 
-        Ok(PutFile {
+        Ok(PutFileRs {
             conflict_resolution_strategy,
             try_make_dirs,
             maximum_file_count,
@@ -198,7 +198,7 @@ impl Schedule for PutFile {
     }
 }
 
-impl MutTrigger for PutFile {
+impl MutTrigger for PutFileRs {
     fn trigger<PC, PS, L>(
         &mut self,
         context: &mut PC,
@@ -258,7 +258,7 @@ impl MutTrigger for PutFile {
     }
 }
 
-impl CalculateMetrics for PutFile {}
+impl CalculateMetrics for PutFileRs {}
 
 #[cfg(not(test))]
 pub(crate) mod processor_definition;

@@ -17,12 +17,12 @@ enum KamikazeBehaviour {
 }
 
 #[derive(Debug, ComponentIdentifier)]
-pub(crate) struct KamikazeProcessor {
+pub(crate) struct KamikazeProcessorRs {
     on_trigger_behaviour: KamikazeBehaviour,
     read_behaviour: Option<KamikazeBehaviour>,
 }
 
-impl Schedule for KamikazeProcessor {
+impl Schedule for KamikazeProcessorRs {
     fn schedule<P: ProcessContext, L: Logger>(context: &P, _logger: &L) -> Result<Self, MinifiError>
     where
         Self: Sized,
@@ -42,7 +42,7 @@ impl Schedule for KamikazeProcessor {
 
         match on_schedule_behaviour {
             KamikazeBehaviour::ReturnErr => Err(MinifiError::UnknownError),
-            KamikazeBehaviour::ReturnOk => Ok(KamikazeProcessor {
+            KamikazeBehaviour::ReturnOk => Ok(KamikazeProcessorRs {
                 on_trigger_behaviour,
                 read_behaviour,
             }),
@@ -53,7 +53,7 @@ impl Schedule for KamikazeProcessor {
     }
 }
 
-impl ConstTrigger for KamikazeProcessor {
+impl ConstTrigger for KamikazeProcessorRs {
     fn trigger<PC, PS, L>(
         &self,
         _context: &mut PC,
@@ -89,7 +89,7 @@ impl ConstTrigger for KamikazeProcessor {
     }
 }
 
-impl CalculateMetrics for KamikazeProcessor {}
+impl CalculateMetrics for KamikazeProcessorRs {}
 
 #[cfg(not(test))]
 pub(crate) mod processor_definition;

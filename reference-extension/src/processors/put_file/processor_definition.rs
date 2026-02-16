@@ -1,11 +1,8 @@
 use super::*;
-use minifi_native::{
-    HasRawProcessorDefinition, ProcessorInputRequirement, Property, RawProcessorDefinition,
-    SingleThreadedProcessor,
-};
+use minifi_native::{HasRawProcessorDefinition, OutputAttribute, ProcessorDefinition, ProcessorInputRequirement, Property, RawProcessorDefinition, Relationship, SingleThreadedProcessor};
 
 #[cfg(windows)]
-fn get_properties() -> &'static [Property] {
+const fn get_properties() -> &'static [Property] {
     &[
         properties::DIRECTORY,
         properties::CONFLICT_RESOLUTION,
@@ -15,7 +12,7 @@ fn get_properties() -> &'static [Property] {
 }
 
 #[cfg(unix)]
-fn get_properties() -> &'static [Property] {
+const fn get_properties() -> &'static [Property] {
     &[
         properties::DIRECTORY,
         properties::CONFLICT_RESOLUTION,
@@ -26,10 +23,10 @@ fn get_properties() -> &'static [Property] {
     ]
 }
 
-impl HasRawProcessorDefinition for PutFile {
+impl HasRawProcessorDefinition for PutFileRs {
     fn get_definition() -> Box<dyn minifi_native::DynRawProcessorDefinition> {
         Box::new(
-            RawProcessorDefinition::<SingleThreadedProcessor<PutFile>>::new(
+            RawProcessorDefinition::<SingleThreadedProcessor<PutFileRs>>::new(
                 "rs::PutFileRs",
                 "Writes the contents of a FlowFile to the local file system.",
                 ProcessorInputRequirement::Required,
@@ -41,4 +38,14 @@ impl HasRawProcessorDefinition for PutFile {
             ),
         )
     }
+}
+
+impl ProcessorDefinition for PutFileRs {
+    const DESCRIPTION: &'static str = "Writes the contents of a FlowFile to the local file system.";
+    const INPUT_REQUIREMENT: ProcessorInputRequirement = ProcessorInputRequirement::Required;
+    const SUPPORTS_DYNAMIC_PROPERTIES: bool = false;
+    const SUPPORTS_DYNAMIC_RELATIONSHIPS: bool = false;
+    const OUTPUT_ATTRIBUTES: &'static [OutputAttribute] = &[];
+    const RELATIONSHIPS: &'static [Relationship] = &[relationships::SUCCESS, relationships::FAILURE];
+    const PROPERTIES: &'static [Property] = get_properties();
 }

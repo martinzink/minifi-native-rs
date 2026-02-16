@@ -21,14 +21,14 @@ enum Mode {
 }
 
 #[derive(Debug, ComponentIdentifier)]
-pub(crate) struct GenerateFlowFile {
+pub(crate) struct GenerateFlowFileRs {
     mode: Mode,
     batch_size: u64,
     file_size: u64,
     data_generated_during_on_schedule: Vec<u8>,
 }
 
-impl Schedule for GenerateFlowFile {
+impl Schedule for GenerateFlowFileRs {
     fn schedule<P: ProcessContext, L: Logger>(context: &P, _logger: &L) -> Result<Self, MinifiError>
     where
         Self: Sized,
@@ -71,7 +71,7 @@ impl Schedule for GenerateFlowFile {
     }
 }
 
-impl GenerateFlowFile {
+impl GenerateFlowFileRs {
     fn is_unique(&self) -> bool {
         match self.mode {
             Mode::UniqueBytes => true,
@@ -124,7 +124,7 @@ impl GenerateFlowFile {
     }
 }
 
-impl ConstTrigger for GenerateFlowFile {
+impl ConstTrigger for GenerateFlowFileRs {
     fn trigger<PC, PS, L>(
         &self,
         context: &mut PC,
@@ -164,7 +164,7 @@ impl ConstTrigger for GenerateFlowFile {
     }
 }
 
-impl CalculateMetrics for GenerateFlowFile {}
+impl CalculateMetrics for GenerateFlowFileRs {}
 
 #[cfg(not(test))]
 pub(crate) mod processor_definition;

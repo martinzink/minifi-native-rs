@@ -2,7 +2,7 @@ mod api;
 mod c_ffi;
 mod mock;
 
-pub use api::raw::raw_controller_service::RawControllerService; // TODO(mzink) replace with more user friendly API
+pub use api::raw::raw_controller_service::RawControllerService;
 
 pub use api::component_definition_traits::{
     ComponentIdentifier, ControllerServiceDefinition, ProcessorDefinition,

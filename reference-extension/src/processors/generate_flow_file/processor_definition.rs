@@ -1,10 +1,10 @@
 use super::properties::*;
-use super::{GenerateFlowFile, relationships};
+use super::{GenerateFlowFileRs, relationships};
 use minifi_native::{
     OutputAttribute, ProcessorDefinition, ProcessorInputRequirement, Property, Relationship,
 };
 
-impl ProcessorDefinition for GenerateFlowFile {
+impl ProcessorDefinition for GenerateFlowFileRs {
     const DESCRIPTION: &'static str = "This processor creates FlowFiles with random data or custom content. GenerateFlowFile is useful for load testing, configuration, and simulation.";
     const INPUT_REQUIREMENT: ProcessorInputRequirement = ProcessorInputRequirement::Forbidden;
     const SUPPORTS_DYNAMIC_PROPERTIES: bool = false;

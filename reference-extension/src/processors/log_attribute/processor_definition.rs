@@ -1,10 +1,10 @@
 use crate::processors::log_attribute::properties::*;
-use crate::processors::log_attribute::{LogAttribute, relationships};
+use crate::processors::log_attribute::{LogAttributeRs, relationships};
 use minifi_native::{
     OutputAttribute, ProcessorDefinition, ProcessorInputRequirement, Property, Relationship,
 };
 
-impl ProcessorDefinition for LogAttribute {
+impl ProcessorDefinition for LogAttributeRs {
     const DESCRIPTION: &'static str =
         "Logs attributes of flow files in the MiNiFi application log.";
     const INPUT_REQUIREMENT: ProcessorInputRequirement = ProcessorInputRequirement::Required;

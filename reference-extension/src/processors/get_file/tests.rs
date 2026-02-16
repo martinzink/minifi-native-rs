@@ -7,7 +7,7 @@ use tempfile::TempDir;
 #[test]
 fn schedule_fails_without_input_dir() {
     assert_eq!(
-        GetFile::schedule(&MockProcessContext::new(), &MockLogger::new())
+        GetFileRs::schedule(&MockProcessContext::new(), &MockLogger::new())
             .err()
             .unwrap(),
         MinifiError::MissingRequiredProperty("Input Directory")
@@ -22,7 +22,7 @@ fn schedule_fails_with_invalid_input_dir() {
         "/invalid_directory".to_string(),
     );
     assert_eq!(
-        GetFile::schedule(&context, &MockLogger::new())
+        GetFileRs::schedule(&context, &MockLogger::new())
             .err()
             .unwrap(),
         MinifiError::ScheduleError("\"/invalid_directory\" is not a valid directory".to_string())
@@ -41,7 +41,7 @@ fn simple_get_file_test() {
         temp_dir.path().to_str().unwrap().to_string(),
     );
 
-    let get_file = GetFile::schedule(&context, &MockLogger::new()).unwrap();
+    let get_file = GetFileRs::schedule(&context, &MockLogger::new()).unwrap();
 
     let mut session = MockProcessSession::new();
     assert!(
@@ -84,7 +84,7 @@ fn complex_dir_without_filters() {
         .insert("Batch Size".to_string(), "10".to_string());
 
     let mut session = MockProcessSession::new();
-    let get_file = GetFile::schedule(&context, &MockLogger::new()).unwrap();
+    let get_file = GetFileRs::schedule(&context, &MockLogger::new()).unwrap();
     assert!(
         get_file
             .trigger(&mut context, &mut session, &MockLogger::new())
@@ -114,7 +114,7 @@ fn test_complex_dir_with_filter(
         .insert(property_name.to_string(), property_vale.to_string());
 
     let mut session = MockProcessSession::new();
-    let get_file = GetFile::schedule(&context, &MockLogger::new()).unwrap();
+    let get_file = GetFileRs::schedule(&context, &MockLogger::new()).unwrap();
     assert!(
         get_file
             .trigger(&mut context, &mut session, &MockLogger::new())
@@ -172,7 +172,7 @@ fn test_hidden_files_and_batch_size() {
         .insert(IGNORE_HIDDEN_FILES.name.to_string(), "false".to_string());
 
     let mut session = MockProcessSession::new();
-    let get_file = GetFile::schedule(&context, &MockLogger::new()).unwrap();
+    let get_file = GetFileRs::schedule(&context, &MockLogger::new()).unwrap();
     assert!(
         get_file
             .trigger(&mut context, &mut session, &MockLogger::new())

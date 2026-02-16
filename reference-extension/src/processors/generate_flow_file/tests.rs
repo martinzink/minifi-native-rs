@@ -6,7 +6,7 @@ use minifi_native::{MockLogger, MockProcessContext, MockProcessSession};
 
 #[test]
 fn schedule_succeeds_with_default_values() {
-    assert!(GenerateFlowFile::schedule(&MockProcessContext::new(), &MockLogger::new()).is_ok());
+    assert!(GenerateFlowFileRs::schedule(&MockProcessContext::new(), &MockLogger::new()).is_ok());
 }
 
 #[test]
@@ -23,7 +23,7 @@ fn generate_flow_file_empty_test() {
         .properties
         .insert(DATA_FORMAT.name.to_string(), "Text".to_string());
 
-    let processor = GenerateFlowFile::schedule(&context, &logger).unwrap();
+    let processor = GenerateFlowFileRs::schedule(&context, &logger).unwrap();
     let mut session = MockProcessSession::new();
     assert_eq!(
         processor.trigger(&mut context, &mut session, &logger),
@@ -50,7 +50,7 @@ fn generate_custom_text() {
         .insert(CUSTOM_TEXT.name.to_string(), "foo bar baz".to_string());
 
     let logger = MockLogger::new();
-    let processor = GenerateFlowFile::schedule(&context, &logger).unwrap();
+    let processor = GenerateFlowFileRs::schedule(&context, &logger).unwrap();
 
     let mut session = MockProcessSession::new();
     assert_eq!(
@@ -81,7 +81,7 @@ fn random_bytes_unique() {
         .insert(BATCH_SIZE.name.to_string(), "2".to_string());
 
     let logger = MockLogger::new();
-    let processor = GenerateFlowFile::schedule(&context, &logger).unwrap();
+    let processor = GenerateFlowFileRs::schedule(&context, &logger).unwrap();
     let mut session = MockProcessSession::new();
     assert_eq!(
         processor.trigger(&mut context, &mut session, &logger),
@@ -119,7 +119,7 @@ fn random_bytes_non_unique() {
         .insert(BATCH_SIZE.name.to_string(), "2".to_string());
 
     let logger = MockLogger::new();
-    let processor = GenerateFlowFile::schedule(&context, &logger).unwrap();
+    let processor = GenerateFlowFileRs::schedule(&context, &logger).unwrap();
     let mut session = MockProcessSession::new();
     assert_eq!(
         processor.trigger(&mut context, &mut session, &logger),

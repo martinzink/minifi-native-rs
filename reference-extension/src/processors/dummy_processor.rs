@@ -8,9 +8,9 @@ use minifi_native::{
 };
 
 #[derive(Debug, ComponentIdentifier)]
-pub(crate) struct DummyProcessor {}
+pub(crate) struct DummyProcessorRs {}
 
-impl Schedule for DummyProcessor {
+impl Schedule for DummyProcessorRs {
     fn schedule<P: ProcessContext, L: Logger>(
         _context: &P,
         _logger: &L,
@@ -22,7 +22,7 @@ impl Schedule for DummyProcessor {
     }
 }
 
-impl ConstTrigger for DummyProcessor {
+impl ConstTrigger for DummyProcessorRs {
     fn trigger<PC, PS, L>(
         &self,
         context: &mut PC,
@@ -52,7 +52,7 @@ impl ConstTrigger for DummyProcessor {
     }
 }
 
-impl CalculateMetrics for DummyProcessor {}
+impl CalculateMetrics for DummyProcessorRs {}
 
 #[cfg(not(test))]
 pub(crate) mod processor_definition;

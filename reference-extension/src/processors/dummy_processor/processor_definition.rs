@@ -1,10 +1,10 @@
-use super::DummyProcessor;
+use super::DummyProcessorRs;
 use super::properties::*;
 use minifi_native::{
     OutputAttribute, ProcessorDefinition, ProcessorInputRequirement, Property, Relationship,
 };
 
-impl ProcessorDefinition for DummyProcessor {
+impl ProcessorDefinition for DummyProcessorRs {
     const DESCRIPTION: &'static str = "Processor to test Controller Service API";
     const INPUT_REQUIREMENT: ProcessorInputRequirement = ProcessorInputRequirement::Forbidden;
     const SUPPORTS_DYNAMIC_PROPERTIES: bool = false;

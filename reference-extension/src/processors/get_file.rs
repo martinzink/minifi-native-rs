@@ -42,7 +42,7 @@ impl DirectoryListing {
 }
 
 #[derive(Debug, ComponentIdentifier)]
-pub(crate) struct GetFile {
+pub(crate) struct GetFileRs {
     recursive: bool,
     keep_source_file: bool,
     input_directory: PathBuf,
@@ -57,7 +57,7 @@ pub(crate) struct GetFile {
     metrics: Mutex<GetFileMetrics>,
 }
 
-impl GetFile {
+impl GetFileRs {
     fn is_listing_empty(&self) -> bool {
         let directory_listing = self.directory_listing.lock().unwrap();
         directory_listing.paths.is_empty()
@@ -186,7 +186,7 @@ impl GetFile {
     }
 }
 
-impl Schedule for GetFile {
+impl Schedule for GetFileRs {
     fn schedule<P: ProcessContext, L: Logger>(context: &P, _logger: &L) -> Result<Self, MinifiError>
     where
         Self: Sized,
@@ -222,7 +222,7 @@ impl Schedule for GetFile {
             .get_bool_property(&IGNORE_HIDDEN_FILES, None)?
             .expect("required property");
 
-        Ok(GetFile {
+        Ok(GetFileRs {
             recursive,
             keep_source_file,
             input_directory,
@@ -242,7 +242,7 @@ impl Schedule for GetFile {
     }
 }
 
-impl ConstTrigger for GetFile {
+impl ConstTrigger for GetFileRs {
     fn trigger<PC, PS, L>(
         &self,
         _context: &mut PC,
@@ -292,7 +292,7 @@ impl ConstTrigger for GetFile {
     }
 }
 
-impl CalculateMetrics for GetFile {
+impl CalculateMetrics for GetFileRs {
     fn calculate_metrics(&self) -> Vec<(String, f64)> {
         let metrics = self.metrics.lock().unwrap();
         vec![

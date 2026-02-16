@@ -9,7 +9,7 @@ mod properties;
 mod relationships;
 
 #[derive(Debug, ComponentIdentifier)]
-pub(crate) struct LogAttribute {
+pub(crate) struct LogAttributeRs {
     log_level: LogLevel,
     attributes_to_log: Option<Vec<String>>,
     attributes_to_ignore: Option<Vec<String>>,
@@ -19,7 +19,7 @@ pub(crate) struct LogAttribute {
     hex_encode_payload: bool,
 }
 
-impl LogAttribute {
+impl LogAttributeRs {
     fn generate_log_message<PS>(&self, session: &mut PS, flow_file: &mut PS::FlowFile) -> String
     where
         PS: ProcessSession,
@@ -62,7 +62,7 @@ impl LogAttribute {
     }
 }
 
-impl ConstTrigger for LogAttribute {
+impl ConstTrigger for LogAttributeRs {
     fn trigger<PC, PS, L>(
         &self,
         _context: &mut PC,
@@ -103,7 +103,7 @@ impl ConstTrigger for LogAttribute {
     }
 }
 
-impl Schedule for LogAttribute {
+impl Schedule for LogAttributeRs {
     fn schedule<P: ProcessContext, L: Logger>(context: &P, _logger: &L) -> Result<Self, MinifiError>
     where
         Self: Sized,
@@ -145,7 +145,7 @@ impl Schedule for LogAttribute {
             .get_bool_property(&properties::HEX_ENCODE_PAYLOAD, None)?
             .expect("required property");
 
-        Ok(LogAttribute {
+        Ok(LogAttributeRs {
             log_level,
             attributes_to_log,
             attributes_to_ignore,
@@ -157,7 +157,7 @@ impl Schedule for LogAttribute {
     }
 }
 
-impl CalculateMetrics for LogAttribute {}
+impl CalculateMetrics for LogAttributeRs {}
 
 #[cfg(not(test))]
 pub(crate) mod processor_definition;
