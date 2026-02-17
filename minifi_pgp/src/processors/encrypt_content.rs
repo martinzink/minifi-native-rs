@@ -99,7 +99,7 @@ impl FlowFileTransform for EncryptContentPGP {
         LoggerImpl: Logger,
     >(
         &self,
-        context: &mut Context,
+        context: &'a mut Context,
         flow_file: Context::FlowFile,
         mut get_content: GetContent,
         logger: &LoggerImpl,

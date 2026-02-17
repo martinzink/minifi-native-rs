@@ -111,7 +111,7 @@ impl FlowFileTransform for DecryptContentPGP {
         LoggerImpl: Logger,
     >(
         &self,
-        context: &mut Context,
+        context: &'a mut Context,
         flow_file: Context::FlowFile,
         mut flow_file_content: GetContent,
         logger: &LoggerImpl,
