@@ -24,23 +24,29 @@ Contains the raw, unsafe FFI bindings to the minifi-c.h C API.
 Provides the public, safe, and idiomatic Rust API. This is the crate that developers will use to build their processors.
 #### API Traits
 Pure Rust traits (Processor, ProcessSession, Logger, etc.) that define the abstract behavior of the MiNiFi environment.
+#### Higher level API
+Pure rust traits that simplify the requirements for a working processor
+  - FlowFileTransform
+  - FlowFileSource
 #### FFI Wrappers
 Concrete structs (CffiSession, CffiLogger, etc.) that implement the API traits by calling the unsafe functions from minifi-native-sys.
 #### Thread safety
 The trait system differentiates between thread-safe (&self) and single-threaded (&mut self) processors at compile time.
-#### Automatic Registration:
-Processors self-register when the library is loaded by the C++ host, using the ctor crate.
 #### Comprehensive Mocking:
 A full suite of mock objects allows for fast and reliable unit testing of all processor logic.
 
 
-## [rust_reference_extension](reference-extension)
+## [rust_reference_extension](rust_reference_extension)
 A concrete example of a processor extension built using the minifi-native crate.
   - Demonstrates how to implement the Processor traits. Shows how to define properties and relationships.
   - Includes comprehensive unit tests using the mocking framework.
   - Includes integration testing that verifies the processor works as expected in a real MiNiFi environment.
      
-## [minifi_pgp]
+## [minifi_pgp](minifi_pgp)
+An extension that uses [rpgp](https://docs.rs/pgp/latest/pgp/) to mimic NiFi's [pgp-nar's](https://nifi.apache.org/docs/nifi-docs/components/org.apache.nifi/nifi-pgp-nar/) functionality
+   - EncryptContentPGP
+   - DecryptContentPGP
 
-#### Use the Library in the MiNiFi C++ Application
+
+## How to Use the Library in the MiNiFi C++ Application
 Copy the shared library (.so, .dll, or .dylib) to the MiNiFi C++ application's extensions/ directory.

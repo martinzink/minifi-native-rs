@@ -3,7 +3,9 @@ pub(crate) mod controller_service;
 mod controller_service_context;
 pub(crate) mod errors;
 mod flow_file;
-mod flow_file_transform;
+mod flow_file_content;
+pub(crate) mod flow_file_source;
+pub(crate) mod flow_file_transform;
 mod logger;
 mod multi_threaded_processor;
 mod output_attribute;
@@ -36,6 +38,4 @@ pub use single_threaded_processor::{MutTrigger, SingleThreadedProcessor};
 
 pub use relationship::Relationship;
 
-pub use flow_file_transform::{
-    Content, FlowFileTransform, FlowFileTransformer, TransformedFlowFile,
-};
+pub use flow_file_content::Content;

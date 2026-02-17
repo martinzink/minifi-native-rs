@@ -49,20 +49,25 @@ impl ProcessSession for MockProcessSession {
         true
     }
 
-    fn write(&mut self, flow_file: &mut Self::FlowFile, data: &[u8]) {
+    fn write(&mut self, flow_file: &mut Self::FlowFile, data: &[u8]) -> Result<(), MinifiError> {
         flow_file.content = data.to_vec();
+        Ok(())
     }
 
-    fn write_in_batches<F>(&mut self, flow_file: &mut Self::FlowFile, mut produce_batch: F) -> bool
+    fn write_in_batches<F>(
+        &mut self,
+        flow_file: &mut Self::FlowFile,
+        mut produce_batch: F,
+    ) -> Result<(), MinifiError>
     where
-        F: FnMut(&mut [u8]) -> Option<usize>
+        F: FnMut(&mut [u8]) -> Option<usize>,
     {
         flow_file.content.clear();
         let mut buffer = Vec::new();
         while let Some(_batch) = produce_batch(&mut buffer) {
             flow_file.content.append(&mut buffer);
         }
-        true
+        Ok(())
     }
 
     fn read(&mut self, flow_file: &Self::FlowFile) -> Option<Vec<u8>> {

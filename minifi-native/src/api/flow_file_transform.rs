@@ -1,4 +1,5 @@
 use crate::api::ProcessorDefinition;
+use crate::api::flow_file_content::Content;
 use crate::{
     CalculateMetrics, CffiLogger, ComponentIdentifier, Concurrent, DynRawProcessorDefinition,
     LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession,
@@ -7,28 +8,10 @@ use crate::{
 };
 use std::collections::HashMap;
 
-pub enum Content {
-    Buffer(Vec<u8>),
-    Stream(Box<dyn std::io::Read>),
-    NoChange,
-}
-
-impl From<Vec<u8>> for Content {
-    fn from(v: Vec<u8>) -> Self {
-        Content::Buffer(v)
-    }
-}
-
-impl From<String> for Content {
-    fn from(s: String) -> Self {
-        Content::Buffer(s.into_bytes())
-    }
-}
-
 pub struct TransformedFlowFile<'a, FlowFileType> {
     flow_file: FlowFileType,
     target_relationship: &'a Relationship,
-    new_content: Content,
+    new_content: Option<Content<'a>>,
     attributes_to_add: HashMap<String, String>,
 }
 
@@ -40,7 +23,7 @@ impl<'a, FlowFileType> TransformedFlowFile<'a, FlowFileType> {
         Self {
             flow_file,
             target_relationship,
-            new_content: Content::NoChange,
+            new_content: None,
             attributes_to_add: HashMap::new(),
         }
     }
@@ -53,13 +36,13 @@ impl<'a, FlowFileType> TransformedFlowFile<'a, FlowFileType> {
         Self {
             flow_file,
             target_relationship,
-            new_content: Content::Buffer(new_content.unwrap_or_default()),
+            new_content: Some(Content::Buffer(new_content.unwrap_or_default())),
             attributes_to_add,
         }
     }
 
-    pub fn new_content(&self) -> &Content {
-        &self.new_content
+    pub fn new_content(&'_ self) -> Option<&'_ Content<'_>> {
+        self.new_content.as_ref()
     }
 
     pub fn target_relationship(&self) -> &Relationship {
@@ -87,7 +70,7 @@ pub trait FlowFileTransform {
 }
 
 #[derive(Debug)]
-pub struct FlowFileTransformer<Implementation>
+pub struct TransformFlowFileProcessor<Implementation>
 where
     Implementation: Schedule + FlowFileTransform + CalculateMetrics,
 {
@@ -95,7 +78,7 @@ where
     scheduled_impl: Option<Implementation>,
 }
 
-impl<'a, Implementation> RawProcessor for FlowFileTransformer<Implementation>
+impl<'a, Implementation> RawProcessor for TransformFlowFileProcessor<Implementation>
 where
     Implementation: Schedule + FlowFileTransform + CalculateMetrics,
 {
@@ -134,7 +117,7 @@ where
     }
 }
 
-impl<'a, Implementation> RawMultiThreadedTrigger for FlowFileTransformer<Implementation>
+impl<'a, Implementation> RawMultiThreadedTrigger for TransformFlowFileProcessor<Implementation>
 where
     Implementation: Schedule + FlowFileTransform + CalculateMetrics,
 {
@@ -158,25 +141,10 @@ where
                 for (k, v) in &transformed_ff.attributes_to_add {
                     session.set_attribute(&mut transformed_ff.flow_file, k, v);
                 }
-                match transformed_ff.new_content {
-                    Content::Buffer(buffer) => {
-                        session.write(&mut transformed_ff.flow_file, &buffer);
-                    }
-                    Content::Stream(mut stream) => {
-                        let success = session.write_in_batches(&mut transformed_ff.flow_file, |buffer| {
-                            match stream.read(buffer) {
-                                Ok(0) => None, // EOF
-                                Ok(n) => Some(n),
-                                Err(_e) => None, // Signal failure/EOF
-                            }
-                        });
-
-                        if !success {
-                            return Err(MinifiError::IoError);
-                        }
-                    }
-                    Content::NoChange => {}
+                if let Some(new_content) = transformed_ff.new_content {
+                    new_content.write_to_flow_file(&mut transformed_ff.flow_file, session)?;
                 }
+
                 session.transfer(
                     transformed_ff.flow_file,
                     transformed_ff.target_relationship.name,
@@ -194,7 +162,7 @@ where
     }
 }
 
-impl<Implementation> RawRegisterableProcessor for FlowFileTransformer<Implementation>
+impl<Implementation> RawRegisterableProcessor for TransformFlowFileProcessor<Implementation>
 where
     Implementation: Schedule
         + FlowFileTransform
@@ -204,17 +172,17 @@ where
         + 'static,
 {
     fn get_definition() -> Box<dyn DynRawProcessorDefinition> {
-        Box::new(
-            RawProcessorDefinition::<FlowFileTransformer<Implementation>>::new(
-                Implementation::CLASS_NAME,
-                Implementation::DESCRIPTION,
-                Implementation::INPUT_REQUIREMENT,
-                Implementation::SUPPORTS_DYNAMIC_PROPERTIES,
-                Implementation::SUPPORTS_DYNAMIC_RELATIONSHIPS,
-                Implementation::OUTPUT_ATTRIBUTES,
-                Implementation::RELATIONSHIPS,
-                Implementation::PROPERTIES,
-            ),
-        )
+        Box::new(RawProcessorDefinition::<
+            TransformFlowFileProcessor<Implementation>,
+        >::new(
+            Implementation::CLASS_NAME,
+            Implementation::DESCRIPTION,
+            Implementation::INPUT_REQUIREMENT,
+            Implementation::SUPPORTS_DYNAMIC_PROPERTIES,
+            Implementation::SUPPORTS_DYNAMIC_RELATIONSHIPS,
+            Implementation::OUTPUT_ATTRIBUTES,
+            Implementation::RELATIONSHIPS,
+            Implementation::PROPERTIES,
+        ))
     }
 }

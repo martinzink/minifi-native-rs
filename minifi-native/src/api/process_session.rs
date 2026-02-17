@@ -16,8 +16,12 @@ pub trait ProcessSession {
         process_attr: F,
     ) -> bool; // TODO(mzink) Result
 
-    fn write(&mut self, flow_file: &mut Self::FlowFile, data: &[u8]);
-    fn write_in_batches<F>(&mut self, flow_file: &mut Self::FlowFile, produce_batch: F) -> bool
+    fn write(&mut self, flow_file: &mut Self::FlowFile, data: &[u8]) -> Result<(), MinifiError>;
+    fn write_in_batches<F>(
+        &mut self,
+        flow_file: &mut Self::FlowFile,
+        produce_batch: F,
+    ) -> Result<(), MinifiError>
     where
         F: FnMut(&mut [u8]) -> Option<usize>;
 

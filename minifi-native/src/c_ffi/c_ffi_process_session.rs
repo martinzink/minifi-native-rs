@@ -2,7 +2,13 @@ use super::c_ffi_flow_file::CffiFlowFile;
 use crate::MinifiError;
 use crate::api::ProcessSession;
 use crate::c_ffi::c_ffi_primitives::{ConvertMinifiStringView, StringView};
-use minifi_native_sys::{MinifiFlowFileGetAttribute, MinifiFlowFileGetAttributes, MinifiFlowFileSetAttribute, MinifiInputStream, MinifiInputStreamRead, MinifiInputStreamSize, MinifiOutputStream, MinifiOutputStreamWrite, MinifiProcessSession, MinifiProcessSessionCreate, MinifiProcessSessionGet, MinifiProcessSessionRead, MinifiProcessSessionTransfer, MinifiProcessSessionWrite, MinifiStatus_MINIFI_STATUS_SUCCESS, MinifiStringView};
+use minifi_native_sys::{
+    MinifiFlowFileGetAttribute, MinifiFlowFileGetAttributes, MinifiFlowFileSetAttribute,
+    MinifiInputStream, MinifiInputStreamRead, MinifiInputStreamSize, MinifiOutputStream,
+    MinifiOutputStreamWrite, MinifiProcessSession, MinifiProcessSessionCreate,
+    MinifiProcessSessionGet, MinifiProcessSessionRead, MinifiProcessSessionTransfer,
+    MinifiProcessSessionWrite, MinifiStatus_MINIFI_STATUS_SUCCESS, MinifiStringView,
+};
 use std::ffi::{CString, c_void};
 use std::os::raw::c_char;
 
@@ -138,7 +144,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
         on_attr_helper.result
     }
 
-    fn write(&mut self, flow_file: &mut Self::FlowFile, data: &[u8]) {
+    fn write(&mut self, flow_file: &mut Self::FlowFile, data: &[u8]) -> Result<(), MinifiError> {
         let mut dt: Option<&[u8]> = Some(data);
         unsafe {
             unsafe extern "C" fn cb(
@@ -166,15 +172,19 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                 &mut dt as *mut _ as *mut c_void,
             ) {
                 #[allow(non_upper_case_globals)]
-                MinifiStatus_MINIFI_STATUS_SUCCESS => {}
-                _ => {} // todo! return the error code (change signature)
+                MinifiStatus_MINIFI_STATUS_SUCCESS => Ok(()),
+                err_code => Err(MinifiError::StatusError(err_code)),
             }
         }
     }
 
-    fn write_in_batches<F>(&mut self, flow_file: &mut Self::FlowFile, produce_batch: F) -> bool
+    fn write_in_batches<F>(
+        &mut self,
+        flow_file: &mut Self::FlowFile,
+        produce_batch: F,
+    ) -> Result<(), MinifiError>
     where
-        F: FnMut(&mut [u8]) -> Option<usize>
+        F: FnMut(&mut [u8]) -> Option<usize>,
     {
         unsafe {
             struct State<'b, F: FnMut(&mut [u8]) -> Option<usize>> {
@@ -204,7 +214,9 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                             n,
                         );
 
-                        if written < 0 { return -1; }
+                        if written < 0 {
+                            return -1;
+                        }
                         overall_writes += written;
                     }
                     overall_writes
@@ -218,8 +230,8 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                 &mut state as *mut _ as *mut c_void,
             ) {
                 #[allow(non_upper_case_globals)]
-                MinifiStatus_MINIFI_STATUS_SUCCESS => true,
-                _ => false,  // todo! better err handling
+                MinifiStatus_MINIFI_STATUS_SUCCESS => Ok(()),
+                error_code => Err(MinifiError::StatusError(error_code)),
             }
         }
     }
@@ -340,7 +352,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
             ) {
                 #[allow(non_upper_case_globals)]
                 MinifiStatus_MINIFI_STATUS_SUCCESS => Ok(()),
-                status_code => Err(MinifiError::StatusError(status_code))
+                status_code => Err(MinifiError::StatusError(status_code)),
             }
         }
     }

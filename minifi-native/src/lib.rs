@@ -11,14 +11,18 @@ pub use api::controller_service::{ControllerService, EnableControllerService};
 pub use api::errors::MinifiError;
 pub use api::processor_traits::{CalculateMetrics, Schedule};
 
+pub use api::flow_file_source::{FlowFileSource, FlowFileSourceProcessor, GeneratedFlowFile};
+pub use api::flow_file_transform::{
+    FlowFileTransform, TransformFlowFileProcessor, TransformedFlowFile,
+};
+
 // TODO(mzink) clean this up
 pub use api::{
     Concurrent, ConstTrigger, Content, ControllerServiceContext, Exclusive, FlowFile,
-    FlowFileTransform, FlowFileTransformer, HasRawProcessorDefinition, LogLevel, Logger,
-    MultiThreadedProcessor, MutTrigger, OnTriggerResult, OutputAttribute, ProcessContext,
-    ProcessSession, ProcessorInputRequirement, Property, RawMultiThreadedTrigger, RawProcessor,
-    RawSingleThreadedTrigger, Relationship, SingleThreadedProcessor, StandardPropertyValidator,
-    TransformedFlowFile,
+    HasRawProcessorDefinition, LogLevel, Logger, MultiThreadedProcessor, MutTrigger,
+    OnTriggerResult, OutputAttribute, ProcessContext, ProcessSession, ProcessorInputRequirement,
+    Property, RawMultiThreadedTrigger, RawProcessor, RawSingleThreadedTrigger, Relationship,
+    SingleThreadedProcessor, StandardPropertyValidator,
 };
 pub use c_ffi::{
     CffiControllerServiceDefinition, CffiControllerServiceList, CffiLogger, CffiProcessorList,
