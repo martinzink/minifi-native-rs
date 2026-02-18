@@ -17,7 +17,7 @@
 #
 ARG BASE_IMAGE="rockylinux:8"
 
-FROM ${BASE_IMAGE} AS build
+FROM ${BASE_IMAGE} AS builder
 LABEL maintainer="Martin Zink <martinzink@apache.org>"
 
 RUN dnf install -y clang
@@ -26,3 +26,8 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV BUILD_DIR=/opt/minifi-native-rs
 COPY . ${BUILD_DIR}
 RUN cd ${BUILD_DIR} && /root/.cargo/bin/cargo build --release
+
+FROM scratch AS bin-export
+# Replace 'builder' with the name used in your primary FROM line (e.g., FROM rust AS builder)
+COPY --from=builder /opt/minifi-native-rs/target/release/librust_reference_extension.so /
+COPY --from=builder /opt/minifi-native-rs/target/release/libminifi_pgp.so /

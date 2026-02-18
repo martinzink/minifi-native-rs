@@ -84,7 +84,10 @@ impl Schedule for EncryptContentPGP {
             && context.get_property(&PUBLIC_KEY_SEARCH, None)?.is_some();
 
         if !has_password && !has_public_key {
-            Err(MinifiError::ScheduleError("Either a password or Public Key Service with Public Key Search should be configured to encrypt files".to_string()))
+            Err(MinifiError::ScheduleError(
+                "Either a password or Public Key Service with Public Key Search should be configured to encrypt files"
+                    .to_string(),
+            ))
         } else {
             Ok(EncryptContentPGP { file_encoding })
         }

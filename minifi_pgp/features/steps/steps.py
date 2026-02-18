@@ -61,15 +61,6 @@ def step_impl(context: MinifiTestContext):
     processor.add_property("Private Key Service", "bob_private_key")
     context.get_or_create_default_minifi_container().flow_definition.processors.append(processor)
 
-
-@then('Minifi crashes with the following "{crash_msg}" in less than {duration}')
-def step_impl(context: MinifiTestContext, crash_msg: str, duration: str):
-    duration_seconds = humanfriendly.parse_timespan(duration)
-    assert wait_for_condition(
-        condition=lambda: context.get_or_create_default_minifi_container().exited and crash_msg in context.get_or_create_default_minifi_container().get_logs(),
-        timeout_seconds=duration_seconds, bail_condition=lambda: False, context=context)
-
-
 @then('an encrypted armored pgp file is placed in the "{directory}" directory in less than {duration}')
 def step_impl(context: MinifiTestContext, directory: str, duration: str):
     duration_seconds = humanfriendly.parse_timespan(duration)

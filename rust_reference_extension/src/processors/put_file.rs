@@ -148,12 +148,14 @@ impl PutFileRs {
         context: &P,
     ) -> Result<PutFileUnixPermissions, MinifiError> {
         use std::os::unix::fs::PermissionsExt;
-        let parse_permission = |property: &minifi_native::Property| -> Result<Option<std::fs::Permissions>, MinifiError> {
-            Ok(context.get_property(&property, None)?
-                .map(|perm_str| { u32::from_str_radix(&perm_str, 8) })
-                .transpose()?
-                .map(|perm| std::fs::Permissions::from_mode(perm)))
-        };
+        let parse_permission =
+            |property: &minifi_native::Property| -> Result<Option<std::fs::Permissions>, MinifiError> {
+                Ok(context
+                    .get_property(&property, None)?
+                    .map(|perm_str| u32::from_str_radix(&perm_str, 8))
+                    .transpose()?
+                    .map(|perm| std::fs::Permissions::from_mode(perm)))
+            };
         let file_permissions = parse_permission(&unix_only_properties::PERMISSIONS)?;
         let directory_permissions = parse_permission(&unix_only_properties::DIRECTORY_PERMISSIONS)?;
 

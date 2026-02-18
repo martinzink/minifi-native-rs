@@ -6,13 +6,13 @@ use minifi_native::{
 };
 
 fn encrypt_with_processor(
-    mut context: MockProcessContext,
-) -> TransformedFlowFile<'static, MockFlowFile> {
+    context: &'_ mut MockProcessContext,
+) -> TransformedFlowFile<'_, MockFlowFile> {
     let processor =
-        EncryptContentPGP::schedule(&context, &MockLogger::new()).expect("should schedule");
+        EncryptContentPGP::schedule(context, &MockLogger::new()).expect("should schedule");
     let res = processor
         .transform(
-            &mut context,
+            context,
             MockFlowFile::new(),
             |_ff| return Some("foo".as_bytes().to_vec()),
             &MockLogger::new(),
@@ -26,29 +26,33 @@ fn cannot_schedule_without_password_or_public_key() {
     assert!(EncryptContentPGP::schedule(&MockProcessContext::new(), &MockLogger::new()).is_err());
 }
 
-#[test]
-fn encrypts_via_passphrase() {
-    let mut context = MockProcessContext::new();
-    context.properties.insert("Passphrase", "password");
-
-    let transformed_ff = encrypt_with_processor(context);
-
-    assert_eq!(transformed_ff.target_relationship(), &SUCCESS);
-    match transformed_ff.new_content() {
+fn assert_content(transform_result: &TransformedFlowFile<MockFlowFile>, is_ascii: bool) {
+    assert_eq!(transform_result.target_relationship(), &SUCCESS);
+    match transform_result.new_content() {
         Some(Content::Buffer(content)) => {
-            assert!(!content.is_ascii());
+            assert_eq!(content.is_ascii(), is_ascii);
         }
         _ => {
             panic!("should be buffer content");
         }
     }
     assert_eq!(
-        transformed_ff
+        transform_result
             .attributes_to_add()
             .get("pgp.file.encoding")
             .unwrap(),
-        "BINARY"
+        if is_ascii { "ASCII" } else { "BINARY" }
     );
+}
+
+#[test]
+fn encrypts_via_passphrase() {
+    let mut context = MockProcessContext::new();
+    context.properties.insert("Passphrase", "password");
+
+    let transformed_ff = encrypt_with_processor(&mut context);
+
+    assert_content(&transformed_ff, false);
 }
 
 fn public_key_service() -> PGPPublicKeyService {
@@ -75,23 +79,8 @@ fn encrypts_ascii_for_alice() {
         Box::new(public_key_service()),
     );
 
-    let transformed_ff = encrypt_with_processor(context);
-    assert_eq!(transformed_ff.target_relationship(), &SUCCESS);
-    match transformed_ff.new_content() {
-        Some(Content::Buffer(content)) => {
-            assert!(content.is_ascii());
-        }
-        _ => {
-            panic!("should be buffer content");
-        }
-    }
-    assert_eq!(
-        transformed_ff
-            .attributes_to_add()
-            .get("pgp.file.encoding")
-            .unwrap(),
-        "ASCII"
-    );
+    let transformed_ff = encrypt_with_processor(&mut context);
+    assert_content(&transformed_ff, true);
 }
 
 #[test]
@@ -108,23 +97,8 @@ fn encrypts_binary_for_bob() {
         Box::new(public_key_service()),
     );
 
-    let transformed_ff = encrypt_with_processor(context);
-    assert_eq!(transformed_ff.target_relationship(), &SUCCESS);
-    match transformed_ff.new_content() {
-        Some(Content::Buffer(content)) => {
-            assert!(!content.is_ascii());
-        }
-        _ => {
-            panic!("should be buffer content");
-        }
-    }
-    assert_eq!(
-        transformed_ff
-            .attributes_to_add()
-            .get("pgp.file.encoding")
-            .unwrap(),
-        "BINARY"
-    );
+    let transformed_ff = encrypt_with_processor(&mut context);
+    assert_content(&transformed_ff, false);
 }
 
 #[test]
@@ -140,7 +114,7 @@ fn cannot_encrypt_for_carol() {
         Box::new(public_key_service()),
     );
 
-    let transformed_ff = encrypt_with_processor(context);
+    let transformed_ff = encrypt_with_processor(&mut context);
     assert_eq!(transformed_ff.target_relationship(), &FAILURE);
     assert!(transformed_ff.new_content().is_none());
     assert!(transformed_ff.attributes_to_add().is_empty());

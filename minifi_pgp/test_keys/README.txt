@@ -1,4 +1,4 @@
-Testing keys
+Testing keys v2
 ------------------------
 uid           [ultimate] Alice <alice@example.com>
 passphrase    whiterabbit
