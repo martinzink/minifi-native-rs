@@ -3,8 +3,8 @@ use minifi_native::{
     CalculateMetrics, ConstTrigger, Logger, MinifiError, OnTriggerResult, ProcessContext,
     ProcessSession, Schedule,
 };
-use rand::Rng;
 use rand::distr::Alphanumeric;
+use rand::{Rng, RngExt};
 use std::cmp::PartialEq;
 
 mod properties;

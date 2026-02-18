@@ -251,7 +251,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                         *result_target = None;
                         return 0;
                     }
-                    let mut buffer: Vec<u8> = Vec::with_capacity(stream_size as usize);
+                    let mut buffer: Vec<u8> = Vec::with_capacity(stream_size);
 
                     let bytes_read = MinifiInputStreamRead(
                         input_stream,
@@ -313,7 +313,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                 unsafe {
                     let batch_helper = &mut *(output_option as *mut BatchReadHelper<F>);
 
-                    let mut remaining_size = MinifiInputStreamSize(input_stream) as usize;
+                    let mut remaining_size = MinifiInputStreamSize(input_stream);
                     let mut overall_read = 0;
                     while remaining_size > 0 {
                         let read_size = remaining_size.min(batch_helper.batch_size);

@@ -1,10 +1,10 @@
 use crate::api::ProcessorDefinition;
 use crate::api::flow_file_content::Content;
+use crate::api::processor_traits::Processor;
 use crate::{
-    CalculateMetrics, CffiLogger, ComponentIdentifier, Concurrent, DynRawProcessorDefinition,
-    LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession,
-    RawMultiThreadedTrigger, RawProcessor, RawProcessorDefinition, RawRegisterableProcessor,
-    Relationship, Schedule,
+    CalculateMetrics, ComponentIdentifier, Concurrent, DynRawProcessorDefinition, LogLevel, Logger,
+    MinifiError, OnTriggerResult, ProcessContext, ProcessSession, RawMultiThreadedTrigger,
+    RawProcessor, RawProcessorDefinition, RawRegisterableProcessor, Relationship, Schedule,
 };
 use std::collections::HashMap;
 
@@ -69,57 +69,12 @@ pub trait FlowFileTransform {
     ) -> Result<TransformedFlowFile<'a, Context::FlowFile>, MinifiError>;
 }
 
-#[derive(Debug)]
-pub struct TransformFlowFileProcessor<Implementation>
+pub struct FlowFileTransformProcessorType {}
+
+impl<'a, Implementation> RawMultiThreadedTrigger
+    for Processor<Implementation, FlowFileTransformProcessorType, Concurrent>
 where
-    Implementation: Schedule + FlowFileTransform + CalculateMetrics,
-{
-    logger: CffiLogger,
-    scheduled_impl: Option<Implementation>,
-}
-
-impl<'a, Implementation> RawProcessor for TransformFlowFileProcessor<Implementation>
-where
-    Implementation: Schedule + FlowFileTransform + CalculateMetrics,
-{
-    type Threading = Concurrent;
-
-    fn new(logger: CffiLogger) -> Self {
-        Self {
-            logger,
-            scheduled_impl: None,
-        }
-    }
-
-    fn log(&self, log_level: LogLevel, message: &str) {
-        self.logger.log(log_level, message);
-    }
-
-    fn on_schedule<P: ProcessContext>(&mut self, context: &P) -> Result<(), MinifiError> {
-        self.scheduled_impl = Some(Implementation::schedule(context, &self.logger)?);
-        Ok(())
-    }
-
-    fn on_unschedule(&mut self) {
-        if let Some(ref mut scheduled_impl) = self.scheduled_impl {
-            scheduled_impl.unschedule()
-        }
-    }
-
-    fn calculate_metrics(&self) -> Vec<(String, f64)> {
-        if let Some(ref scheduled_impl) = self.scheduled_impl {
-            scheduled_impl.calculate_metrics()
-        } else {
-            self.logger
-                .warn("Calculating metrics before processor is scheduled.");
-            vec![]
-        }
-    }
-}
-
-impl<'a, Implementation> RawMultiThreadedTrigger for TransformFlowFileProcessor<Implementation>
-where
-    Implementation: Schedule + FlowFileTransform + CalculateMetrics,
+    Implementation: Schedule + CalculateMetrics + FlowFileTransform,
 {
     fn on_trigger<PC, PS>(
         &self,
@@ -162,7 +117,8 @@ where
     }
 }
 
-impl<Implementation> RawRegisterableProcessor for TransformFlowFileProcessor<Implementation>
+impl<Implementation> RawRegisterableProcessor
+    for Processor<Implementation, FlowFileTransformProcessorType, Concurrent>
 where
     Implementation: Schedule
         + FlowFileTransform
@@ -173,7 +129,7 @@ where
 {
     fn get_definition() -> Box<dyn DynRawProcessorDefinition> {
         Box::new(RawProcessorDefinition::<
-            TransformFlowFileProcessor<Implementation>,
+            Processor<Implementation, FlowFileTransformProcessorType, Concurrent>,
         >::new(
             Implementation::CLASS_NAME,
             Implementation::DESCRIPTION,

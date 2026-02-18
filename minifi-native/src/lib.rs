@@ -2,27 +2,28 @@ mod api;
 mod c_ffi;
 mod mock;
 
-pub use api::raw::raw_controller_service::RawControllerService;
+pub use api::errors::MinifiError;
 
+pub use api::complex_processor::{ComplexProcessorType, ConstTrigger, MutTrigger};
 pub use api::component_definition_traits::{
     ComponentIdentifier, ControllerServiceDefinition, ProcessorDefinition,
 };
 pub use api::controller_service::{ControllerService, EnableControllerService};
-pub use api::errors::MinifiError;
-pub use api::processor_traits::{CalculateMetrics, Schedule};
+pub use api::processor_traits::{CalculateMetrics, Processor, Schedule};
 
-pub use api::flow_file_source::{FlowFileSource, FlowFileSourceProcessor, GeneratedFlowFile};
+pub use api::flow_file_source::{FlowFileSource, FlowFileSourceProcessorType, GeneratedFlowFile};
 pub use api::flow_file_transform::{
-    FlowFileTransform, TransformFlowFileProcessor, TransformedFlowFile,
+    FlowFileTransform, FlowFileTransformProcessorType, TransformedFlowFile,
 };
+
+pub use api::raw::raw_controller_service::RawControllerService;
 
 // TODO(mzink) clean this up
 pub use api::{
-    Concurrent, ConstTrigger, Content, ControllerServiceContext, Exclusive, FlowFile,
-    HasRawProcessorDefinition, LogLevel, Logger, MultiThreadedProcessor, MutTrigger,
-    OnTriggerResult, OutputAttribute, ProcessContext, ProcessSession, ProcessorInputRequirement,
-    Property, RawMultiThreadedTrigger, RawProcessor, RawSingleThreadedTrigger, Relationship,
-    SingleThreadedProcessor, StandardPropertyValidator,
+    Concurrent, Content, ControllerServiceContext, Exclusive, FlowFile, HasRawProcessorDefinition,
+    LogLevel, Logger, OnTriggerResult, OutputAttribute, ProcessContext, ProcessSession,
+    ProcessorInputRequirement, Property, RawMultiThreadedTrigger, RawProcessor,
+    RawSingleThreadedTrigger, Relationship, StandardPropertyValidator,
 };
 pub use c_ffi::{
     CffiControllerServiceDefinition, CffiControllerServiceList, CffiLogger, CffiProcessorList,

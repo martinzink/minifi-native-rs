@@ -58,7 +58,7 @@ impl ConvertMinifiStringView for MinifiStringView {
             return Err(FfiConversionError::NullPointer);
         }
         unsafe {
-            let slice = std::slice::from_raw_parts(self.data as *const u8, self.length as usize);
+            let slice = std::slice::from_raw_parts(self.data as *const u8, self.length);
             String::from_utf8(slice.to_vec()).map_err(|_| FfiConversionError::InvalidUtf8)
         }
     }
@@ -68,7 +68,7 @@ impl ConvertMinifiStringView for MinifiStringView {
             return Err(FfiConversionError::NullPointer);
         }
         unsafe {
-            let slice = std::slice::from_raw_parts(self.data as *const u8, self.length as usize);
+            let slice = std::slice::from_raw_parts(self.data as *const u8, self.length);
             str::from_utf8(slice).map_err(|_| FfiConversionError::InvalidUtf8)
         }
     }

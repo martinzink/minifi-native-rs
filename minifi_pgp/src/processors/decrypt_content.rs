@@ -57,10 +57,10 @@ impl Schedule for DecryptContentPGP {
 impl DecryptContentPGP {
     fn decrypt_msg<'a, PC, L>(
         &self,
-        msg: pgp::composed::Message<'a>,
+        msg: Message<'a>,
         ctx: &PC,
         _logger: &L,
-    ) -> pgp::errors::Result<pgp::composed::Message<'a>>
+    ) -> pgp::errors::Result<Message<'a>>
     where
         PC: ProcessContext,
         L: Logger,
@@ -123,8 +123,7 @@ impl FlowFileTransform for DecryptContentPGP {
             ));
         };
 
-        let Ok(msg) = pgp::composed::Message::from_reader(std::io::Cursor::new(content))
-            .map(|(msg, _header)| msg)
+        let Ok(msg) = Message::from_reader(std::io::Cursor::new(content)).map(|(msg, _header)| msg)
         else {
             logger.debug("No valid PGP message found");
             return Ok(TransformedFlowFile::route_without_changes(

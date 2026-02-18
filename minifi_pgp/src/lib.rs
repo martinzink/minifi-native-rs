@@ -9,16 +9,18 @@ use crate::controller_services::public_key_service::PGPPublicKeyService;
 use crate::processors::decrypt_content::DecryptContentPGP;
 #[cfg(not(test))]
 use crate::processors::encrypt_content::EncryptContentPGP;
+#[cfg(not(test))]
+use minifi_native::{Concurrent, FlowFileTransformProcessorType};
 
 #[cfg(not(test))]
 minifi_native::declare_minifi_extension!(
     processors: [
-        minifi_native::TransformFlowFileProcessor::<EncryptContentPGP>,
-        minifi_native::TransformFlowFileProcessor::<DecryptContentPGP>,
+        minifi_native::Processor<EncryptContentPGP, FlowFileTransformProcessorType, Concurrent>,
+        minifi_native::Processor<DecryptContentPGP, FlowFileTransformProcessorType, Concurrent>,
     ],
     controllers: [
-        minifi_native::ControllerService::<PGPPublicKeyService>,
-        minifi_native::ControllerService::<PGPPrivateKeyService>,
+        minifi_native::ControllerService<PGPPublicKeyService>,
+        minifi_native::ControllerService<PGPPrivateKeyService>,
     ]
 );
 
