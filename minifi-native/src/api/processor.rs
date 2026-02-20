@@ -1,6 +1,6 @@
-use crate::api::RawThreadingModel;
+use crate::api::{RawProcessor, RawThreadingModel};
 use crate::c_ffi::CffiLogger;
-use crate::{LogLevel, Logger, MinifiError, ProcessContext, RawProcessor};
+use crate::{LogLevel, Logger, MinifiError, ProcessContext};
 use std::marker::PhantomData;
 
 pub trait Schedule {

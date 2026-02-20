@@ -7,15 +7,25 @@ pub trait ProcessSession {
 
     fn create(&mut self) -> Result<Self::FlowFile, MinifiError>;
     fn get(&mut self) -> Option<Self::FlowFile>;
-    fn transfer(&mut self, flow_file: Self::FlowFile, relationship: &str);
+    fn transfer(
+        &mut self,
+        flow_file: Self::FlowFile,
+        relationship: &str,
+    ) -> Result<(), MinifiError>;
+    fn remove(&mut self, flow_file: Self::FlowFile) -> Result<(), MinifiError>;
 
-    fn set_attribute(&mut self, flow_file: &mut Self::FlowFile, attr_key: &str, attr_value: &str); // TODO(mzink) Result
-    fn get_attribute(&self, flow_file: &mut Self::FlowFile, attr_key: &str) -> Option<String>; // TODO(mzink) Result
+    fn set_attribute(
+        &mut self,
+        flow_file: &mut Self::FlowFile,
+        attr_key: &str,
+        attr_value: &str,
+    ) -> Result<(), MinifiError>;
+    fn get_attribute(&self, flow_file: &mut Self::FlowFile, attr_key: &str) -> Option<String>;
     fn on_attributes<F: FnMut(&str, &str)>(
         &self,
         flow_file: &Self::FlowFile,
         process_attr: F,
-    ) -> bool; // TODO(mzink) Result
+    ) -> bool;
 
     fn write(&mut self, flow_file: &mut Self::FlowFile, data: &[u8]) -> Result<(), MinifiError>;
     fn write_stream<'a>(

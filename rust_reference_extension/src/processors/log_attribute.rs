@@ -52,7 +52,7 @@ impl LogAttributeRs {
                         String::from_utf8(flow_file_payload)
                             .unwrap_or(String::new())
                             .as_str(),
-                    ); // TODO(error handling)
+                    );
                 }
             }
         }
@@ -91,7 +91,7 @@ impl ConstTrigger for LogAttributeRs {
             if let Some(mut flow_file) = session.get() {
                 let log_msg = self.generate_log_message(session, &mut flow_file);
                 logger.log(self.log_level, log_msg.as_str());
-                session.transfer(flow_file, relationships::SUCCESS.name);
+                session.transfer(flow_file, relationships::SUCCESS.name)?;
                 flow_files_processed += 1;
             } else {
                 break;

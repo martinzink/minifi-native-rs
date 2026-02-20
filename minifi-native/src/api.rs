@@ -25,10 +25,7 @@ pub use output_attribute::OutputAttribute;
 pub use process_context::ProcessContext;
 pub use process_session::ProcessSession;
 pub use raw::raw_controller_service::RawControllerService;
-pub use raw::raw_processor::{
-    HasRawProcessorDefinition, OnTriggerResult, ProcessorInputRequirement, RawMultiThreadedTrigger,
-    RawProcessor, RawSingleThreadedTrigger,
-};
+pub use raw::raw_processor::{OnTriggerResult, ProcessorInputRequirement, RawProcessor};
 pub use raw::raw_threading_model::RawThreadingModel;
 
 pub use property::{Property, StandardPropertyValidator};

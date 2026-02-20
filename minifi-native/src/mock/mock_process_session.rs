@@ -22,17 +22,32 @@ impl ProcessSession for MockProcessSession {
     fn get(&mut self) -> Option<Self::FlowFile> {
         self.input_flow_files.pop()
     }
-    fn transfer(&mut self, flow_file: Self::FlowFile, relationship: &str) {
+    fn transfer(
+        &mut self,
+        flow_file: Self::FlowFile,
+        relationship: &str,
+    ) -> Result<(), MinifiError> {
         self.transferred_flow_files.push(TransferredFlowFile {
             relationship: relationship.to_string(),
             flow_file,
         });
+        Ok(())
     }
 
-    fn set_attribute(&mut self, flow_file: &mut Self::FlowFile, attr_key: &str, attr_value: &str) {
+    fn remove(&mut self, _flow_file: Self::FlowFile) -> Result<(), MinifiError> {
+        Ok(())
+    }
+
+    fn set_attribute(
+        &mut self,
+        flow_file: &mut Self::FlowFile,
+        attr_key: &str,
+        attr_value: &str,
+    ) -> Result<(), MinifiError> {
         flow_file
             .attributes
             .insert(attr_key.to_string(), attr_value.to_string());
+        Ok(())
     }
     fn get_attribute(&self, flow_file: &mut Self::FlowFile, attr_key: &str) -> Option<String> {
         flow_file.attributes.get(attr_key).cloned()

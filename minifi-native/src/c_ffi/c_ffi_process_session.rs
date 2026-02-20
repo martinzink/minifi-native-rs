@@ -6,8 +6,9 @@ use minifi_native_sys::{
     MinifiFlowFileGetAttribute, MinifiFlowFileGetAttributes, MinifiFlowFileSetAttribute,
     MinifiInputStream, MinifiInputStreamRead, MinifiInputStreamSize, MinifiOutputStream,
     MinifiOutputStreamWrite, MinifiProcessSession, MinifiProcessSessionCreate,
-    MinifiProcessSessionGet, MinifiProcessSessionRead, MinifiProcessSessionTransfer,
-    MinifiProcessSessionWrite, MinifiStatus_MINIFI_STATUS_SUCCESS, MinifiStringView,
+    MinifiProcessSessionGet, MinifiProcessSessionRead, MinifiProcessSessionRemove,
+    MinifiProcessSessionTransfer, MinifiProcessSessionWrite, MinifiStatus_MINIFI_STATUS_SUCCESS,
+    MinifiStringView,
 };
 use std::ffi::{CString, c_void};
 use std::io::Read;
@@ -107,31 +108,57 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
         }
     }
 
-    fn transfer(&mut self, flow_file: Self::FlowFile, relationship: &str) {
-        if let Ok(c_relationship) = CString::new(relationship) {
-            unsafe {
-                MinifiProcessSessionTransfer(
-                    self.ptr,
-                    flow_file.ptr,
-                    MinifiStringView {
-                        data: c_relationship.as_ptr(),
-                        length: c_relationship.as_bytes().len(),
-                    },
-                );
+    fn transfer(
+        &mut self,
+        flow_file: Self::FlowFile,
+        relationship: &str,
+    ) -> Result<(), MinifiError> {
+        let c_relationship = CString::new(relationship)?;
+        unsafe {
+            match MinifiProcessSessionTransfer(
+                self.ptr,
+                flow_file.ptr,
+                MinifiStringView {
+                    data: c_relationship.as_ptr(),
+                    length: c_relationship.as_bytes().len(),
+                },
+            ) {
+                #[allow(non_upper_case_globals)]
+                MinifiStatus_MINIFI_STATUS_SUCCESS => Ok(()),
+                err_code => Err(MinifiError::StatusError(err_code)),
             }
         }
     }
 
-    fn set_attribute(&mut self, flow_file: &mut Self::FlowFile, attr_key: &str, attr_value: &str) {
+    fn remove(&mut self, flow_file: Self::FlowFile) -> Result<(), MinifiError> {
+        unsafe {
+            match MinifiProcessSessionRemove(self.ptr, flow_file.ptr) {
+                #[allow(non_upper_case_globals)]
+                MinifiStatus_MINIFI_STATUS_SUCCESS => Ok(()),
+                err_code => Err(MinifiError::StatusError(err_code)),
+            }
+        }
+    }
+
+    fn set_attribute(
+        &mut self,
+        flow_file: &mut Self::FlowFile,
+        attr_key: &str,
+        attr_value: &str,
+    ) -> Result<(), MinifiError> {
         unsafe {
             let attr_key_string_view = StringView::new(attr_key);
             let attr_value_string_view = StringView::new(attr_value);
-            MinifiFlowFileSetAttribute(
+            match MinifiFlowFileSetAttribute(
                 self.ptr,
                 flow_file.ptr,
                 attr_key_string_view.as_raw(),
                 &attr_value_string_view.as_raw(),
-            )
+            ) {
+                #[allow(non_upper_case_globals)]
+                MinifiStatus_MINIFI_STATUS_SUCCESS => Ok(()),
+                err_code => Err(MinifiError::StatusError(err_code)),
+            }
         }
     }
 
@@ -186,7 +213,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                 let attr_value = minifi_attr_val.as_str();
                 if attr_key.is_err() || attr_value.is_err() {
                     helper.result = false;
-                    return; // TODO(mzink) better err handling?
+                    return;
                 }
                 (helper.process_attr)(attr_key.unwrap(), attr_value.unwrap());
             }

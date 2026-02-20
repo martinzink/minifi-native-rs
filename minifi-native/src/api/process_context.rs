@@ -1,7 +1,8 @@
 use crate::StandardPropertyValidator::*;
+use crate::api::RawControllerService;
 use crate::api::component_definition_traits::ComponentIdentifier;
 use crate::api::flow_file::FlowFile;
-use crate::{EnableControllerService, MinifiError, Property, RawControllerService};
+use crate::{EnableControllerService, MinifiError, Property};
 use std::str::FromStr;
 use std::time::Duration;
 

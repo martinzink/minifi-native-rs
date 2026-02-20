@@ -158,7 +158,7 @@ impl ConstTrigger for GenerateFlowFileRs {
                     session.write(&mut ff, non_unique_data_buffer)?;
                 }
             }
-            session.transfer(ff, relationships::SUCCESS.name);
+            session.transfer(ff, relationships::SUCCESS.name)?;
         }
         Ok(OnTriggerResult::Ok)
     }

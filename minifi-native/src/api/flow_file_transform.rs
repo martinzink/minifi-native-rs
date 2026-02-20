@@ -1,11 +1,11 @@
-use crate::api::ProcessorDefinition;
 use crate::api::flow_file_content::Content;
 use crate::api::processor::Processor;
+use crate::api::raw::raw_processor::RawMultiThreadedTrigger;
+use crate::api::{ProcessorDefinition, RawProcessor};
 use crate::c_ffi::{DynRawProcessorDefinition, RawProcessorDefinition, RawRegisterableProcessor};
 use crate::{
     CalculateMetrics, ComponentIdentifier, Concurrent, LogLevel, Logger, MinifiError,
-    OnTriggerResult, ProcessContext, ProcessSession, RawMultiThreadedTrigger, RawProcessor,
-    Relationship, Schedule,
+    OnTriggerResult, ProcessContext, ProcessSession, Relationship, Schedule,
 };
 use std::collections::HashMap;
 
@@ -95,7 +95,7 @@ where
                     &self.logger,
                 )?;
                 for (k, v) in &transformed_ff.attributes_to_add {
-                    session.set_attribute(&mut transformed_ff.flow_file, k, v);
+                    session.set_attribute(&mut transformed_ff.flow_file, k, v)?;
                 }
                 match transformed_ff.new_content {
                     None => {}
@@ -110,7 +110,7 @@ where
                 session.transfer(
                     transformed_ff.flow_file,
                     transformed_ff.target_relationship.name,
-                );
+                )?;
                 Ok(OnTriggerResult::Ok)
             } else {
                 self.log(LogLevel::Trace, "No flowfile to transform");

@@ -1,10 +1,8 @@
 use super::c_ffi_flow_file::CffiFlowFile;
 use super::c_ffi_primitives::{ConvertMinifiStringView, FfiConversionError, StringView};
-use crate::api::ProcessContext;
 use crate::api::controller_service::ControllerService;
-use crate::{
-    ComponentIdentifier, EnableControllerService, MinifiError, Property, RawControllerService,
-};
+use crate::api::{ProcessContext, RawControllerService};
+use crate::{ComponentIdentifier, EnableControllerService, MinifiError, Property};
 use minifi_native_sys::*;
 use std::ffi::c_void;
 
@@ -77,7 +75,6 @@ unsafe extern "C" fn get_controller_service_callback(
         let controller_service_helper =
             &mut *(controller_service_helper_ptr as *mut ControllerServiceHelper);
 
-        // TODO(mzink) maybe do some logging?
         match controller_service_helper.is_valid(&class_name, &group_name, &version) {
             Ok(false) => MinifiStatus_MINIFI_STATUS_VALIDATION_FAILED,
             Ok(true) => {

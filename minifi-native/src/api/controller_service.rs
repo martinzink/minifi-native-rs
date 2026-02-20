@@ -1,10 +1,11 @@
+use crate::api::RawControllerService;
 use crate::c_ffi::{
     CffiControllerServiceDefinition, CffiLogger, DynRawControllerServiceDefinition,
     RegisterableControllerService,
 };
 use crate::{
     ComponentIdentifier, ControllerServiceContext, ControllerServiceDefinition, LogLevel, Logger,
-    MinifiError, RawControllerService,
+    MinifiError,
 };
 
 pub trait EnableControllerService {

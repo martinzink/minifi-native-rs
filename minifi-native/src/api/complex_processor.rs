@@ -1,9 +1,9 @@
 use crate::api::processor::CalculateMetrics;
+use crate::api::raw::raw_processor::{RawMultiThreadedTrigger, RawSingleThreadedTrigger};
 use crate::c_ffi::{DynRawProcessorDefinition, RawProcessorDefinition, RawRegisterableProcessor};
 use crate::{
     ComponentIdentifier, Concurrent, Exclusive, Logger, MinifiError, OnTriggerResult,
-    ProcessContext, ProcessSession, Processor, ProcessorDefinition, RawMultiThreadedTrigger,
-    RawSingleThreadedTrigger, Schedule,
+    ProcessContext, ProcessSession, Processor, ProcessorDefinition, Schedule,
 };
 
 pub trait MutTrigger {

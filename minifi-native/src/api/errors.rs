@@ -1,4 +1,5 @@
 use minifi_native_sys::{MinifiStatus, MinifiStatus_MINIFI_STATUS_UNKNOWN_ERROR};
+use std::ffi::NulError;
 use std::num::ParseIntError;
 use std::str::ParseBoolError;
 
@@ -20,6 +21,7 @@ pub enum ParseError {
     Int(ParseIntError),
     Duration(humantime::DurationError),
     Size(SizeParseError),
+    Nul(NulError),
     Other,
 }
 
@@ -63,6 +65,12 @@ impl From<humantime::DurationError> for MinifiError {
 impl From<byte_unit::ParseError> for MinifiError {
     fn from(err: byte_unit::ParseError) -> Self {
         MinifiError::Parse(ParseError::Size(SizeParseError(err)))
+    }
+}
+
+impl From<NulError> for MinifiError {
+    fn from(err: NulError) -> Self {
+        MinifiError::Parse(ParseError::Nul(err))
     }
 }
 

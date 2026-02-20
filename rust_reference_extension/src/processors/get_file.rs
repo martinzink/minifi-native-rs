@@ -175,7 +175,7 @@ impl GetFileRs {
             .expect("Successful FlowFile creation is expected");
 
         if let Some(file_name) = path.file_name().and_then(|f| f.to_str()) {
-            session.set_attribute(&mut ff, FILENAME_OUTPUT_ATTRIBUTE.name, file_name);
+            session.set_attribute(&mut ff, FILENAME_OUTPUT_ATTRIBUTE.name, file_name)?;
         } else {
             logger.warn(format!("Couldnt get filename of {:?}", path).as_str());
         }
@@ -183,7 +183,7 @@ impl GetFileRs {
             &mut ff,
             ABSOLUTE_PATH_OUTPUT_ATTRIBUTE.name,
             path.to_string_lossy().trim(),
-        );
+        )?;
 
         let contents = std::fs::read_to_string(&path).expect("Failed to read file");
         session.write(&mut ff, contents.as_bytes())?;
@@ -195,7 +195,7 @@ impl GetFileRs {
                 }
             }
         }
-        session.transfer(ff, relationships::SUCCESS.name);
+        session.transfer(ff, relationships::SUCCESS.name)?;
         Ok(())
     }
 }

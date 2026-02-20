@@ -220,27 +220,27 @@ impl MutTrigger for PutFileRs {
         let Ok(destination_path) = Self::get_destination_path::<PC, PS>(context, session, &mut ff)
         else {
             logger.warn("Invalid destination path");
-            session.transfer(ff, relationships::FAILURE.name);
+            session.transfer(ff, relationships::FAILURE.name)?;
             return Ok(OnTriggerResult::Yield);
         };
 
         if self.directory_is_full(&destination_path) {
             logger.warn("Directory is full");
-            session.transfer(ff, relationships::FAILURE.name);
+            session.transfer(ff, relationships::FAILURE.name)?;
             return Ok(OnTriggerResult::Yield);
         }
 
         if destination_path.exists() {
             match self.conflict_resolution_strategy {
                 ConflictResolutionStrategy::Fail => {
-                    session.transfer(ff, relationships::FAILURE.name);
+                    session.transfer(ff, relationships::FAILURE.name)?;
                     return Ok(OnTriggerResult::Ok);
                 }
                 ConflictResolutionStrategy::Replace => {
                     // continue with PutFile operation
                 }
                 ConflictResolutionStrategy::Ignore => {
-                    session.transfer(ff, relationships::SUCCESS.name);
+                    session.transfer(ff, relationships::SUCCESS.name)?;
                     return Ok(OnTriggerResult::Ok);
                 }
             }
@@ -248,12 +248,12 @@ impl MutTrigger for PutFileRs {
 
         match self.put_file::<PC, PS, L>(session, logger, &destination_path, &ff) {
             Ok(_) => {
-                session.transfer(ff, relationships::SUCCESS.name);
+                session.transfer(ff, relationships::SUCCESS.name)?;
                 Ok(OnTriggerResult::Ok)
             }
             Err(e) => {
                 logger.warn(format!("Failed to put file due to {:?}", e).as_str());
-                session.transfer(ff, relationships::FAILURE.name);
+                session.transfer(ff, relationships::FAILURE.name)?;
                 Ok(OnTriggerResult::Ok)
             }
         }

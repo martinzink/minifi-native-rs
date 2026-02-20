@@ -76,7 +76,7 @@ impl ConstTrigger for KamikazeProcessorRs {
                 }
             });
 
-            session.transfer(flow_file, relationships::SUCCESS.name);
+            session.transfer(flow_file, relationships::SUCCESS.name)?;
         }
 
         match self.on_trigger_behaviour {

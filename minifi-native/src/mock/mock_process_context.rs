@@ -1,8 +1,5 @@
-use crate::api::ProcessContext;
-use crate::{
-    ComponentIdentifier, EnableControllerService, MinifiError, MockFlowFile, Property,
-    RawControllerService,
-};
+use crate::api::{ProcessContext, RawControllerService};
+use crate::{ComponentIdentifier, EnableControllerService, MinifiError, MockFlowFile, Property};
 use std::any::Any;
 use std::collections::HashMap;
 
