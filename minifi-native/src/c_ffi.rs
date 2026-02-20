@@ -11,6 +11,7 @@ mod c_ffi_processor_definition;
 mod c_ffi_processor_list;
 mod c_ffi_property;
 mod c_ffi_relationship;
+mod c_ffi_input_stream;
 
 pub use c_ffi_controller_service_definition::CffiControllerServiceDefinition;
 pub use c_ffi_controller_service_definition::DynRawControllerServiceDefinition;

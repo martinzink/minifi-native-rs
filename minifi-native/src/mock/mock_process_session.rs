@@ -1,3 +1,4 @@
+use std::cell::RefCell;
 use crate::api::ProcessSession;
 use crate::{MinifiError, MockFlowFile};
 use itertools::Itertools;
@@ -10,7 +11,7 @@ pub struct TransferredFlowFile {
 
 pub struct MockProcessSession {
     pub input_flow_files: Vec<MockFlowFile>,
-    pub transferred_flow_files: Vec<TransferredFlowFile>,
+    pub transferred_flow_files: RefCell<Vec<TransferredFlowFile>>,
 }
 
 impl ProcessSession for MockProcessSession {
@@ -23,11 +24,11 @@ impl ProcessSession for MockProcessSession {
         self.input_flow_files.pop()
     }
     fn transfer(
-        &mut self,
+        &self,
         flow_file: Self::FlowFile,
         relationship: &str,
     ) -> Result<(), MinifiError> {
-        self.transferred_flow_files.push(TransferredFlowFile {
+        self.transferred_flow_files.borrow_mut().push(TransferredFlowFile {
             relationship: relationship.to_string(),
             flow_file,
         });
@@ -39,7 +40,7 @@ impl ProcessSession for MockProcessSession {
     }
 
     fn set_attribute(
-        &mut self,
+        &self,
         flow_file: &mut Self::FlowFile,
         attr_key: &str,
         attr_value: &str,
@@ -65,28 +66,35 @@ impl ProcessSession for MockProcessSession {
         true
     }
 
-    fn write(&mut self, flow_file: &mut Self::FlowFile, data: &[u8]) -> Result<(), MinifiError> {
-        flow_file.content = data.to_vec();
+    fn write(&self, flow_file: &Self::FlowFile, data: &[u8]) -> Result<(), MinifiError> {
+        *flow_file.content.borrow_mut() = data.to_vec();
         Ok(())
     }
 
     fn write_stream<'a>(
-        &mut self,
-        flow_file: &mut Self::FlowFile,
+        &self,
+        flow_file: &Self::FlowFile,
         mut stream: Box<dyn Read + 'a>,
     ) -> Result<(), MinifiError> {
         stream
-            .read_to_end(&mut flow_file.content)
+            .read_to_end(&mut flow_file.content.borrow_mut())
             .expect("Mock data should be readable");
         Ok(())
     }
 
-    fn read(&mut self, flow_file: &Self::FlowFile) -> Option<Vec<u8>> {
-        Some(flow_file.content.to_vec())
+    fn read(&self, flow_file: &Self::FlowFile) -> Option<Vec<u8>> {
+        Some(flow_file.content.borrow().clone())
+    }
+
+    fn read_stream<F, R>(&self, _flow_file: &Self::FlowFile, _callback: F) -> Result<R, MinifiError>
+    where
+        F: FnOnce(&mut dyn Read, &Self::FlowFile) -> Result<R, MinifiError>
+    {
+        Err(MinifiError::UnknownError) // TODO
     }
 
     fn read_in_batches<F>(
-        &mut self,
+        &self,
         flow_file: &Self::FlowFile,
         batch_size: usize,
         mut process_batch: F,
@@ -94,7 +102,7 @@ impl ProcessSession for MockProcessSession {
     where
         F: FnMut(&[u8]) -> Result<(), MinifiError>,
     {
-        for chunk in flow_file.content.chunks(batch_size) {
+        for chunk in flow_file.content.borrow().chunks(batch_size) {
             process_batch(chunk)?;
         }
         Ok(())
@@ -104,9 +112,13 @@ impl ProcessSession for MockProcessSession {
 impl MockProcessSession {
     pub fn new() -> Self {
         Self {
-            transferred_flow_files: Vec::new(),
+            transferred_flow_files: RefCell::new(Vec::new()),
             input_flow_files: Vec::new(),
         }
+    }
+    
+    pub fn num_of_transferred_flow_files(&self) -> usize {
+        self.transferred_flow_files.borrow().len()
     }
 }
 
@@ -116,9 +128,9 @@ mod tests {
 
     #[test]
     fn test_read_in_batches() {
-        let mut session = MockProcessSession::new();
+        let session = MockProcessSession::new();
         let mut flow_file = MockFlowFile::new();
-        flow_file.content = "Hello, World!".to_string().as_bytes().to_vec();
+        flow_file.content = RefCell::from("Hello, World!".to_string().as_bytes().to_vec());
         let mut vec: Vec<u8> = Vec::new();
 
         let res = session.read_in_batches(&mut flow_file, 1, |batch| {

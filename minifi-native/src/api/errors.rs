@@ -30,6 +30,7 @@ pub enum MinifiError {
     UnknownError,
     MissingRequiredProperty(&'static str),
     ControllerServiceError(&'static str),
+    OtherError(&'static str),
     InvalidValidator,
     Parse(ParseError),
     ScheduleError(String),

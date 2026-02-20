@@ -49,7 +49,7 @@ fn simple_get_file_test() {
             .trigger(&mut context, &mut session, &MockLogger::new())
             .is_ok()
     );
-    assert_eq!(session.transferred_flow_files.len(), 1);
+    assert_eq!(session.num_of_transferred_flow_files(), 1);
 }
 
 fn make_file(temp_dir: &TempDir, file_name: &str, size: usize, age: Duration) {
@@ -90,7 +90,7 @@ fn complex_dir_without_filters() {
             .trigger(&mut context, &mut session, &MockLogger::new())
             .is_ok()
     );
-    assert_eq!(session.transferred_flow_files.len(), 4);
+    assert_eq!(session.num_of_transferred_flow_files(), 4);
 }
 
 fn test_complex_dir_with_filter(
@@ -120,8 +120,9 @@ fn test_complex_dir_with_filter(
             .trigger(&mut context, &mut session, &MockLogger::new())
             .is_ok()
     );
-    assert_eq!(session.transferred_flow_files.len(), 2);
-    assert!(session.transferred_flow_files.iter().all(|transfer| {
+    assert_eq!(session.num_of_transferred_flow_files(), 2);
+    let transferred_flow_files = session.transferred_flow_files.borrow();
+    assert!(transferred_flow_files.iter().all(|transfer| {
         transfer.relationship == SUCCESS.name
             && transfer
                 .flow_file
@@ -130,10 +131,9 @@ fn test_complex_dir_with_filter(
                 .and_then(|filename| Some(filename.contains(expected_filename_part)))
                 .unwrap_or(false)
     }));
-    let sum_file_len = session
-        .transferred_flow_files
+    let sum_file_len = transferred_flow_files
         .iter()
-        .fold(0, |acc, transfer| acc + transfer.flow_file.content.len());
+        .fold(0, |acc, transfer| acc + transfer.flow_file.content_len());
 
     let metrics = get_file.calculate_metrics();
     assert_eq!(metrics.len(), 2);
@@ -178,5 +178,5 @@ fn test_hidden_files_and_batch_size() {
             .trigger(&mut context, &mut session, &MockLogger::new())
             .is_ok()
     );
-    assert_eq!(session.transferred_flow_files.len(), 2);
+    assert_eq!(session.num_of_transferred_flow_files(), 2);
 }

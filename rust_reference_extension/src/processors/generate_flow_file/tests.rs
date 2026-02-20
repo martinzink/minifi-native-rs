@@ -29,8 +29,9 @@ fn generate_flow_file_empty_test() {
         processor.trigger(&mut context, &mut session, &logger),
         Ok(OnTriggerResult::Ok)
     );
-    assert_eq!(session.transferred_flow_files.len(), 1);
-    assert_eq!(session.transferred_flow_files[0].flow_file.content.len(), 0);
+    let result_flow_files = session.transferred_flow_files.borrow();
+    assert_eq!(result_flow_files.len(), 1);
+    assert_eq!(result_flow_files[0].flow_file.content_len(), 0);
 }
 
 #[test]
@@ -57,11 +58,9 @@ fn generate_custom_text() {
         processor.trigger(&mut context, &mut session, &logger),
         Ok(OnTriggerResult::Ok)
     );
-    assert_eq!(session.transferred_flow_files.len(), 1);
-    assert_eq!(
-        session.transferred_flow_files[0].flow_file.content,
-        "foo bar baz".as_bytes()
-    );
+    let result_flow_files = session.transferred_flow_files.borrow();
+    assert_eq!(result_flow_files.len(), 1);
+    assert!(result_flow_files[0].flow_file.content_eq("foo bar baz"),);
 }
 
 #[test]
@@ -87,18 +86,19 @@ fn random_bytes_unique() {
         processor.trigger(&mut context, &mut session, &logger),
         Ok(OnTriggerResult::Ok)
     );
-    assert_eq!(session.transferred_flow_files.len(), 2);
+    let result_flow_files = session.transferred_flow_files.borrow();
+    assert_eq!(result_flow_files.len(), 2);
     assert_eq!(
-        session.transferred_flow_files[0].flow_file.content.len(),
+        result_flow_files[0].flow_file.content_len(),
         40
     );
     assert_eq!(
-        session.transferred_flow_files[1].flow_file.content.len(),
+        result_flow_files[1].flow_file.content_len(),
         40
     );
     assert_ne!(
-        session.transferred_flow_files[0].flow_file.content,
-        session.transferred_flow_files[1].flow_file.content
+        *result_flow_files[0].flow_file.content.borrow(),
+        *result_flow_files[1].flow_file.content.borrow()
     );
 }
 
@@ -125,17 +125,18 @@ fn random_bytes_non_unique() {
         processor.trigger(&mut context, &mut session, &logger),
         Ok(OnTriggerResult::Ok)
     );
-    assert_eq!(session.transferred_flow_files.len(), 2);
+    let result_flow_files = session.transferred_flow_files.borrow();
+    assert_eq!(result_flow_files.len(), 2);
     assert_eq!(
-        session.transferred_flow_files[0].flow_file.content.len(),
+        result_flow_files[0].flow_file.content_len(),
         40
     );
     assert_eq!(
-        session.transferred_flow_files[1].flow_file.content.len(),
+        result_flow_files[1].flow_file.content_len(),
         40
     );
     assert_eq!(
-        session.transferred_flow_files[0].flow_file.content,
-        session.transferred_flow_files[1].flow_file.content
+        *result_flow_files[0].flow_file.content.borrow(),
+        *result_flow_files[1].flow_file.content.borrow()
     );
 }

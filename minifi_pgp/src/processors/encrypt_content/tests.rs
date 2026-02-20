@@ -5,28 +5,12 @@ use minifi_native::{
     MockProcessContext, TransformedFlowFile,
 };
 
-fn encrypt_with_processor(
-    context: &'_ mut MockProcessContext,
-) -> TransformedFlowFile<'_, MockFlowFile> {
-    let processor =
-        EncryptContentPGP::schedule(context, &MockLogger::new()).expect("should schedule");
-    let res = processor
-        .transform(
-            context,
-            MockFlowFile::new(),
-            |_ff| return Some("foo".as_bytes().to_vec()),
-            &MockLogger::new(),
-        )
-        .expect("Should be able to transform");
-    res
-}
-
 #[test]
 fn cannot_schedule_without_password_or_public_key() {
     assert!(EncryptContentPGP::schedule(&MockProcessContext::new(), &MockLogger::new()).is_err());
 }
 
-fn assert_content(transform_result: &TransformedFlowFile<MockFlowFile>, is_ascii: bool) {
+fn assert_content(transform_result: &TransformedFlowFile, is_ascii: bool) {
     assert_eq!(transform_result.target_relationship(), &SUCCESS);
     match transform_result.new_content() {
         Some(Content::Buffer(content)) => {
@@ -50,7 +34,10 @@ fn encrypts_via_passphrase() {
     let mut context = MockProcessContext::new();
     context.properties.insert("Passphrase", "password");
 
-    let transformed_ff = encrypt_with_processor(&mut context);
+    let input_ff = MockFlowFile::with_content("foo".as_bytes());
+    let mut input_stream = input_ff.get_stream();
+    let processor = EncryptContentPGP::schedule(&mut context, &MockLogger::new()).expect("should schedule");
+    let transformed_ff = processor.transform(&mut context, &input_ff, &mut input_stream, &MockLogger::new()).expect("should transform");
 
     assert_content(&transformed_ff, false);
 }
@@ -79,7 +66,11 @@ fn encrypts_ascii_for_alice() {
         Box::new(public_key_service()),
     );
 
-    let transformed_ff = encrypt_with_processor(&mut context);
+    let input_ff = MockFlowFile::with_content("foo".as_bytes());
+    let mut input_stream = input_ff.get_stream();
+    let processor = EncryptContentPGP::schedule(&mut context, &MockLogger::new()).expect("should schedule");
+    let transformed_ff = processor.transform(&mut context, &input_ff, &mut input_stream, &MockLogger::new()).expect("should transform");
+
     assert_content(&transformed_ff, true);
 }
 
@@ -97,7 +88,11 @@ fn encrypts_binary_for_bob() {
         Box::new(public_key_service()),
     );
 
-    let transformed_ff = encrypt_with_processor(&mut context);
+    let input_ff = MockFlowFile::with_content("foo".as_bytes());
+    let mut input_stream = input_ff.get_stream();
+    let processor = EncryptContentPGP::schedule(&mut context, &MockLogger::new()).expect("should schedule");
+    let transformed_ff = processor.transform(&mut context, &input_ff, &mut input_stream, &MockLogger::new()).expect("should transform");
+
     assert_content(&transformed_ff, false);
 }
 
@@ -114,7 +109,11 @@ fn cannot_encrypt_for_carol() {
         Box::new(public_key_service()),
     );
 
-    let transformed_ff = encrypt_with_processor(&mut context);
+    let input_ff = MockFlowFile::with_content("foo".as_bytes());
+    let mut input_stream = input_ff.get_stream();
+    let processor = EncryptContentPGP::schedule(&mut context, &MockLogger::new()).expect("should schedule");
+    let transformed_ff = processor.transform(&mut context, &input_ff, &mut input_stream, &MockLogger::new()).expect("should transform");
+
     assert_eq!(transformed_ff.target_relationship(), &FAILURE);
     assert!(transformed_ff.new_content().is_none());
     assert!(transformed_ff.attributes_to_add().is_empty());

@@ -98,15 +98,14 @@ impl FlowFileTransform for EncryptContentPGP {
     fn transform<
         'a,
         Context: ProcessContext,
-        GetContent: FnMut(&Context::FlowFile) -> Option<Vec<u8>>,
         LoggerImpl: Logger,
     >(
         &self,
         context: &'a mut Context,
-        flow_file: Context::FlowFile,
-        mut get_content: GetContent,
+        flow_file: &Context::FlowFile,
+        input_stream: &'a mut dyn std::io::Read,
         logger: &LoggerImpl,
-    ) -> Result<TransformedFlowFile<'a, Context::FlowFile>, MinifiError> {
+    ) -> Result<TransformedFlowFile<'a>, MinifiError> {
         let public_key = if let (Some(pub_key_search), Some(public_key_service)) = (
             context.get_property(&PUBLIC_KEY_SEARCH, Some(&flow_file))?,
             context.get_controller_service::<PGPPublicKeyService>(&PUBLIC_KEY_SERVICE)?,
@@ -119,16 +118,15 @@ impl FlowFileTransform for EncryptContentPGP {
         if public_key.is_none() && password.is_none() {
             logger.debug("No password or public key to encrypt with");
             return Ok(TransformedFlowFile::route_without_changes(
-                flow_file, &FAILURE,
+                &FAILURE,
             ));
         }
 
-        let content = get_content(&flow_file)
-            .ok_or_else(|| MinifiError::TriggerError("Failed to get content".to_string()))?;
+        let mut content = Vec::new();
+        let _content_size = input_stream.read_to_end(&mut content);
 
         match self.encrypt_message(content, public_key.as_deref(), password.as_deref()) {
             Ok(encrypted_content) => Ok(TransformedFlowFile::new(
-                flow_file,
                 &SUCCESS,
                 Some(encrypted_content),
                 HashMap::from([(
@@ -139,7 +137,7 @@ impl FlowFileTransform for EncryptContentPGP {
             Err(e) => {
                 logger.debug(&format!("Failed to encrypt content {:?}", e));
                 Ok(TransformedFlowFile::route_without_changes(
-                    flow_file, &FAILURE,
+                    &FAILURE,
                 ))
             }
         }

@@ -20,11 +20,10 @@ fn simple_put_file_test() {
     let mut put_file = PutFileRs::schedule(&context, &MockLogger::new()).expect("Should succeed");
 
     let mut session = MockProcessSession::new();
-    let mut flow_file = MockFlowFile::new();
+    let mut flow_file = MockFlowFile::with_content("test".as_bytes());
     flow_file
         .attributes
         .insert("filename".to_string(), "test.txt".to_string());
-    flow_file.content = "test".as_bytes().to_vec();
     session.input_flow_files.push(flow_file);
 
     assert_eq!(
@@ -32,8 +31,8 @@ fn simple_put_file_test() {
         Ok(OnTriggerResult::Ok)
     );
 
-    assert_eq!(session.transferred_flow_files.len(), 1);
-    assert_eq!(session.transferred_flow_files[0].relationship, SUCCESS.name);
+    assert_eq!(session.num_of_transferred_flow_files(), 1);
+    assert_eq!(session.transferred_flow_files.borrow()[0].relationship, SUCCESS.name);
 
     let expected_path = temp_dir.path().join("subdir/test.txt");
     assert!(expected_path.exists());
@@ -60,11 +59,10 @@ fn put_file_without_create_dirs() {
     let mut put_file = PutFileRs::schedule(&context, &MockLogger::new()).expect("Should succeed");
 
     let mut session = MockProcessSession::new();
-    let mut flow_file = MockFlowFile::new();
+    let mut flow_file = MockFlowFile::with_content("test".as_bytes());
     flow_file
         .attributes
         .insert("filename".to_string(), "test.txt".to_string());
-    flow_file.content = "test".as_bytes().to_vec();
     session.input_flow_files.push(flow_file);
 
     assert_eq!(
@@ -72,8 +70,8 @@ fn put_file_without_create_dirs() {
         Ok(OnTriggerResult::Ok)
     );
 
-    assert_eq!(session.transferred_flow_files.len(), 1);
-    assert_eq!(session.transferred_flow_files[0].relationship, FAILURE.name);
+    assert_eq!(session.num_of_transferred_flow_files(), 1);
+    assert_eq!(session.transferred_flow_files.borrow()[0].relationship, FAILURE.name);
 
     let expected_path = temp_dir.path().join("subdir/test.txt");
     assert!(!expected_path.exists());
@@ -102,11 +100,10 @@ fn put_file_test_permissions() {
     let mut put_file = PutFileRs::schedule(&context, &MockLogger::new()).expect("Should succeed");
 
     let mut session = MockProcessSession::new();
-    let mut flow_file = MockFlowFile::new();
+    let mut flow_file = MockFlowFile::with_content("test".as_bytes());
     flow_file
         .attributes
         .insert("filename".to_string(), "test.txt".to_string());
-    flow_file.content = "test".as_bytes().to_vec();
     session.input_flow_files.push(flow_file);
 
     assert_eq!(
@@ -114,8 +111,8 @@ fn put_file_test_permissions() {
         Ok(OnTriggerResult::Ok)
     );
 
-    assert_eq!(session.transferred_flow_files.len(), 1);
-    assert_eq!(session.transferred_flow_files[0].relationship, SUCCESS.name);
+    assert_eq!(session.num_of_transferred_flow_files(), 1);
+    assert_eq!(session.transferred_flow_files.borrow()[0].relationship, SUCCESS.name);
 
     let expected_path = temp_dir.path().join("subdir/test.txt");
     assert!(expected_path.exists());

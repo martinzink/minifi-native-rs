@@ -83,11 +83,13 @@ fn test_decryption(
 
     let decrypt_content = DecryptContentPGP::schedule(&processor_context, &MockLogger::new())
         .expect("Should schedule without any properties");
+    let flow_file = MockFlowFile::with_content(&get_test_message(message_file_name));
+    let flow_file_stream = &mut flow_file.get_stream();
     let res = decrypt_content
         .transform(
             &mut processor_context,
-            MockFlowFile::new(),
-            |_ff| Some(get_test_message(message_file_name)),
+            &flow_file,
+            flow_file_stream,
             &MockLogger::new(),
         )
         .expect("Should be able to transform");
@@ -189,11 +191,13 @@ fn decryption_of_not_encrypted_data() {
 
     let decrypt_content = DecryptContentPGP::schedule(&processor_context, &logger)
         .expect("Should schedule without any properties");
+    let flow_file = MockFlowFile::with_content("something not encrypted".as_bytes());
+    let flow_file_stream = &mut flow_file.get_stream();
     let res = decrypt_content
         .transform(
             &mut processor_context,
-            MockFlowFile::new(),
-            |_ff| Some("something not encrypted".as_bytes().to_vec()),
+            &flow_file,
+            flow_file_stream,
             &logger,
         )
         .expect("Should be able to transform");

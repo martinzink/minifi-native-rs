@@ -13,6 +13,7 @@ use minifi_native_sys::{
 use std::ffi::{CString, c_void};
 use std::io::Read;
 use std::os::raw::c_char;
+use crate::c_ffi::c_ffi_input_stream::CffiInputStream;
 
 pub struct CffiProcessSession<'a> {
     ptr: *mut MinifiProcessSession,
@@ -29,8 +30,8 @@ impl<'a> CffiProcessSession<'a> {
     }
 
     fn write_in_batches<F>(
-        &mut self,
-        flow_file: &mut CffiFlowFile,
+        &self,
+        flow_file: &CffiFlowFile,
         produce_batch: F,
     ) -> Result<(), MinifiError>
     where
@@ -109,7 +110,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
     }
 
     fn transfer(
-        &mut self,
+        &self,
         flow_file: Self::FlowFile,
         relationship: &str,
     ) -> Result<(), MinifiError> {
@@ -141,7 +142,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
     }
 
     fn set_attribute(
-        &mut self,
+        &self,
         flow_file: &mut Self::FlowFile,
         attr_key: &str,
         attr_value: &str,
@@ -230,7 +231,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
         on_attr_helper.result
     }
 
-    fn write(&mut self, flow_file: &mut Self::FlowFile, data: &[u8]) -> Result<(), MinifiError> {
+    fn write(&self, flow_file: &Self::FlowFile, data: &[u8]) -> Result<(), MinifiError> {
         let mut dt: Option<&[u8]> = Some(data);
         unsafe {
             unsafe extern "C" fn cb(
@@ -265,11 +266,11 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
     }
 
     fn write_stream<'b>(
-        &mut self,
-        mut flow_file: &mut Self::FlowFile,
+        &self,
+        flow_file: &Self::FlowFile,
         mut stream: Box<dyn Read + 'b>,
     ) -> Result<(), MinifiError> {
-        self.write_in_batches(&mut flow_file, |buffer| {
+        self.write_in_batches(flow_file, |buffer| {
             match stream.read(buffer) {
                 Ok(0) => None, // EOF
                 Ok(n) => Some(n),
@@ -278,7 +279,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
         })
     }
 
-    fn read(&mut self, flow_file: &Self::FlowFile) -> Option<Vec<u8>> {
+    fn read(&self, flow_file: &Self::FlowFile) -> Option<Vec<u8>> {
         let mut output: Option<Vec<u8>> = None;
         unsafe {
             unsafe extern "C" fn cb(
@@ -323,8 +324,51 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
         output
     }
 
+    fn read_stream<F, R>(&self, flow_file: &Self::FlowFile, callback: F) -> Result<R, MinifiError>
+    where
+        F: FnOnce(&mut dyn Read, &Self::FlowFile) -> Result<R, MinifiError>,
+    {
+        unsafe {
+            struct CallbackCtx<'a, F, R> {
+                callback: Option<F>,
+                flow_file: &'a CffiFlowFile,
+                result: Option<Result<R, MinifiError>>,
+            }
+            let mut ctx = CallbackCtx { callback: Some(callback), flow_file, result: None };
+
+            unsafe extern "C" fn read_cb<F, R>(user_data: *mut c_void, stream_ptr: *mut MinifiInputStream) -> i64
+            where F: FnOnce(&mut dyn std::io::Read, &CffiFlowFile) -> Result<R, MinifiError>
+            {
+                unsafe {
+                    let ctx = &mut *(user_data as *mut CallbackCtx<F, R>);
+
+                    // Construct the Rust Reader wrapper here.
+                    let mut reader = CffiInputStream {
+                        ptr: stream_ptr,
+                        _marker: std::marker::PhantomData
+                    };
+
+                    if let Some(cb) = ctx.callback.take() {
+                        ctx.result = Some(cb(&mut reader, ctx.flow_file));
+                    }
+                }
+
+                0
+            }
+
+            MinifiProcessSessionRead(
+                self.ptr,
+                flow_file.ptr,
+                Some(read_cb::<F, R>),
+                &mut ctx as *mut _ as *mut c_void
+            );
+
+            ctx.result.unwrap_or(Err(MinifiError::OtherError("Callback execution failed")))
+        }
+    }
+
     fn read_in_batches<F>(
-        &mut self,
+        &self,
         flow_file: &Self::FlowFile,
         batch_size: usize,
         process_batch: F,

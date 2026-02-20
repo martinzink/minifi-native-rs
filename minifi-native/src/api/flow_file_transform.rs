@@ -9,33 +9,28 @@ use crate::{
 };
 use std::collections::HashMap;
 
-pub struct TransformedFlowFile<'a, FlowFileType> {
-    flow_file: FlowFileType,
+pub struct TransformedFlowFile<'a> {
     target_relationship: &'a Relationship,
     new_content: Option<Content<'a>>,
     attributes_to_add: HashMap<String, String>,
 }
 
-impl<'a, FlowFileType> TransformedFlowFile<'a, FlowFileType> {
+impl<'a> TransformedFlowFile<'a> {
     pub fn route_without_changes(
-        flow_file: FlowFileType,
         target_relationship: &'a Relationship,
     ) -> Self {
         Self {
-            flow_file,
             target_relationship,
             new_content: None,
             attributes_to_add: HashMap::new(),
         }
     }
     pub fn new(
-        flow_file: FlowFileType,
         target_relationship: &'a Relationship,
         new_content: Option<Vec<u8>>,
         attributes_to_add: HashMap<String, String>,
     ) -> Self {
         Self {
-            flow_file,
             target_relationship,
             new_content: Some(Content::Buffer(new_content.unwrap_or_default())),
             attributes_to_add,
@@ -59,15 +54,14 @@ pub trait FlowFileTransform {
     fn transform<
         'a,
         Context: ProcessContext,
-        GetContent: FnMut(&Context::FlowFile) -> Option<Vec<u8>>,
         LoggerImpl: Logger,
     >(
-        &self,
+        &'a self,
         context: &'a mut Context,
-        flow_file: Context::FlowFile,
-        flow_file_content: GetContent,
+        flow_file: &Context::FlowFile,
+        input_stream: &'a mut dyn std::io::Read,
         logger: &LoggerImpl,
-    ) -> Result<TransformedFlowFile<'a, Context::FlowFile>, MinifiError>;
+    ) -> Result<TransformedFlowFile<'a>, MinifiError>;
 }
 
 pub struct FlowFileTransformProcessorType {}
@@ -87,30 +81,36 @@ where
         PS: ProcessSession<FlowFile = PC::FlowFile>,
     {
         if let Some(ref scheduled_impl) = self.scheduled_impl {
-            if let Some(flow_file) = session.get() {
-                let mut transformed_ff = scheduled_impl.transform(
-                    context,
-                    flow_file,
-                    |ff| session.read(&ff),
-                    &self.logger,
-                )?;
-                for (k, v) in &transformed_ff.attributes_to_add {
-                    session.set_attribute(&mut transformed_ff.flow_file, k, v)?;
-                }
-                match transformed_ff.new_content {
-                    None => {}
-                    Some(Content::Buffer(buffer)) => {
-                        session.write(&mut transformed_ff.flow_file, &buffer)?;
-                    }
-                    Some(Content::Stream(stream)) => {
-                        session.write_stream(&mut transformed_ff.flow_file, stream)?;
-                    }
+            if let Some(mut flow_file) = session.get() {
+                let (attrs_to_add, relationship) = session.read_stream(&flow_file, |input_stream, ff| {
+                    let transformed = scheduled_impl.transform(
+                        context,
+                        &flow_file,
+                        input_stream,
+                        &self.logger,
+                    )?;
+
+                    match transformed.new_content {
+                        None => {}
+                        Some(Content::Buffer(buffer)) => {
+                            session.write(ff, &buffer)?;
+                        }
+                        Some(Content::Stream(stream)) => {
+                            session.write_stream(ff, stream)?;
+                        }
+                    };
+                    Ok((transformed.attributes_to_add, transformed.target_relationship.name))
+                })?;
+
+                for (k, v) in attrs_to_add {
+                    session.set_attribute(&mut flow_file, &k, &v)?;
                 }
 
                 session.transfer(
-                    transformed_ff.flow_file,
-                    transformed_ff.target_relationship.name,
+                    flow_file,
+                    relationship,
                 )?;
+
                 Ok(OnTriggerResult::Ok)
             } else {
                 self.log(LogLevel::Trace, "No flowfile to transform");
