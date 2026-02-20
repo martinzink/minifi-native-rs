@@ -1,6 +1,6 @@
-use std::io::Read;
 use crate::MinifiError;
 use crate::api::flow_file::FlowFile;
+use std::io::Read;
 
 pub trait ProcessSession {
     type FlowFile: FlowFile;
@@ -18,7 +18,11 @@ pub trait ProcessSession {
     ) -> bool; // TODO(mzink) Result
 
     fn write(&mut self, flow_file: &mut Self::FlowFile, data: &[u8]) -> Result<(), MinifiError>;
-    fn write_stream<'a>(&mut self, flow_file: &mut Self::FlowFile, stream: Box<dyn Read + 'a>) -> Result<(), MinifiError>;
+    fn write_stream<'a>(
+        &mut self,
+        flow_file: &mut Self::FlowFile,
+        stream: Box<dyn Read + 'a>,
+    ) -> Result<(), MinifiError>;
 
     fn read(&mut self, flow_file: &Self::FlowFile) -> Option<Vec<u8>>;
     fn read_in_batches<F>(

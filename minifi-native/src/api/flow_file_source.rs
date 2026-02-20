@@ -1,12 +1,11 @@
-use crate::{
-    CalculateMetrics, ComponentIdentifier, Concurrent, Logger,
-    MinifiError, OnTriggerResult, ProcessContext, ProcessSession, Processor, ProcessorDefinition,
-    RawMultiThreadedTrigger, Relationship,
-    Schedule,
-};
-use std::collections::HashMap;
 use crate::api::Content;
 use crate::c_ffi::{DynRawProcessorDefinition, RawProcessorDefinition, RawRegisterableProcessor};
+use crate::{
+    CalculateMetrics, ComponentIdentifier, Concurrent, Logger, MinifiError, OnTriggerResult,
+    ProcessContext, ProcessSession, Processor, ProcessorDefinition, RawMultiThreadedTrigger,
+    Relationship, Schedule,
+};
+use std::collections::HashMap;
 
 pub struct GeneratedFlowFile<'a> {
     target_relationship: &'a Relationship,
@@ -57,8 +56,12 @@ where
                 let mut ff = session.create()?;
                 match new_flow_file_data.new_content {
                     None => {}
-                    Some(Content::Buffer(buffer)) => { session.write(&mut ff, &buffer)?; },
-                    Some(Content::Stream(stream)) => { session.write_stream(&mut ff, stream)?; },
+                    Some(Content::Buffer(buffer)) => {
+                        session.write(&mut ff, &buffer)?;
+                    }
+                    Some(Content::Stream(stream)) => {
+                        session.write_stream(&mut ff, stream)?;
+                    }
                 }
                 for (k, v) in &new_flow_file_data.attributes_to_add {
                     session.set_attribute(&mut ff, k, v);

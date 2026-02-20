@@ -1,7 +1,7 @@
 use crate::api::errors::MinifiError;
 use crate::api::raw::raw_threading_model::{Concurrent, Exclusive, RawThreadingModel};
-use crate::{LogLevel, ProcessContext, ProcessSession};
 use crate::c_ffi::{CffiLogger, DynRawProcessorDefinition};
+use crate::{LogLevel, ProcessContext, ProcessSession};
 
 pub enum ProcessorInputRequirement {
     Required,

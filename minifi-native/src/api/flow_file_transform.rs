@@ -1,13 +1,13 @@
 use crate::api::ProcessorDefinition;
 use crate::api::flow_file_content::Content;
 use crate::api::processor::Processor;
+use crate::c_ffi::{DynRawProcessorDefinition, RawProcessorDefinition, RawRegisterableProcessor};
 use crate::{
-    CalculateMetrics, ComponentIdentifier, Concurrent, LogLevel, Logger,
-    MinifiError, OnTriggerResult, ProcessContext, ProcessSession, RawMultiThreadedTrigger,
-    RawProcessor, Relationship, Schedule,
+    CalculateMetrics, ComponentIdentifier, Concurrent, LogLevel, Logger, MinifiError,
+    OnTriggerResult, ProcessContext, ProcessSession, RawMultiThreadedTrigger, RawProcessor,
+    Relationship, Schedule,
 };
 use std::collections::HashMap;
-use crate::c_ffi::{DynRawProcessorDefinition, RawProcessorDefinition, RawRegisterableProcessor};
 
 pub struct TransformedFlowFile<'a, FlowFileType> {
     flow_file: FlowFileType,
@@ -99,8 +99,12 @@ where
                 }
                 match transformed_ff.new_content {
                     None => {}
-                    Some(Content::Buffer(buffer)) => { session.write(&mut transformed_ff.flow_file, &buffer)?; },
-                    Some(Content::Stream(stream)) => { session.write_stream(&mut transformed_ff.flow_file, stream)?; },
+                    Some(Content::Buffer(buffer)) => {
+                        session.write(&mut transformed_ff.flow_file, &buffer)?;
+                    }
+                    Some(Content::Stream(stream)) => {
+                        session.write_stream(&mut transformed_ff.flow_file, stream)?;
+                    }
                 }
 
                 session.transfer(

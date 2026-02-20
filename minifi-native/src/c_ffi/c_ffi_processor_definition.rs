@@ -191,7 +191,7 @@ where
             let processor = &*(processor_ptr as *const T);
             let metrics = processor.calculate_metrics();
             let metric_values: Vec<f64> = metrics.iter().map(|(_k, v)| *v).collect();
-            // TODO(mzink) maybe we should skip StringView and use MinifiStringView directly?
+
             let metric_string_view: Vec<StringView> = metrics
                 .iter()
                 .map(|(k, _v)| StringView::new(k.as_str()))
@@ -210,19 +210,36 @@ where
     }
 }
 
+#[derive(Debug)]
+pub struct ProcessorClassDefinition<'a> {
+    inner: MinifiProcessorClassDefinition,
+    _marker: std::marker::PhantomData<&'a ()>,
+}
+
+impl<'a> ProcessorClassDefinition<'a> {
+    pub(crate) fn new(inner: MinifiProcessorClassDefinition) -> Self {
+        Self {
+            inner,
+            _marker: std::marker::PhantomData,
+        }
+    }
+
+    pub unsafe fn as_raw(&self) -> MinifiProcessorClassDefinition {
+        self.inner
+    }
+}
+
 pub trait DynRawProcessorDefinition {
-    // unsafe because self must outlive the resulting MinifiProcessorClassDefinition
-    unsafe fn class_description(&self) -> MinifiProcessorClassDefinition;
+    fn class_description(&'_ self) -> ProcessorClassDefinition<'_>;
 }
 
 impl<T> DynRawProcessorDefinition for RawProcessorDefinition<T>
 where
     T: RawProcessor + DispatchOnTrigger<T::Threading>,
 {
-    // unsafe because self must outlive the resulting MinifiProcessorClassDefinition
-    unsafe fn class_description(&self) -> MinifiProcessorClassDefinition {
+    fn class_description(&'_ self) -> ProcessorClassDefinition<'_> {
         unsafe {
-            MinifiProcessorClassDefinition {
+            ProcessorClassDefinition::new(MinifiProcessorClassDefinition {
                 full_name: self.name.as_minifi_c_type(),
                 description: self.description_text.as_minifi_c_type(),
                 class_properties_count: self.c_properties.len(),
@@ -248,7 +265,7 @@ where
                     onUnSchedule: Some(Self::on_unschedule_processor),
                     calculateMetrics: Some(Self::calculate_metrics),
                 },
-            }
+            })
         }
     }
 }

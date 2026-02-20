@@ -237,7 +237,11 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
         }
     }
 
-    fn write_stream<'b>(&mut self, mut flow_file: &mut Self::FlowFile, mut stream: Box<dyn Read + 'b>) -> Result<(), MinifiError> {
+    fn write_stream<'b>(
+        &mut self,
+        mut flow_file: &mut Self::FlowFile,
+        mut stream: Box<dyn Read + 'b>,
+    ) -> Result<(), MinifiError> {
         self.write_in_batches(&mut flow_file, |buffer| {
             match stream.read(buffer) {
                 Ok(0) => None, // EOF

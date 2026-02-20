@@ -1,6 +1,6 @@
 use crate::api::ControllerServiceContext;
-use crate::{LogLevel, MinifiError};
 use crate::c_ffi::CffiLogger;
+use crate::{LogLevel, MinifiError};
 
 pub trait RawControllerService: Sized {
     fn new(logger: CffiLogger) -> Self;

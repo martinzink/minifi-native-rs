@@ -30,7 +30,8 @@ impl CffiControllerServiceList {
                 self.controller_service_definitions
                     .last()
                     .unwrap()
-                    .class_description(),
+                    .class_description()
+                    .as_raw(),
             );
         }
     }

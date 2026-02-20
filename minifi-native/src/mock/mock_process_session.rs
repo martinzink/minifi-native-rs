@@ -1,7 +1,7 @@
-use std::io::Read;
 use crate::api::ProcessSession;
 use crate::{MinifiError, MockFlowFile};
 use itertools::Itertools;
+use std::io::Read;
 
 pub struct TransferredFlowFile {
     pub relationship: String,
@@ -55,8 +55,14 @@ impl ProcessSession for MockProcessSession {
         Ok(())
     }
 
-    fn write_stream<'a>(&mut self, flow_file: &mut Self::FlowFile, mut stream: Box<dyn Read + 'a>) -> Result<(), MinifiError> {
-        stream.read_to_end(&mut flow_file.content).expect("Mock data should be readable");
+    fn write_stream<'a>(
+        &mut self,
+        flow_file: &mut Self::FlowFile,
+        mut stream: Box<dyn Read + 'a>,
+    ) -> Result<(), MinifiError> {
+        stream
+            .read_to_end(&mut flow_file.content)
+            .expect("Mock data should be readable");
         Ok(())
     }
 

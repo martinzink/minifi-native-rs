@@ -29,7 +29,7 @@ pub use raw::raw_processor::{
     HasRawProcessorDefinition, OnTriggerResult, ProcessorInputRequirement, RawMultiThreadedTrigger,
     RawProcessor, RawSingleThreadedTrigger,
 };
-pub use raw::raw_threading_model::{RawThreadingModel};
+pub use raw::raw_threading_model::RawThreadingModel;
 
 pub use property::{Property, StandardPropertyValidator};
 

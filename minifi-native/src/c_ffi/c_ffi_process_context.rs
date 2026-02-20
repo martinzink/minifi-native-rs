@@ -144,7 +144,7 @@ impl<'a> ProcessContext for CffiProcessContext<'a> {
                     &mut helper as *mut _ as *mut c_void,
                 );
                 if get_cs_status != MinifiStatus_MINIFI_STATUS_SUCCESS {
-                    return Err(MinifiError::UnknownError); // TODO(mzink) err from get_cs_status
+                    return Err(MinifiError::StatusError(get_cs_status));
                 }
             }
 

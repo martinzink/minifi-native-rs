@@ -135,11 +135,25 @@ impl GetFileRs {
             return Ok(false);
         }
 
+        #[cfg(unix)]
         fn is_hidden(path: PathBuf) -> bool {
-            // TODO(windows)
             path.file_name()
                 .and_then(|f| f.to_str())
                 .map_or(false, |f| f.starts_with('.'))
+        }
+
+        #[cfg(windows)]
+        fn is_hidden(path: PathBuf) -> bool {
+            use std::fs;
+            use std::os::windows::fs::MetadataExt;
+
+            // FILE_ATTRIBUTE_HIDDEN is defined as 0x2 or 2 in Windows API
+            const FILE_ATTRIBUTE_HIDDEN: u32 = 2;
+
+            match fs::metadata(&path) {
+                Ok(metadata) => (metadata.file_attributes() & FILE_ATTRIBUTE_HIDDEN) != 0,
+                Err(_) => false,
+            }
         }
 
         if self.ignore_hidden_files && is_hidden(dir_entry.path().to_path_buf()) {
@@ -170,7 +184,6 @@ impl GetFileRs {
             ABSOLUTE_PATH_OUTPUT_ATTRIBUTE.name,
             path.to_string_lossy().trim(),
         );
-        // TODO(relative path)
 
         let contents = std::fs::read_to_string(&path).expect("Failed to read file");
         session.write(&mut ff, contents.as_bytes())?;

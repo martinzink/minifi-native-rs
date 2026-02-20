@@ -19,22 +19,22 @@ pub use api::raw::raw_controller_service::RawControllerService;
 pub use api::raw::raw_threading_model::{Concurrent, Exclusive};
 
 pub use api::flow_file_content::Content;
-pub use api::logger::{Logger, LogLevel};
+pub use api::logger::{LogLevel, Logger};
 
 // TODO(mzink) clean this up
 pub use api::{
-    ControllerServiceContext, FlowFile, HasRawProcessorDefinition,
-    OnTriggerResult, OutputAttribute, ProcessContext, ProcessSession,
-    ProcessorInputRequirement, Property, RawMultiThreadedTrigger, RawProcessor,
-    RawSingleThreadedTrigger, Relationship, StandardPropertyValidator,
+    ControllerServiceContext, FlowFile, HasRawProcessorDefinition, OnTriggerResult,
+    OutputAttribute, ProcessContext, ProcessSession, ProcessorInputRequirement, Property,
+    RawMultiThreadedTrigger, RawProcessor, RawSingleThreadedTrigger, Relationship,
+    StandardPropertyValidator,
 };
 
+pub use minifi_macros as macros;
+pub use minifi_native_sys as sys;
 pub use mock::{
     MockControllerServiceContext, MockFlowFile, MockLogger, MockProcessContext, MockProcessSession,
     StdLogger,
 };
-pub use minifi_macros as macros;
-pub use minifi_native_sys as sys;
 
 #[unsafe(no_mangle)]
 #[allow(non_upper_case_globals)]

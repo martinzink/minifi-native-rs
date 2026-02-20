@@ -1,15 +1,32 @@
 use crate::api::RawControllerService;
+use crate::c_ffi::StaticStrAsMinifiCStr;
 use crate::c_ffi::c_ffi_controller_service_context::CffiControllerServiceContext;
 use crate::c_ffi::c_ffi_property::CProperties;
-use crate::{
-    ComponentIdentifier, ControllerServiceDefinition, LogLevel, Property,
-};
+use crate::{ComponentIdentifier, ControllerServiceDefinition, LogLevel, Property};
 use minifi_native_sys::{
     MinifiControllerServiceCallbacks, MinifiControllerServiceClassDefinition,
     MinifiControllerServiceContext, MinifiControllerServiceMetadata, MinifiStatus,
 };
 use std::ffi::c_void;
-use crate::c_ffi::StaticStrAsMinifiCStr;
+
+#[derive(Debug)]
+pub struct ControllerServiceClassDefinition<'a> {
+    inner: MinifiControllerServiceClassDefinition,
+    _marker: std::marker::PhantomData<&'a ()>,
+}
+
+impl<'a> ControllerServiceClassDefinition<'a> {
+    pub(crate) fn new(inner: MinifiControllerServiceClassDefinition) -> Self {
+        Self {
+            inner,
+            _marker: std::marker::PhantomData,
+        }
+    }
+
+    pub unsafe fn as_raw(&self) -> MinifiControllerServiceClassDefinition {
+        self.inner
+    }
+}
 
 pub struct CffiControllerServiceDefinition<T>
 where
@@ -80,17 +97,16 @@ where
 }
 
 pub trait DynRawControllerServiceDefinition {
-    // unsafe because self must outlive the resulting MinifiControllerServiceClassDefinition
-    unsafe fn class_description(&self) -> MinifiControllerServiceClassDefinition;
+    fn class_description(&'_ self) -> ControllerServiceClassDefinition<'_>;
 }
 
 impl<T> DynRawControllerServiceDefinition for CffiControllerServiceDefinition<T>
 where
     T: RawControllerService + ComponentIdentifier,
 {
-    unsafe fn class_description(&self) -> MinifiControllerServiceClassDefinition {
+    fn class_description(&'_ self) -> ControllerServiceClassDefinition<'_> {
         unsafe {
-            MinifiControllerServiceClassDefinition {
+            ControllerServiceClassDefinition::new(MinifiControllerServiceClassDefinition {
                 full_name: self.name.as_minifi_c_type(),
                 description: self.description_text.as_minifi_c_type(),
                 class_properties_count: self.c_properties.len(),
@@ -101,7 +117,7 @@ where
                     enable: Some(Self::enable_controller_service),
                     notifyStop: Some(Self::disable_controller_service),
                 },
-            }
+            })
         }
     }
 }
