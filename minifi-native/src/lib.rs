@@ -1,6 +1,6 @@
 mod api;
-mod c_ffi;
-mod mock;
+pub mod c_ffi;
+pub mod mock;
 
 pub use api::errors::MinifiError;
 
@@ -9,50 +9,44 @@ pub use api::component_definition_traits::{
     ComponentIdentifier, ControllerServiceDefinition, ProcessorDefinition,
 };
 pub use api::controller_service::{ControllerService, EnableControllerService};
-pub use api::processor_traits::{CalculateMetrics, Processor, Schedule};
-
 pub use api::flow_file_source::{FlowFileSource, FlowFileSourceProcessorType, GeneratedFlowFile};
 pub use api::flow_file_transform::{
     FlowFileTransform, FlowFileTransformProcessorType, TransformedFlowFile,
 };
+pub use api::processor::{CalculateMetrics, Processor, Schedule};
 
 pub use api::raw::raw_controller_service::RawControllerService;
+pub use api::raw::raw_threading_model::{Concurrent, Exclusive};
+
+pub use api::flow_file_content::Content;
+pub use api::logger::{Logger, LogLevel};
 
 // TODO(mzink) clean this up
 pub use api::{
-    Concurrent, Content, ControllerServiceContext, Exclusive, FlowFile, HasRawProcessorDefinition,
-    LogLevel, Logger, OnTriggerResult, OutputAttribute, ProcessContext, ProcessSession,
+    ControllerServiceContext, FlowFile, HasRawProcessorDefinition,
+    OnTriggerResult, OutputAttribute, ProcessContext, ProcessSession,
     ProcessorInputRequirement, Property, RawMultiThreadedTrigger, RawProcessor,
     RawSingleThreadedTrigger, Relationship, StandardPropertyValidator,
 };
-pub use c_ffi::{
-    CffiControllerServiceDefinition, CffiControllerServiceList, CffiLogger, CffiProcessorList,
-    DynRawControllerServiceDefinition, DynRawProcessorDefinition, RawProcessorDefinition,
-    RawRegisterableProcessor, RegisterableControllerService, StaticStrAsMinifiCStr,
-};
+
 pub use mock::{
     MockControllerServiceContext, MockFlowFile, MockLogger, MockProcessContext, MockProcessSession,
     StdLogger,
 };
-
 pub use minifi_macros as macros;
 pub use minifi_native_sys as sys;
-use minifi_native_sys::{
-    MINIFI_API_MAJOR_VERSION, MINIFI_API_MINOR_VERSION, MINIFI_API_PATCH_VERSION,
-};
 
 #[unsafe(no_mangle)]
+#[allow(non_upper_case_globals)]
 #[cfg_attr(target_os = "linux", unsafe(link_section = ".rodata"))]
 #[cfg_attr(target_os = "macos", unsafe(link_section = "__DATA,__const"))]
 #[cfg_attr(target_os = "windows", unsafe(link_section = ".rdata"))]
-pub static MINIFI_C_API_VERSION: &str = const_format::concatcp!(
-    "MINIFI_API_VERSION=[",
-    MINIFI_API_MAJOR_VERSION,
+pub static MinifiApiVersion: &str = const_format::concatcp!(
+    minifi_native_sys::MINIFI_API_MAJOR_VERSION,
     ".",
-    MINIFI_API_MINOR_VERSION,
+    minifi_native_sys::MINIFI_API_MINOR_VERSION,
     ".",
-    MINIFI_API_PATCH_VERSION,
-    "]"
+    minifi_native_sys::MINIFI_API_PATCH_VERSION,
 );
 
 #[macro_export]
@@ -68,10 +62,10 @@ macro_rules! declare_minifi_extension {
             _config: *mut minifi_native::sys::MinifiConfig,
         ) -> *mut minifi_native::sys::MinifiExtension {
 
-            use minifi_native::StaticStrAsMinifiCStr;
+            use minifi_native::c_ffi::StaticStrAsMinifiCStr;
 
             unsafe {
-                let mut processor_list = minifi_native::CffiProcessorList::new();
+                let mut processor_list = minifi_native::c_ffi::CffiProcessorList::new();
 
                 $(
                     {
@@ -79,7 +73,7 @@ macro_rules! declare_minifi_extension {
                     }
                 )*
 
-                let mut controller_list = minifi_native::CffiControllerServiceList::new();
+                let mut controller_list = minifi_native::c_ffi::CffiControllerServiceList::new();
 
                 $(
                     {
@@ -98,7 +92,7 @@ macro_rules! declare_minifi_extension {
                     controller_services_ptr: controller_list.get_controller_service_ptr(),
                 };
 
-                minifi_native::sys::MinifiCreateExtension_0_1(minifi_native::MINIFI_C_API_VERSION.as_minifi_c_type(), &extension_create_info)
+                minifi_native::sys::MinifiCreateExtension(&extension_create_info)
             }
         }
     };

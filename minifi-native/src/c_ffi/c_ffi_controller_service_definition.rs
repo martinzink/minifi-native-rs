@@ -2,13 +2,14 @@ use crate::api::RawControllerService;
 use crate::c_ffi::c_ffi_controller_service_context::CffiControllerServiceContext;
 use crate::c_ffi::c_ffi_property::CProperties;
 use crate::{
-    ComponentIdentifier, ControllerServiceDefinition, LogLevel, Property, StaticStrAsMinifiCStr,
+    ComponentIdentifier, ControllerServiceDefinition, LogLevel, Property,
 };
 use minifi_native_sys::{
     MinifiControllerServiceCallbacks, MinifiControllerServiceClassDefinition,
     MinifiControllerServiceContext, MinifiControllerServiceMetadata, MinifiStatus,
 };
 use std::ffi::c_void;
+use crate::c_ffi::StaticStrAsMinifiCStr;
 
 pub struct CffiControllerServiceDefinition<T>
 where

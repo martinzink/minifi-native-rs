@@ -10,6 +10,7 @@ use minifi_native_sys::{
     MinifiProcessSessionWrite, MinifiStatus_MINIFI_STATUS_SUCCESS, MinifiStringView,
 };
 use std::ffi::{CString, c_void};
+use std::io::Read;
 use std::os::raw::c_char;
 
 pub struct CffiProcessSession<'a> {
@@ -23,6 +24,64 @@ impl<'a> CffiProcessSession<'a> {
         Self {
             ptr,
             _lifetime: std::marker::PhantomData,
+        }
+    }
+
+    fn write_in_batches<F>(
+        &mut self,
+        flow_file: &mut CffiFlowFile,
+        produce_batch: F,
+    ) -> Result<(), MinifiError>
+    where
+        F: FnMut(&mut [u8]) -> Option<usize>,
+    {
+        unsafe {
+            struct State<'b, F: FnMut(&mut [u8]) -> Option<usize>> {
+                callback: F,
+                buffer: &'b mut [u8],
+            }
+
+            let mut buffer = [0u8; 8192];
+            let mut state = State {
+                callback: produce_batch,
+                buffer: &mut buffer,
+            };
+
+            unsafe extern "C" fn cb<F: FnMut(&mut [u8]) -> Option<usize>>(
+                user_ctx: *mut c_void,
+                output_stream: *mut MinifiOutputStream,
+            ) -> i64 {
+                unsafe {
+                    let state = &mut *(user_ctx as *mut State<F>);
+                    let mut overall_writes = 0;
+
+                    // The user fills our provided buffer
+                    while let Some(n) = (state.callback)(state.buffer) {
+                        let written = MinifiOutputStreamWrite(
+                            output_stream,
+                            state.buffer.as_ptr() as *const c_char,
+                            n,
+                        );
+
+                        if written < 0 {
+                            return -1;
+                        }
+                        overall_writes += written;
+                    }
+                    overall_writes
+                }
+            }
+
+            match MinifiProcessSessionWrite(
+                self.ptr,
+                flow_file.ptr,
+                Some(cb::<F>),
+                &mut state as *mut _ as *mut c_void,
+            ) {
+                #[allow(non_upper_case_globals)]
+                MinifiStatus_MINIFI_STATUS_SUCCESS => Ok(()),
+                error_code => Err(MinifiError::StatusError(error_code)),
+            }
         }
     }
 }
@@ -178,62 +237,14 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
         }
     }
 
-    fn write_in_batches<F>(
-        &mut self,
-        flow_file: &mut Self::FlowFile,
-        produce_batch: F,
-    ) -> Result<(), MinifiError>
-    where
-        F: FnMut(&mut [u8]) -> Option<usize>,
-    {
-        unsafe {
-            struct State<'b, F: FnMut(&mut [u8]) -> Option<usize>> {
-                callback: F,
-                buffer: &'b mut [u8],
+    fn write_stream<'b>(&mut self, mut flow_file: &mut Self::FlowFile, mut stream: Box<dyn Read + 'b>) -> Result<(), MinifiError> {
+        self.write_in_batches(&mut flow_file, |buffer| {
+            match stream.read(buffer) {
+                Ok(0) => None, // EOF
+                Ok(n) => Some(n),
+                Err(_e) => None, // Signal failure/EOF
             }
-
-            let mut buffer = [0u8; 8192];
-            let mut state = State {
-                callback: produce_batch,
-                buffer: &mut buffer,
-            };
-
-            unsafe extern "C" fn cb<F: FnMut(&mut [u8]) -> Option<usize>>(
-                user_ctx: *mut c_void,
-                output_stream: *mut MinifiOutputStream,
-            ) -> i64 {
-                unsafe {
-                    let state = &mut *(user_ctx as *mut State<F>);
-                    let mut overall_writes = 0;
-
-                    // The user fills our provided buffer
-                    while let Some(n) = (state.callback)(state.buffer) {
-                        let written = MinifiOutputStreamWrite(
-                            output_stream,
-                            state.buffer.as_ptr() as *const c_char,
-                            n,
-                        );
-
-                        if written < 0 {
-                            return -1;
-                        }
-                        overall_writes += written;
-                    }
-                    overall_writes
-                }
-            }
-
-            match MinifiProcessSessionWrite(
-                self.ptr,
-                flow_file.ptr,
-                Some(cb::<F>),
-                &mut state as *mut _ as *mut c_void,
-            ) {
-                #[allow(non_upper_case_globals)]
-                MinifiStatus_MINIFI_STATUS_SUCCESS => Ok(()),
-                error_code => Err(MinifiError::StatusError(error_code)),
-            }
-        }
+        })
     }
 
     fn read(&mut self, flow_file: &Self::FlowFile) -> Option<Vec<u8>> {

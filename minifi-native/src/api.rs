@@ -4,14 +4,14 @@ pub(crate) mod controller_service;
 mod controller_service_context;
 pub(crate) mod errors;
 mod flow_file;
-mod flow_file_content;
+pub(crate) mod flow_file_content;
 pub(crate) mod flow_file_source;
 pub(crate) mod flow_file_transform;
-mod logger;
+pub(crate) mod logger;
 mod output_attribute;
 mod process_context;
 mod process_session;
-pub(crate) mod processor_traits;
+pub(crate) mod processor;
 mod property;
 pub(crate) mod raw;
 mod relationship;
@@ -29,7 +29,7 @@ pub use raw::raw_processor::{
     HasRawProcessorDefinition, OnTriggerResult, ProcessorInputRequirement, RawMultiThreadedTrigger,
     RawProcessor, RawSingleThreadedTrigger,
 };
-pub use raw::raw_threading_model::{Concurrent, Exclusive, RawThreadingModel};
+pub use raw::raw_threading_model::{RawThreadingModel};
 
 pub use property::{Property, StandardPropertyValidator};
 

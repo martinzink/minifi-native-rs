@@ -1,12 +1,13 @@
 use crate::api::ProcessorDefinition;
 use crate::api::flow_file_content::Content;
-use crate::api::processor_traits::Processor;
+use crate::api::processor::Processor;
 use crate::{
-    CalculateMetrics, ComponentIdentifier, Concurrent, DynRawProcessorDefinition, LogLevel, Logger,
+    CalculateMetrics, ComponentIdentifier, Concurrent, LogLevel, Logger,
     MinifiError, OnTriggerResult, ProcessContext, ProcessSession, RawMultiThreadedTrigger,
-    RawProcessor, RawProcessorDefinition, RawRegisterableProcessor, Relationship, Schedule,
+    RawProcessor, Relationship, Schedule,
 };
 use std::collections::HashMap;
+use crate::c_ffi::{DynRawProcessorDefinition, RawProcessorDefinition, RawRegisterableProcessor};
 
 pub struct TransformedFlowFile<'a, FlowFileType> {
     flow_file: FlowFileType,
@@ -96,8 +97,10 @@ where
                 for (k, v) in &transformed_ff.attributes_to_add {
                     session.set_attribute(&mut transformed_ff.flow_file, k, v);
                 }
-                if let Some(new_content) = transformed_ff.new_content {
-                    new_content.write_to_flow_file(&mut transformed_ff.flow_file, session)?;
+                match transformed_ff.new_content {
+                    None => {}
+                    Some(Content::Buffer(buffer)) => { session.write(&mut transformed_ff.flow_file, &buffer)?; },
+                    Some(Content::Stream(stream)) => { session.write_stream(&mut transformed_ff.flow_file, stream)?; },
                 }
 
                 session.transfer(

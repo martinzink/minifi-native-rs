@@ -4,7 +4,7 @@ use minifi_native::{
     ProcessSession, Schedule,
 };
 use rand::distr::Alphanumeric;
-use rand::{Rng, RngExt};
+use rand::{RngExt};
 use std::cmp::PartialEq;
 
 mod properties;

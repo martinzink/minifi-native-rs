@@ -1,10 +1,11 @@
-use crate::api::processor_traits::CalculateMetrics;
+use crate::api::processor::CalculateMetrics;
 use crate::{
-    ComponentIdentifier, Concurrent, DynRawProcessorDefinition, Exclusive, Logger, MinifiError,
+    ComponentIdentifier, Concurrent, Exclusive, Logger, MinifiError,
     OnTriggerResult, ProcessContext, ProcessSession, Processor, ProcessorDefinition,
-    RawMultiThreadedTrigger, RawProcessorDefinition, RawRegisterableProcessor,
+    RawMultiThreadedTrigger,
     RawSingleThreadedTrigger, Schedule,
 };
+use crate::c_ffi::{DynRawProcessorDefinition, RawProcessorDefinition, RawRegisterableProcessor};
 
 pub trait MutTrigger {
     fn trigger<PC, PS, L>(

@@ -1,6 +1,7 @@
 use crate::api::RawThreadingModel;
-use crate::{CffiLogger, LogLevel, Logger, MinifiError, ProcessContext, RawProcessor};
+use crate::{LogLevel, Logger, MinifiError, ProcessContext, RawProcessor};
 use std::marker::PhantomData;
+use crate::c_ffi::CffiLogger;
 
 pub trait Schedule {
     fn schedule<P: ProcessContext, L: Logger>(context: &P, logger: &L) -> Result<Self, MinifiError>
@@ -41,6 +42,10 @@ where
             threading_model: PhantomData,
             flow_file_type: PhantomData,
         }
+    }
+
+    fn restore(&self) -> bool {
+        todo!()
     }
 
     fn log(&self, log_level: LogLevel, message: &str) {

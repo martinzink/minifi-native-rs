@@ -1,8 +1,9 @@
 use crate::{
-    CffiControllerServiceDefinition, CffiLogger, ComponentIdentifier, ControllerServiceContext,
-    ControllerServiceDefinition, DynRawControllerServiceDefinition, LogLevel, Logger, MinifiError,
-    RawControllerService, RegisterableControllerService,
+    ComponentIdentifier, ControllerServiceContext,
+    ControllerServiceDefinition, LogLevel, Logger, MinifiError,
+    RawControllerService,
 };
+use crate::c_ffi::{CffiControllerServiceDefinition, CffiLogger, DynRawControllerServiceDefinition, RegisterableControllerService};
 
 pub trait EnableControllerService {
     fn enable<P: ControllerServiceContext, L: Logger>(

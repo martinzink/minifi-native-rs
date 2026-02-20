@@ -1,3 +1,4 @@
+use std::io::Read;
 use crate::api::ProcessSession;
 use crate::{MinifiError, MockFlowFile};
 use itertools::Itertools;
@@ -54,19 +55,8 @@ impl ProcessSession for MockProcessSession {
         Ok(())
     }
 
-    fn write_in_batches<F>(
-        &mut self,
-        flow_file: &mut Self::FlowFile,
-        mut produce_batch: F,
-    ) -> Result<(), MinifiError>
-    where
-        F: FnMut(&mut [u8]) -> Option<usize>,
-    {
-        flow_file.content.clear();
-        let mut buffer = Vec::new();
-        while let Some(_batch) = produce_batch(&mut buffer) {
-            flow_file.content.append(&mut buffer);
-        }
+    fn write_stream<'a>(&mut self, flow_file: &mut Self::FlowFile, mut stream: Box<dyn Read + 'a>) -> Result<(), MinifiError> {
+        stream.read_to_end(&mut flow_file.content).expect("Mock data should be readable");
         Ok(())
     }
 
