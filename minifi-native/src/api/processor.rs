@@ -45,7 +45,15 @@ where
     }
 
     fn restore(&self) -> bool {
-        todo!()
+        false  // TODO(mzink)
+    }
+
+    fn get_trigger_when_empty(&self) -> bool {
+        false  // TODO(mzink)
+    }
+
+    fn is_work_available(&self) -> bool {
+        false  // TODO(mzink)
     }
 
     fn log(&self, log_level: LogLevel, message: &str) {
