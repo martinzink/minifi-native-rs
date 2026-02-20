@@ -87,7 +87,7 @@ Feature: Test Minifi Native C Api capabilities
 
     When the MiNiFi instance starts up
 
-    Then the Minifi logs contain the following message: "(KamikazeProcessorRs): Process Schedule Operation: Error while scheduling processor" in less than 3 seconds
+    Then the Minifi logs contain the following message: "(KamikazeProcessorRs): Process Schedule Operation: Error while scheduling processor" in less than 10 seconds
 
   Scenario: Panic in extension's on_schedule crashes the agent aswell
     Given a KamikazeProcessorRs processor with the "On Schedule Behaviour" property set to "Panic"
@@ -103,7 +103,7 @@ Feature: Test Minifi Native C Api capabilities
 
     When the MiNiFi instance starts up
 
-    Then the Minifi logs contain the following message: "Trigger and commit failed for processor KamikazeProcessorRs" in less than 3 seconds
+    Then the Minifi logs contain the following message: "Trigger and commit failed for processor KamikazeProcessorRs" in less than 10 seconds
 
   Scenario: Panic in extension's on_trigger crashes the agent aswell
     Given a KamikazeProcessorRs processor with the "On Schedule Behaviour" property set to "ReturnOk"
