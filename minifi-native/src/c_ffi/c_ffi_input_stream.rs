@@ -1,5 +1,5 @@
-use std::io::{Read, Error, ErrorKind, BufRead};
 use minifi_native_sys::{MinifiInputStream, MinifiInputStreamRead};
+use std::io::{BufRead, Error, ErrorKind, Read};
 
 #[derive(Debug)]
 pub struct CffiInputStream<'a> {
@@ -43,7 +43,7 @@ impl<'a> BufRead for CffiInputStream<'a> {
                 let ret = MinifiInputStreamRead(
                     self.ptr,
                     self.buffer.as_mut_ptr() as *mut std::ffi::c_char,
-                    self.buffer.len()
+                    self.buffer.len(),
                 );
                 if ret < 0 {
                     return Err(Error::new(ErrorKind::Other, "Minifi Read Error"));

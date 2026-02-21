@@ -1,4 +1,7 @@
-use minifi_native::{FlowFileTransform, InputStream, Logger, MinifiError, ProcessContext, Schedule, TransformedFlowFile};
+use minifi_native::{
+    FlowFileTransform, InputStream, Logger, MinifiError, ProcessContext, Schedule,
+    TransformedFlowFile,
+};
 use pgp::composed::{ArmorOptions, MessageBuilder, SignedPublicKey};
 use pgp::types::StringToKey;
 use std::collections::HashMap;
@@ -93,11 +96,7 @@ impl Schedule for EncryptContentPGP {
 }
 
 impl FlowFileTransform for EncryptContentPGP {
-    fn transform<
-        'a,
-        Context: ProcessContext,
-        LoggerImpl: Logger,
-    >(
+    fn transform<'a, Context: ProcessContext, LoggerImpl: Logger>(
         &self,
         context: &'a mut Context,
         flow_file: &Context::FlowFile,
@@ -115,9 +114,7 @@ impl FlowFileTransform for EncryptContentPGP {
         let password = context.get_property(&PASSPHRASE, Some(&flow_file))?;
         if public_key.is_none() && password.is_none() {
             logger.debug("No password or public key to encrypt with");
-            return Ok(TransformedFlowFile::route_without_changes(
-                &FAILURE,
-            ));
+            return Ok(TransformedFlowFile::route_without_changes(&FAILURE));
         }
 
         let mut content = Vec::new();
@@ -134,9 +131,7 @@ impl FlowFileTransform for EncryptContentPGP {
             )),
             Err(e) => {
                 logger.debug(&format!("Failed to encrypt content {:?}", e));
-                Ok(TransformedFlowFile::route_without_changes(
-                    &FAILURE,
-                ))
+                Ok(TransformedFlowFile::route_without_changes(&FAILURE))
             }
         }
     }

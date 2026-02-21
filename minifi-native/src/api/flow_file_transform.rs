@@ -16,9 +16,7 @@ pub struct TransformedFlowFile<'a> {
 }
 
 impl<'a> TransformedFlowFile<'a> {
-    pub fn route_without_changes(
-        target_relationship: &'a Relationship,
-    ) -> Self {
+    pub fn route_without_changes(target_relationship: &'a Relationship) -> Self {
         Self {
             target_relationship,
             new_content: None,
@@ -51,11 +49,7 @@ impl<'a> TransformedFlowFile<'a> {
 }
 
 pub trait FlowFileTransform {
-    fn transform<
-        'a,
-        Context: ProcessContext,
-        LoggerImpl: Logger,
-    >(
+    fn transform<'a, Context: ProcessContext, LoggerImpl: Logger>(
         &'a self,
         context: &'a mut Context,
         flow_file: &Context::FlowFile,
@@ -82,34 +76,35 @@ where
     {
         if let Some(ref scheduled_impl) = self.scheduled_impl {
             if let Some(mut flow_file) = session.get() {
-                let (attrs_to_add, relationship) = session.read_stream(&flow_file, |input_stream, ff| {
-                    let transformed = scheduled_impl.transform(
-                        context,
-                        &flow_file,
-                        input_stream,
-                        &self.logger,
-                    )?;
+                let (attrs_to_add, relationship) =
+                    session.read_stream(&flow_file, |input_stream, ff| {
+                        let transformed = scheduled_impl.transform(
+                            context,
+                            &flow_file,
+                            input_stream,
+                            &self.logger,
+                        )?;
 
-                    match transformed.new_content {
-                        None => {}
-                        Some(Content::Buffer(buffer)) => {
-                            session.write(ff, &buffer)?;
-                        }
-                        Some(Content::Stream(stream)) => {
-                            session.write_stream(ff, stream)?;
-                        }
-                    };
-                    Ok((transformed.attributes_to_add, transformed.target_relationship.name))
-                })?;
+                        match transformed.new_content {
+                            None => {}
+                            Some(Content::Buffer(buffer)) => {
+                                session.write(ff, &buffer)?;
+                            }
+                            Some(Content::Stream(stream)) => {
+                                session.write_stream(ff, stream)?;
+                            }
+                        };
+                        Ok((
+                            transformed.attributes_to_add,
+                            transformed.target_relationship.name,
+                        ))
+                    })?;
 
                 for (k, v) in attrs_to_add {
                     session.set_attribute(&mut flow_file, &k, &v)?;
                 }
 
-                session.transfer(
-                    flow_file,
-                    relationship,
-                )?;
+                session.transfer(flow_file, relationship)?;
 
                 Ok(OnTriggerResult::Ok)
             } else {

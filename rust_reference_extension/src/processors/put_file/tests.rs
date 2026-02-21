@@ -32,7 +32,10 @@ fn simple_put_file_test() {
     );
 
     assert_eq!(session.num_of_transferred_flow_files(), 1);
-    assert_eq!(session.transferred_flow_files.borrow()[0].relationship, SUCCESS.name);
+    assert_eq!(
+        session.transferred_flow_files.borrow()[0].relationship,
+        SUCCESS.name
+    );
 
     let expected_path = temp_dir.path().join("subdir/test.txt");
     assert!(expected_path.exists());
@@ -71,7 +74,10 @@ fn put_file_without_create_dirs() {
     );
 
     assert_eq!(session.num_of_transferred_flow_files(), 1);
-    assert_eq!(session.transferred_flow_files.borrow()[0].relationship, FAILURE.name);
+    assert_eq!(
+        session.transferred_flow_files.borrow()[0].relationship,
+        FAILURE.name
+    );
 
     let expected_path = temp_dir.path().join("subdir/test.txt");
     assert!(!expected_path.exists());
@@ -112,7 +118,10 @@ fn put_file_test_permissions() {
     );
 
     assert_eq!(session.num_of_transferred_flow_files(), 1);
-    assert_eq!(session.transferred_flow_files.borrow()[0].relationship, SUCCESS.name);
+    assert_eq!(
+        session.transferred_flow_files.borrow()[0].relationship,
+        SUCCESS.name
+    );
 
     let expected_path = temp_dir.path().join("subdir/test.txt");
     assert!(expected_path.exists());

@@ -1,5 +1,5 @@
-use std::cell::RefCell;
 use crate::api::FlowFile;
+use std::cell::RefCell;
 use std::collections::HashMap;
 
 pub struct MockFlowFile {
@@ -28,7 +28,10 @@ impl MockFlowFile {
         self.content.borrow().len()
     }
 
-    pub fn content_eq<S>(&self, other: S) -> bool where S: Into<String> {
+    pub fn content_eq<S>(&self, other: S) -> bool
+    where
+        S: Into<String>,
+    {
         let my_content = self.content.borrow();
         *my_content == other.into().as_bytes()
     }

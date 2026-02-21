@@ -1,6 +1,7 @@
 use super::c_ffi_flow_file::CffiFlowFile;
 use crate::MinifiError;
 use crate::api::{InputStream, ProcessSession};
+use crate::c_ffi::c_ffi_input_stream::CffiInputStream;
 use crate::c_ffi::c_ffi_primitives::{ConvertMinifiStringView, StringView};
 use minifi_native_sys::{
     MinifiFlowFileGetAttribute, MinifiFlowFileGetAttributes, MinifiFlowFileSetAttribute,
@@ -11,9 +12,8 @@ use minifi_native_sys::{
     MinifiStringView,
 };
 use std::ffi::{CString, c_void};
-use std::io::{Read};
+use std::io::Read;
 use std::os::raw::c_char;
-use crate::c_ffi::c_ffi_input_stream::CffiInputStream;
 
 pub struct CffiProcessSession<'a> {
     ptr: *mut MinifiProcessSession,
@@ -109,11 +109,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
         }
     }
 
-    fn transfer(
-        &self,
-        flow_file: Self::FlowFile,
-        relationship: &str,
-    ) -> Result<(), MinifiError> {
+    fn transfer(&self, flow_file: Self::FlowFile, relationship: &str) -> Result<(), MinifiError> {
         let c_relationship = CString::new(relationship)?;
         unsafe {
             match MinifiProcessSessionTransfer(
@@ -334,10 +330,18 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                 flow_file: &'a CffiFlowFile,
                 result: Option<Result<R, MinifiError>>,
             }
-            let mut ctx = CallbackCtx { callback: Some(callback), flow_file, result: None };
+            let mut ctx = CallbackCtx {
+                callback: Some(callback),
+                flow_file,
+                result: None,
+            };
 
-            unsafe extern "C" fn read_cb<F, R>(user_data: *mut c_void, stream_ptr: *mut MinifiInputStream) -> i64
-            where F: FnOnce(&mut dyn InputStream, &CffiFlowFile) -> Result<R, MinifiError>
+            unsafe extern "C" fn read_cb<F, R>(
+                user_data: *mut c_void,
+                stream_ptr: *mut MinifiInputStream,
+            ) -> i64
+            where
+                F: FnOnce(&mut dyn InputStream, &CffiFlowFile) -> Result<R, MinifiError>,
             {
                 unsafe {
                     let ctx = &mut *(user_data as *mut CallbackCtx<F, R>);
@@ -357,10 +361,11 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                 self.ptr,
                 flow_file.ptr,
                 Some(read_cb::<F, R>),
-                &mut ctx as *mut _ as *mut c_void
+                &mut ctx as *mut _ as *mut c_void,
             );
 
-            ctx.result.unwrap_or(Err(MinifiError::OtherError("Callback execution failed")))
+            ctx.result
+                .unwrap_or(Err(MinifiError::OtherError("Callback execution failed")))
         }
     }
 

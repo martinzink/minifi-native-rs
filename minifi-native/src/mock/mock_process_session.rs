@@ -1,8 +1,8 @@
-use std::cell::RefCell;
 use crate::api::{InputStream, ProcessSession};
 use crate::{MinifiError, MockFlowFile};
 use itertools::Itertools;
-use std::io::{Read};
+use std::cell::RefCell;
+use std::io::Read;
 
 pub struct TransferredFlowFile {
     pub relationship: String,
@@ -23,15 +23,13 @@ impl ProcessSession for MockProcessSession {
     fn get(&mut self) -> Option<Self::FlowFile> {
         self.input_flow_files.pop()
     }
-    fn transfer(
-        &self,
-        flow_file: Self::FlowFile,
-        relationship: &str,
-    ) -> Result<(), MinifiError> {
-        self.transferred_flow_files.borrow_mut().push(TransferredFlowFile {
-            relationship: relationship.to_string(),
-            flow_file,
-        });
+    fn transfer(&self, flow_file: Self::FlowFile, relationship: &str) -> Result<(), MinifiError> {
+        self.transferred_flow_files
+            .borrow_mut()
+            .push(TransferredFlowFile {
+                relationship: relationship.to_string(),
+                flow_file,
+            });
         Ok(())
     }
 
@@ -88,9 +86,9 @@ impl ProcessSession for MockProcessSession {
 
     fn read_stream<F, R>(&self, _flow_file: &Self::FlowFile, _callback: F) -> Result<R, MinifiError>
     where
-        F: FnOnce(&mut dyn InputStream, &Self::FlowFile) -> Result<R, MinifiError>
+        F: FnOnce(&mut dyn InputStream, &Self::FlowFile) -> Result<R, MinifiError>,
     {
-        Err(MinifiError::UnknownError) // TODO
+        unimplemented!("Not implemented yet")
     }
 
     fn read_in_batches<F>(

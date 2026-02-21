@@ -88,14 +88,8 @@ fn random_bytes_unique() {
     );
     let result_flow_files = session.transferred_flow_files.borrow();
     assert_eq!(result_flow_files.len(), 2);
-    assert_eq!(
-        result_flow_files[0].flow_file.content_len(),
-        40
-    );
-    assert_eq!(
-        result_flow_files[1].flow_file.content_len(),
-        40
-    );
+    assert_eq!(result_flow_files[0].flow_file.content_len(), 40);
+    assert_eq!(result_flow_files[1].flow_file.content_len(), 40);
     assert_ne!(
         *result_flow_files[0].flow_file.content.borrow(),
         *result_flow_files[1].flow_file.content.borrow()
@@ -127,14 +121,8 @@ fn random_bytes_non_unique() {
     );
     let result_flow_files = session.transferred_flow_files.borrow();
     assert_eq!(result_flow_files.len(), 2);
-    assert_eq!(
-        result_flow_files[0].flow_file.content_len(),
-        40
-    );
-    assert_eq!(
-        result_flow_files[1].flow_file.content_len(),
-        40
-    );
+    assert_eq!(result_flow_files[0].flow_file.content_len(), 40);
+    assert_eq!(result_flow_files[1].flow_file.content_len(), 40);
     assert_eq!(
         *result_flow_files[0].flow_file.content.borrow(),
         *result_flow_files[1].flow_file.content.borrow()

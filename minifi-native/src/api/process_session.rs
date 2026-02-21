@@ -8,11 +8,7 @@ pub trait ProcessSession {
 
     fn create(&mut self) -> Result<Self::FlowFile, MinifiError>;
     fn get(&mut self) -> Option<Self::FlowFile>;
-    fn transfer(
-        &self,
-        flow_file: Self::FlowFile,
-        relationship: &str,
-    ) -> Result<(), MinifiError>;
+    fn transfer(&self, flow_file: Self::FlowFile, relationship: &str) -> Result<(), MinifiError>;
     fn remove(&mut self, flow_file: Self::FlowFile) -> Result<(), MinifiError>;
 
     fn set_attribute(

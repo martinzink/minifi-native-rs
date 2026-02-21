@@ -21,8 +21,9 @@ pub use api::flow_file_content::Content;
 pub use api::logger::{LogLevel, Logger};
 
 pub use api::{
-    ControllerServiceContext, FlowFile, OnTriggerResult, OutputAttribute, ProcessContext,
-    ProcessSession, ProcessorInputRequirement, Property, Relationship, StandardPropertyValidator, InputStream
+    ControllerServiceContext, FlowFile, InputStream, OnTriggerResult, OutputAttribute,
+    ProcessContext, ProcessSession, ProcessorInputRequirement, Property, Relationship,
+    StandardPropertyValidator,
 };
 
 pub use minifi_macros as macros;
