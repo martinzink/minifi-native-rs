@@ -49,13 +49,15 @@ impl<'a> TransformedFlowFile<'a> {
 }
 
 pub trait FlowFileTransform {
-    fn transform<'a, Context: ProcessContext, LoggerImpl: Logger>(
-        &'a self,
-        context: &'a mut Context,
-        flow_file: &Context::FlowFile,
-        input_stream: &'a mut dyn InputStream,
+    fn transform<'ctx, 'stream, Context: ProcessContext, LoggerImpl: Logger>(
+        &self,
+        context: &'ctx mut Context,
+        _flow_file: &Context::FlowFile,
+        input_stream: &'stream mut dyn InputStream,
         logger: &LoggerImpl,
-    ) -> Result<TransformedFlowFile<'a>, MinifiError>;
+    ) -> Result<TransformedFlowFile<'stream>, MinifiError>
+    where
+        'ctx: 'stream;
 }
 
 pub struct FlowFileTransformProcessorType {}

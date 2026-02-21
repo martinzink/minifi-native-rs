@@ -106,13 +106,16 @@ impl DecryptContentPGP {
 }
 
 impl FlowFileTransform for DecryptContentPGP {
-    fn transform<'a, Context: ProcessContext, LoggerImpl: Logger>(
+    fn transform<'ctx, 'stream, Context: ProcessContext, LoggerImpl: Logger>(
         &self,
-        context: &'a mut Context,
+        context: &'ctx mut Context,
         _flow_file: &Context::FlowFile,
-        input_stream: &'a mut dyn InputStream,
+        input_stream: &'stream mut dyn InputStream,
         logger: &LoggerImpl,
-    ) -> Result<TransformedFlowFile<'a>, MinifiError> {
+    ) -> Result<TransformedFlowFile<'stream>, MinifiError>
+    where
+        'ctx: 'stream,
+    {
         let Ok(msg) = Message::from_reader(input_stream).map(|(msg, _header)| msg) else {
             logger.debug("No valid PGP message found");
             return Ok(TransformedFlowFile::route_without_changes(&FAILURE));

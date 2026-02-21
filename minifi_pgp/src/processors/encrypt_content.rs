@@ -96,13 +96,16 @@ impl Schedule for EncryptContentPGP {
 }
 
 impl FlowFileTransform for EncryptContentPGP {
-    fn transform<'a, Context: ProcessContext, LoggerImpl: Logger>(
+    fn transform<'ctx, 'stream, Context: ProcessContext, LoggerImpl: Logger>(
         &self,
-        context: &'a mut Context,
+        context: &'ctx mut Context,
         flow_file: &Context::FlowFile,
-        input_stream: &'a mut dyn InputStream,
+        input_stream: &'stream mut dyn InputStream,
         logger: &LoggerImpl,
-    ) -> Result<TransformedFlowFile<'a>, MinifiError> {
+    ) -> Result<TransformedFlowFile<'stream>, MinifiError>
+    where
+        'ctx: 'stream,
+    {
         let public_key = if let (Some(pub_key_search), Some(public_key_service)) = (
             context.get_property(&PUBLIC_KEY_SEARCH, Some(&flow_file))?,
             context.get_controller_service::<PGPPublicKeyService>(&PUBLIC_KEY_SERVICE)?,
