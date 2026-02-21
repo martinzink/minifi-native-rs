@@ -1,6 +1,7 @@
 use crate::MinifiError;
 use crate::api::flow_file::FlowFile;
-use std::io::Read;
+pub trait InputStream: std::io::BufRead + Send + std::fmt::Debug {}
+impl<T: std::io::BufRead + Send + std::fmt::Debug> InputStream for T {}
 
 pub trait ProcessSession {
     type FlowFile: FlowFile;
@@ -31,13 +32,13 @@ pub trait ProcessSession {
     fn write_stream<'a>(
         &self,
         flow_file: &Self::FlowFile,
-        stream: Box<dyn Read + 'a>,
+        stream: Box<dyn std::io::Read + 'a>,
     ) -> Result<(), MinifiError>;
 
     fn read(&self, flow_file: &Self::FlowFile) -> Option<Vec<u8>>;
     fn read_stream<F, R>(&self, flow_file: &Self::FlowFile, callback: F) -> Result<R, MinifiError>
     where
-        F: FnOnce(&mut dyn std::io::Read, &Self::FlowFile) -> Result<R, MinifiError>;
+        F: FnOnce(&mut dyn InputStream, &Self::FlowFile) -> Result<R, MinifiError>;
     fn read_in_batches<F>(
         &self,
         flow_file: &Self::FlowFile,

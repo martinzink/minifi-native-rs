@@ -1,7 +1,7 @@
 use crate::api::flow_file_content::Content;
 use crate::api::processor::Processor;
 use crate::api::raw::raw_processor::RawMultiThreadedTrigger;
-use crate::api::{ProcessorDefinition, RawProcessor};
+use crate::api::{InputStream, ProcessorDefinition, RawProcessor};
 use crate::c_ffi::{DynRawProcessorDefinition, RawProcessorDefinition, RawRegisterableProcessor};
 use crate::{
     CalculateMetrics, ComponentIdentifier, Concurrent, LogLevel, Logger, MinifiError,
@@ -59,7 +59,7 @@ pub trait FlowFileTransform {
         &'a self,
         context: &'a mut Context,
         flow_file: &Context::FlowFile,
-        input_stream: &'a mut dyn std::io::Read,
+        input_stream: &'a mut dyn InputStream,
         logger: &LoggerImpl,
     ) -> Result<TransformedFlowFile<'a>, MinifiError>;
 }

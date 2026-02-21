@@ -23,7 +23,7 @@ pub use flow_file::FlowFile;
 pub use logger::{LogLevel, Logger};
 pub use output_attribute::OutputAttribute;
 pub use process_context::ProcessContext;
-pub use process_session::ProcessSession;
+pub use process_session::{ProcessSession, InputStream};
 pub use raw::raw_controller_service::RawControllerService;
 pub use raw::raw_processor::{OnTriggerResult, ProcessorInputRequirement, RawProcessor};
 pub use raw::raw_threading_model::RawThreadingModel;

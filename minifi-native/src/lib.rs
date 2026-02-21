@@ -22,7 +22,7 @@ pub use api::logger::{LogLevel, Logger};
 
 pub use api::{
     ControllerServiceContext, FlowFile, OnTriggerResult, OutputAttribute, ProcessContext,
-    ProcessSession, ProcessorInputRequirement, Property, Relationship, StandardPropertyValidator,
+    ProcessSession, ProcessorInputRequirement, Property, Relationship, StandardPropertyValidator, InputStream
 };
 
 pub use minifi_macros as macros;

@@ -1,6 +1,4 @@
-use minifi_native::{
-    FlowFileTransform, Logger, MinifiError, ProcessContext, Schedule, TransformedFlowFile,
-};
+use minifi_native::{FlowFileTransform, InputStream, Logger, MinifiError, ProcessContext, Schedule, TransformedFlowFile};
 use pgp::composed::{ArmorOptions, MessageBuilder, SignedPublicKey};
 use pgp::types::StringToKey;
 use std::collections::HashMap;
@@ -103,7 +101,7 @@ impl FlowFileTransform for EncryptContentPGP {
         &self,
         context: &'a mut Context,
         flow_file: &Context::FlowFile,
-        input_stream: &'a mut dyn std::io::Read,
+        input_stream: &'a mut dyn InputStream,
         logger: &LoggerImpl,
     ) -> Result<TransformedFlowFile<'a>, MinifiError> {
         let public_key = if let (Some(pub_key_search), Some(public_key_service)) = (

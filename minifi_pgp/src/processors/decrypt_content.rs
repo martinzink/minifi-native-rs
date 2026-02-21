@@ -6,11 +6,10 @@ use crate::controller_services::private_key_service::PGPPrivateKeyService;
 use crate::processors::decrypt_content::properties::{PRIVATE_KEY_SERVICE, SYMMETRIC_PASSWORD};
 use crate::processors::decrypt_content::relationships::{FAILURE, SUCCESS};
 use minifi_native::macros::{ComponentIdentifier, DefaultMetrics};
-use minifi_native::{
-    FlowFileTransform, Logger, MinifiError, ProcessContext, Schedule, TransformedFlowFile,
-};
+use minifi_native::{FlowFileTransform, InputStream, Logger, MinifiError, ProcessContext, Schedule, TransformedFlowFile};
 use pgp::composed::{Message, TheRing};
 use std::collections::HashMap;
+use std::fmt::Debug;
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
 
 #[derive(Debug, Clone, Copy, PartialEq, Display, EnumString, VariantNames, IntoStaticStr)]
@@ -112,13 +111,10 @@ impl FlowFileTransform for DecryptContentPGP {
         &self,
         context: &'a mut Context,
         _flow_file: &Context::FlowFile,
-        input_stream: &'a mut dyn std::io::Read,
+        input_stream: &'a mut dyn InputStream,
         logger: &LoggerImpl,
     ) -> Result<TransformedFlowFile<'a>, MinifiError> {
-        let mut content = Vec::new();
-        let _content_size = input_stream.read_to_end(&mut content);
-
-        let Ok(msg) = Message::from_reader(std::io::Cursor::new(content)).map(|(msg, _header)| msg)
+        let Ok(msg) = Message::from_reader(input_stream).map(|(msg, _header)| msg)
         else {
             logger.debug("No valid PGP message found");
             return Ok(TransformedFlowFile::route_without_changes(

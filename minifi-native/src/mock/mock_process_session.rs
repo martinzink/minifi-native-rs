@@ -1,8 +1,8 @@
 use std::cell::RefCell;
-use crate::api::ProcessSession;
+use crate::api::{InputStream, ProcessSession};
 use crate::{MinifiError, MockFlowFile};
 use itertools::Itertools;
-use std::io::Read;
+use std::io::{Read};
 
 pub struct TransferredFlowFile {
     pub relationship: String,
@@ -88,7 +88,7 @@ impl ProcessSession for MockProcessSession {
 
     fn read_stream<F, R>(&self, _flow_file: &Self::FlowFile, _callback: F) -> Result<R, MinifiError>
     where
-        F: FnOnce(&mut dyn Read, &Self::FlowFile) -> Result<R, MinifiError>
+        F: FnOnce(&mut dyn InputStream, &Self::FlowFile) -> Result<R, MinifiError>
     {
         Err(MinifiError::UnknownError) // TODO
     }
@@ -116,7 +116,7 @@ impl MockProcessSession {
             input_flow_files: Vec::new(),
         }
     }
-    
+
     pub fn num_of_transferred_flow_files(&self) -> usize {
         self.transferred_flow_files.borrow().len()
     }

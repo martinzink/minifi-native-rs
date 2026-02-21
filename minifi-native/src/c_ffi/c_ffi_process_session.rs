@@ -1,6 +1,6 @@
 use super::c_ffi_flow_file::CffiFlowFile;
 use crate::MinifiError;
-use crate::api::ProcessSession;
+use crate::api::{InputStream, ProcessSession};
 use crate::c_ffi::c_ffi_primitives::{ConvertMinifiStringView, StringView};
 use minifi_native_sys::{
     MinifiFlowFileGetAttribute, MinifiFlowFileGetAttributes, MinifiFlowFileSetAttribute,
@@ -11,7 +11,7 @@ use minifi_native_sys::{
     MinifiStringView,
 };
 use std::ffi::{CString, c_void};
-use std::io::Read;
+use std::io::{Read};
 use std::os::raw::c_char;
 use crate::c_ffi::c_ffi_input_stream::CffiInputStream;
 
@@ -326,7 +326,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
 
     fn read_stream<F, R>(&self, flow_file: &Self::FlowFile, callback: F) -> Result<R, MinifiError>
     where
-        F: FnOnce(&mut dyn Read, &Self::FlowFile) -> Result<R, MinifiError>,
+        F: FnOnce(&mut dyn InputStream, &Self::FlowFile) -> Result<R, MinifiError>,
     {
         unsafe {
             struct CallbackCtx<'a, F, R> {
@@ -337,16 +337,13 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
             let mut ctx = CallbackCtx { callback: Some(callback), flow_file, result: None };
 
             unsafe extern "C" fn read_cb<F, R>(user_data: *mut c_void, stream_ptr: *mut MinifiInputStream) -> i64
-            where F: FnOnce(&mut dyn std::io::Read, &CffiFlowFile) -> Result<R, MinifiError>
+            where F: FnOnce(&mut dyn InputStream, &CffiFlowFile) -> Result<R, MinifiError>
             {
                 unsafe {
                     let ctx = &mut *(user_data as *mut CallbackCtx<F, R>);
 
                     // Construct the Rust Reader wrapper here.
-                    let mut reader = CffiInputStream {
-                        ptr: stream_ptr,
-                        _marker: std::marker::PhantomData
-                    };
+                    let mut reader = CffiInputStream::new(stream_ptr);
 
                     if let Some(cb) = ctx.callback.take() {
                         ctx.result = Some(cb(&mut reader, ctx.flow_file));
