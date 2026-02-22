@@ -3,9 +3,19 @@ use crate::processors::decrypt_content::DecryptContentPGP;
 use crate::test_utils;
 use crate::test_utils::get_test_message;
 use minifi_native::{
-    EnableControllerService, FlowFileTransform, MockControllerServiceContext, MockFlowFile,
-    MockLogger, MockProcessContext, Schedule,
+    ComponentIdentifier, EnableControllerService, FlowFileTransform, MockControllerServiceContext,
+    MockFlowFile, MockLogger, MockProcessContext, Schedule,
 };
+
+#[test]
+fn test_ids() {
+    assert_eq!(
+        DecryptContentPGP::CLASS_NAME,
+        "minifi_pgp::processors::decrypt_content::DecryptContentPGP"
+    );
+    assert_eq!(DecryptContentPGP::GROUP_NAME, "minifi_pgp");
+    assert_eq!(DecryptContentPGP::VERSION, "0.1.0");
+}
 
 #[test]
 fn fails_to_schedule_by_default() {

@@ -5,9 +5,9 @@ use minifi_native::{ComponentIdentifier, MockLogger, MockProcessContext, Schedul
 fn test_ids() {
     assert_eq!(
         LoremIpsumCSUser::CLASS_NAME,
-        "rust_reference_extension::processors::lorem_ipsum_cs_user::LoremIpsumCSUser"
+        "minifi_rs_playground::processors::lorem_ipsum_cs_user::LoremIpsumCSUser"
     );
-    assert_eq!(LoremIpsumCSUser::GROUP_NAME, "rust_reference_extension");
+    assert_eq!(LoremIpsumCSUser::GROUP_NAME, "minifi_rs_playground");
     assert_eq!(LoremIpsumCSUser::VERSION, "0.1.0");
 }
 

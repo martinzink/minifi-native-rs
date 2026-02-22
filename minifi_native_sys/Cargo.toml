@@ -1,5 +1,5 @@
 [package]
-name = "minifi-native-sys"
+name = "minifi_native_sys"
 version = "0.1.0"
 edition = "2024"
 description = "Raw FFI bindings to the Apache MiNiFi Native C API"

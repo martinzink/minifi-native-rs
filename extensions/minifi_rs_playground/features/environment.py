@@ -65,12 +65,12 @@ RUN chmod 755 {container_extension_dir}{lib_filename}
 
 def before_all(context):
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    build_path = os.path.normpath(os.path.join(dir_path, "../../target/release/"))
-    add_extension_to_minifi_container("rust_reference_extension", [build_path], context)
+    build_path = os.path.normpath(os.path.join(dir_path, "../../../target/release/"))
+    add_extension_to_minifi_container("minifi_rs_playground", [build_path], context)
 
 
 def before_scenario(context, scenario):
-    context.minifi_container_image = "apacheminificpp:rust_reference_extension"
+    context.minifi_container_image = "apacheminificpp:minifi_rs_playground"
     common_before_scenario(context, scenario)
 
 

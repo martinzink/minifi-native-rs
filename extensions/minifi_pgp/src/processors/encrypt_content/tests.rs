@@ -1,9 +1,19 @@
 use super::*;
 use crate::test_utils;
 use minifi_native::{
-    Content, EnableControllerService, MockControllerServiceContext, MockFlowFile, MockLogger,
-    MockProcessContext, TransformedFlowFile,
+    ComponentIdentifier, Content, EnableControllerService, MockControllerServiceContext,
+    MockFlowFile, MockLogger, MockProcessContext, TransformedFlowFile,
 };
+
+#[test]
+fn test_ids() {
+    assert_eq!(
+        EncryptContentPGP::CLASS_NAME,
+        "minifi_pgp::processors::encrypt_content::EncryptContentPGP"
+    );
+    assert_eq!(EncryptContentPGP::GROUP_NAME, "minifi_pgp");
+    assert_eq!(EncryptContentPGP::VERSION, "0.1.0");
+}
 
 #[test]
 fn cannot_schedule_without_password_or_public_key() {

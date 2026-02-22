@@ -26,7 +26,7 @@ pub use api::{
     StandardPropertyValidator,
 };
 
-pub use minifi_macros as macros;
+pub use minifi_native_macros as macros;
 pub use minifi_native_sys as sys;
 pub use mock::{
     MockControllerServiceContext, MockFlowFile, MockLogger, MockProcessContext, MockProcessSession,

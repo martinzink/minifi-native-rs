@@ -9,11 +9,11 @@ Feature: Test Minifi Native C Api capabilities
 
     When the MiNiFi instance starts up
 
-    Then the Minifi logs contain the following message: "Registering class 'GenerateFlowFileRs' at '/rust_reference_extension'" in less than 10 seconds
-    And the Minifi logs contain the following message: "Registering class 'GetFileRs' at '/rust_reference_extension'" in less than 1 seconds
-    And the Minifi logs contain the following message: "Registering class 'KamikazeProcessorRs' at '/rust_reference_extension'" in less than 1 seconds
-    And the Minifi logs contain the following message: "Registering class 'LogAttributeRs' at '/rust_reference_extension'" in less than 1 seconds
-    And the Minifi logs contain the following message: "Registering class 'PutFileRs' at '/rust_reference_extension'" in less than 1 seconds
+    Then the Minifi logs contain the following message: "Registering class 'GenerateFlowFileRs' at '/minifi_rs_playground'" in less than 10 seconds
+    And the Minifi logs contain the following message: "Registering class 'GetFileRs' at '/minifi_rs_playground'" in less than 1 seconds
+    And the Minifi logs contain the following message: "Registering class 'KamikazeProcessorRs' at '/minifi_rs_playground'" in less than 1 seconds
+    And the Minifi logs contain the following message: "Registering class 'LogAttributeRs' at '/minifi_rs_playground'" in less than 1 seconds
+    And the Minifi logs contain the following message: "Registering class 'PutFileRs' at '/minifi_rs_playground'" in less than 1 seconds
     And the Minifi logs do not contain errors
     And the Minifi logs do not contain warnings
 
@@ -53,7 +53,7 @@ Feature: Test Minifi Native C Api capabilities
     And the "Log Payload" property of the LogAttributeRs processor is set to "true"
     And the "success" relationship of the GenerateFlowFileRs processor is connected to the LogAttributeRs
     And LogAttributeRs's success relationship is auto-terminated
-    And log property "logger.rust_reference_extension::processors::log_attribute::LogAttributeRs" is set to "TRACE,stderr"
+    And log property "logger.minifi_rs_playground::processors::log_attribute::LogAttributeRs" is set to "TRACE,stderr"
 
     When the MiNiFi instance starts up
 

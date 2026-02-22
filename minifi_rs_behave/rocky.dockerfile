@@ -29,5 +29,5 @@ RUN cd ${BUILD_DIR} && /root/.cargo/bin/cargo build --release
 
 FROM scratch AS bin-export
 
-COPY --from=builder /opt/minifi-native-rs/target/release/librust_reference_extension.so /
+COPY --from=builder /opt/minifi-native-rs/target/release/libminifi_rs_playground.so /
 COPY --from=builder /opt/minifi-native-rs/target/release/libminifi_pgp.so /

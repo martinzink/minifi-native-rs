@@ -5,8 +5,8 @@ edition = "2024"
 
 [dependencies]
 glob = "0.3.3"
-minifi_pgp = { path = "../minifi_pgp" }
-rust_reference_extension = { path = "../rust_reference_extension" }
+minifi_pgp = { path = "../extensions/minifi_pgp" }
+minifi_rs_playground = { path = "../extensions/minifi_rs_playground" }
 
 [lints.rust]
 unused_crate_dependencies = "allow"

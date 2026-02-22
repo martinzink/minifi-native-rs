@@ -1,5 +1,5 @@
 [package]
-name = "rust_reference_extension"
+name = "minifi_rs_playground"
 version = "0.1.0"
 edition = "2024"
 
@@ -7,7 +7,7 @@ edition = "2024"
 crate-type = ["cdylib"]
 
 [dependencies]
-minifi-native = { path = "../minifi-native" }
+minifi_native = { path = "../../minifi_native" }
 strum = "0.27.2"
 walkdir = "2.5.0"
 rand = "0.10.0"
@@ -16,6 +16,5 @@ strum_macros = "0.27.2"
 lipsum = "0.9.1"
 
 [dev-dependencies]
-minifi-native = { path = "../minifi-native" }
 tempfile = "3.22.0"
 filetime = "0.2.26"

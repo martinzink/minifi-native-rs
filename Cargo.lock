@@ -1204,7 +1204,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f52b00d39961fc5b2736ea853c9cc86238e165017a493d1d5c8eac6bdc4cc273"
 
 [[package]]
-name = "minifi-macros"
+name = "minifi_native"
+version = "0.1.0"
+dependencies = [
+ "byte-unit",
+ "const_format",
+ "humantime",
+ "itertools 0.14.0",
+ "minifi_native_macros",
+ "minifi_native_sys",
+ "strum",
+ "strum_macros",
+]
+
+[[package]]
+name = "minifi_native_macros"
 version = "0.1.0"
 dependencies = [
  "quote",
@@ -1212,21 +1226,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "minifi-native"
-version = "0.1.0"
-dependencies = [
- "byte-unit",
- "const_format",
- "humantime",
- "itertools 0.14.0",
- "minifi-macros",
- "minifi-native-sys",
- "strum",
- "strum_macros",
-]
-
-[[package]]
-name = "minifi-native-sys"
+name = "minifi_native_sys"
 version = "0.1.0"
 dependencies = [
  "bindgen",
@@ -1237,7 +1237,7 @@ dependencies = [
 name = "minifi_pgp"
 version = "0.1.0"
 dependencies = [
- "minifi-native",
+ "minifi_native",
  "pgp",
  "rand 0.8.5",
  "strum",
@@ -1250,7 +1250,22 @@ version = "0.1.0"
 dependencies = [
  "glob",
  "minifi_pgp",
- "rust_reference_extension",
+ "minifi_rs_playground",
+]
+
+[[package]]
+name = "minifi_rs_playground"
+version = "0.1.0"
+dependencies = [
+ "filetime",
+ "hex",
+ "lipsum",
+ "minifi_native",
+ "rand 0.10.0",
+ "strum",
+ "strum_macros",
+ "tempfile",
+ "walkdir",
 ]
 
 [[package]]
@@ -1830,21 +1845,6 @@ dependencies = [
  "rkyv",
  "serde",
  "serde_json",
-]
-
-[[package]]
-name = "rust_reference_extension"
-version = "0.1.0"
-dependencies = [
- "filetime",
- "hex",
- "lipsum",
- "minifi-native",
- "rand 0.10.0",
- "strum",
- "strum_macros",
- "tempfile",
- "walkdir",
 ]
 
 [[package]]

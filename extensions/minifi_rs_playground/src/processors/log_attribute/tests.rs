@@ -7,9 +7,9 @@ use minifi_native::{
 fn test_component_id() {
     assert_eq!(
         LogAttributeRs::CLASS_NAME,
-        "rust_reference_extension::processors::log_attribute::LogAttributeRs"
+        "minifi_rs_playground::processors::log_attribute::LogAttributeRs"
     );
-    assert_eq!(LogAttributeRs::GROUP_NAME, "rust_reference_extension");
+    assert_eq!(LogAttributeRs::GROUP_NAME, "minifi_rs_playground");
     assert_eq!(LogAttributeRs::VERSION, "0.1.0");
 }
 #[test]

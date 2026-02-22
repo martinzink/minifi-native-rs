@@ -65,7 +65,7 @@ RUN chmod 755 {container_extension_dir}{lib_filename}
 
 def before_all(context):
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    build_path = os.path.normpath(os.path.join(dir_path, "../../target/release/"))
+    build_path = os.path.normpath(os.path.join(dir_path, "../../../target/release/"))
     add_extension_to_minifi_container("minifi_pgp", [build_path], context)
 
 
