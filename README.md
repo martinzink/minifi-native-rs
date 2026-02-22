@@ -47,6 +47,11 @@ An extension that uses [rpgp](https://docs.rs/pgp/latest/pgp/) to mimic NiFi's [
    - EncryptContentPGP
    - DecryptContentPGP
 
+## [minifi_rs_behave](minifi_rs_behave)
+Run the behave integration tests using Minifi's docker framework. This will test the release artifacts againts the latest released [MiNiFi native docker container](https://hub.docker.com/r/apache/nifi-minifi-cpp).
+There is a handy alias to initiate all behave tests.
+
+`cargo behave`
 
 ## How to Use the Library in the MiNiFi C++ Application
 Copy the shared library (.so, .dll, or .dylib) to the MiNiFi C++ application's extensions/ directory.

@@ -19,6 +19,7 @@ fn get_venv_behave(venv_path: &Path) -> PathBuf {
     }
 }
 
+#[allow(dead_code)]
 fn run_build_in_docker(root_path: &Path) {
     let mut rocky_build = Command::new("./rockybuild.sh");
     let status = rocky_build
@@ -90,6 +91,8 @@ fn main() {
     cmd.arg("--show-progress-bar");
     cmd.arg("--parallel-processes");
     cmd.arg("2");
+
+    println!("{:?}", cmd);
 
     let status = cmd
         .current_dir(root)

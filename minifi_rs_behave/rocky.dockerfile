@@ -28,6 +28,6 @@ COPY . ${BUILD_DIR}
 RUN cd ${BUILD_DIR} && /root/.cargo/bin/cargo build --release
 
 FROM scratch AS bin-export
-# Replace 'builder' with the name used in your primary FROM line (e.g., FROM rust AS builder)
+
 COPY --from=builder /opt/minifi-native-rs/target/release/librust_reference_extension.so /
 COPY --from=builder /opt/minifi-native-rs/target/release/libminifi_pgp.so /

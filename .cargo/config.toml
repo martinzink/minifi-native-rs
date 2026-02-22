@@ -5,4 +5,4 @@ rustflags = ["-C", "link-arg=-undefined", "-C", "link-arg=dynamic_lookup"]
 rustflags = ["-C", "link-arg=-undefined", "-C", "link-arg=dynamic_lookup"]
 
 [alias]
-behave = ["run", "--release", "--bin", "behave_tester"]
+behave = ["run", "--release", "--bin", "minifi_rs_behave"]

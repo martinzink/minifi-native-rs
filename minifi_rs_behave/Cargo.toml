@@ -1,5 +1,5 @@
 [package]
-name = "behave_tester"
+name = "minifi_rs_behave"
 version = "0.1.0"
 edition = "2024"
 
