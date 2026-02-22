@@ -34,9 +34,12 @@ Concrete structs (CffiSession, CffiLogger, etc.) that implement the API traits b
 The trait system differentiates between thread-safe (&self) and single-threaded (&mut self) processors at compile time.
 #### Comprehensive Mocking:
 A full suite of mock objects allows for fast and reliable unit testing of all processor logic.
+
 ### [minifi_rs_behave](minifi_rs_behave)
-Run the behave integration tests using Minifi's docker framework. This will test the release artifacts againts the latest released [MiNiFi native docker container](https://hub.docker.com/r/apache/nifi-minifi-cpp).
+Run the behave integration tests using Minifi's docker framework. This will test the release artifacts against the latest released [MiNiFi native docker container](https://hub.docker.com/r/apache/nifi-minifi-cpp).
 There is a handy alias to initiate all behave tests.
+
+`cargo behave`
 
 ## Extensions
 ### [minifi_rs_playground](minifi_rs_playground)
@@ -49,8 +52,6 @@ A concrete example of a processor extension built using the minifi-native crate.
 An extension that uses [rpgp](https://docs.rs/pgp/latest/pgp/) to mimic NiFi's [pgp-nar's](https://nifi.apache.org/docs/nifi-docs/components/org.apache.nifi/nifi-pgp-nar/) functionality
 - EncryptContentPGP
 - DecryptContentPGP
-
-`cargo behave`
 
 ## How to Use the Library in the MiNiFi C++ Application
 Copy the shared library (.so, .dll, or .dylib) to the MiNiFi C++ application's extensions/ directory.
