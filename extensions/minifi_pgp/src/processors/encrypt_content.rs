@@ -42,13 +42,13 @@ fn string_to_key() -> StringToKey {
 }
 
 impl EncryptContentPGP {
-    fn encrypt_message(
+    fn encrypt_bytes(
         &self,
-        message: Vec<u8>,
+        input_stream: &mut dyn InputStream,
         pub_key: Option<&SignedPublicKey>,
         passphrase: Option<&str>,
     ) -> pgp::errors::Result<Vec<u8>> {
-        let mut builder = MessageBuilder::from_bytes("", message).seipd_v1(
+        let mut builder = MessageBuilder::from_reader("", input_stream).seipd_v1(
             rand::thread_rng(),
             pgp::crypto::sym::SymmetricKeyAlgorithm::AES256,
         );
@@ -120,10 +120,7 @@ impl FlowFileTransform for EncryptContentPGP {
             return Ok(TransformedFlowFile::route_without_changes(&FAILURE));
         }
 
-        let mut content = Vec::new();
-        let _content_size = input_stream.read_to_end(&mut content);
-
-        match self.encrypt_message(content, public_key.as_deref(), password.as_deref()) {
+        match self.encrypt_bytes(input_stream, public_key.as_deref(), password.as_deref()) {
             Ok(encrypted_content) => Ok(TransformedFlowFile::new(
                 &SUCCESS,
                 Some(encrypted_content),
