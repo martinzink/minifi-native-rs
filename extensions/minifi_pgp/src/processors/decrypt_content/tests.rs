@@ -1,5 +1,5 @@
 use crate::controller_services::private_key_service::PGPPrivateKeyService;
-use crate::processors::decrypt_content::DecryptContentPGP;
+use crate::processors::decrypt_content::{DecryptContentPGP, output_attributes};
 use crate::test_utils;
 use crate::test_utils::get_test_message;
 use minifi_native::{
@@ -108,10 +108,23 @@ fn test_decryption(
         Ok(_result_bytes) => {
             assert_eq!(res.target_relationship(), &super::relationships::SUCCESS);
             assert!(res.new_content().is_some());
+            let data_modified = res
+                .attributes_to_add()
+                .get(output_attributes::LITERAL_DATA_MODIFIED.name)
+                .unwrap()
+                .parse::<u64>()
+                .expect("Should be u64");
+            assert!(data_modified > 1770000000000);
+            assert!(data_modified < 1780000000000);
+            assert!(
+                res.attributes_to_add()
+                    .contains_key(output_attributes::LITERAL_DATA_FILENAME.name)
+            );
         }
         Err(_) => {
             assert_eq!(res.target_relationship(), &super::relationships::FAILURE);
             assert!(res.new_content().is_none());
+            assert!(res.attributes_to_add().is_empty());
         }
     }
 }

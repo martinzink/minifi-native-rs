@@ -98,7 +98,7 @@ impl DecryptContentPGP {
             }
             attributes_to_add.insert(
                 output_attributes::LITERAL_DATA_MODIFIED.name.to_string(),
-                literal_data_header.created().as_secs().to_string(),
+                (literal_data_header.created().as_secs() as u64 * 1000).to_string(), // Nifi uses ms timestamp
             );
         }
         attributes_to_add
