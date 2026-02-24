@@ -25,7 +25,7 @@ pub enum ParseError {
     Other,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug)]
 pub enum MinifiError {
     UnknownError,
     MissingRequiredProperty(&'static str),
@@ -35,8 +35,14 @@ pub enum MinifiError {
     Parse(ParseError),
     ScheduleError(String),
     TriggerError(String),
-    IoError,
+    IoError(std::io::Error),
     StatusError(u32),
+}
+
+impl From<std::io::Error> for MinifiError {
+    fn from(error: std::io::Error) -> Self {
+        MinifiError::IoError(error)
+    }
 }
 
 impl From<strum::ParseError> for MinifiError {

@@ -27,8 +27,10 @@ fn simple_put_file_test() {
     session.input_flow_files.push(flow_file);
 
     assert_eq!(
-        put_file.trigger(&mut context, &mut session, &MockLogger::new()),
-        Ok(OnTriggerResult::Ok)
+        put_file
+            .trigger(&mut context, &mut session, &MockLogger::new())
+            .expect("Should trigger successfully"),
+        OnTriggerResult::Ok
     );
 
     assert_eq!(session.num_of_transferred_flow_files(), 1);
@@ -69,8 +71,10 @@ fn put_file_without_create_dirs() {
     session.input_flow_files.push(flow_file);
 
     assert_eq!(
-        put_file.trigger(&mut context, &mut session, &MockLogger::new()),
-        Ok(OnTriggerResult::Ok)
+        put_file
+            .trigger(&mut context, &mut session, &MockLogger::new())
+            .expect("Should trigger successfully"),
+        OnTriggerResult::Ok
     );
 
     assert_eq!(session.num_of_transferred_flow_files(), 1);
@@ -113,8 +117,10 @@ fn put_file_test_permissions() {
     session.input_flow_files.push(flow_file);
 
     assert_eq!(
-        put_file.trigger(&mut context, &mut session, &MockLogger::new()),
-        Ok(OnTriggerResult::Ok)
+        put_file
+            .trigger(&mut context, &mut session, &MockLogger::new())
+            .expect("Should trigger successfully"),
+        OnTriggerResult::Ok
     );
 
     assert_eq!(session.num_of_transferred_flow_files(), 1);

@@ -1,4 +1,6 @@
-use minifi_native_sys::{MinifiInputStream, MinifiInputStreamRead};
+use minifi_native_sys::{
+    MinifiInputStream, MinifiInputStreamRead, MinifiOutputStream, MinifiOutputStreamWrite,
+};
 use std::io::{BufRead, Error, ErrorKind, Read};
 
 #[derive(Debug)]
@@ -57,5 +59,41 @@ impl<'a> BufRead for CffiInputStream<'a> {
 
     fn consume(&mut self, amount: usize) {
         self.pos = std::cmp::min(self.pos + amount, self.cap);
+    }
+}
+
+#[derive(Debug)]
+pub struct CffiOutputStream<'a> {
+    ptr: *mut MinifiOutputStream,
+    _marker: std::marker::PhantomData<&'a ()>,
+}
+
+impl<'a> CffiOutputStream<'a> {
+    pub(crate) fn new(ptr: *mut MinifiOutputStream) -> Self {
+        Self {
+            ptr,
+            _marker: std::marker::PhantomData,
+        }
+    }
+}
+
+unsafe impl<'a> Send for CffiOutputStream<'a> {}
+
+impl<'a> std::io::Write for CffiOutputStream<'a> {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        unsafe {
+            let ret = MinifiOutputStreamWrite(
+                self.ptr,
+                buf.as_ptr() as *const std::ffi::c_char,
+                buf.len(),
+            );
+            if ret < 0 {
+                return Err(Error::new(ErrorKind::Other, "Minifi Write Error"));
+            }
+            Ok(ret as usize)
+        }
+    }
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(()) // Handled by C++ session commit
     }
 }

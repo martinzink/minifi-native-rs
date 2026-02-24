@@ -106,7 +106,10 @@ fn test_decryption(
 
     match expected_result {
         Ok(_result_bytes) => {
-            assert_eq!(res.target_relationship(), &super::relationships::SUCCESS);
+            assert_eq!(
+                res.target_relationship(),
+                super::relationships::SUCCESS.name
+            );
             assert!(res.new_content().is_some());
             let data_modified = res
                 .attributes_to_add()
@@ -122,7 +125,10 @@ fn test_decryption(
             );
         }
         Err(_) => {
-            assert_eq!(res.target_relationship(), &super::relationships::FAILURE);
+            assert_eq!(
+                res.target_relationship(),
+                super::relationships::FAILURE.name
+            );
             assert!(res.new_content().is_none());
             assert!(res.attributes_to_add().is_empty());
         }
@@ -225,6 +231,9 @@ fn decryption_of_not_encrypted_data() {
         )
         .expect("Should be able to transform");
 
-    assert_eq!(res.target_relationship(), &super::relationships::FAILURE);
+    assert_eq!(
+        res.target_relationship(),
+        super::relationships::FAILURE.name
+    );
     assert!(res.new_content().is_none());
 }

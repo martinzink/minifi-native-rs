@@ -5,6 +5,18 @@ use minifi_native::{
     ComponentIdentifier, EnableControllerService, MockControllerServiceContext, MockLogger,
 };
 
+fn assert_public_key_service_enable_fails_with_no_valid_keys(
+    context: &MockControllerServiceContext,
+) {
+    if let Err(ControllerServiceError(error)) =
+        PGPPublicKeyService::enable(context, &MockLogger::new())
+    {
+        assert_eq!(error, "Could not load any valid keys");
+    } else {
+        panic!("Didnt fail with no_valid_keys");
+    }
+}
+
 #[test]
 fn test_component_id() {
     assert_eq!(
@@ -19,10 +31,7 @@ fn test_component_id() {
 fn default_fails() {
     let context = MockControllerServiceContext::new();
 
-    assert_eq!(
-        PGPPublicKeyService::enable(&context, &MockLogger::new()),
-        Err(ControllerServiceError("Could not load any valid keys"))
-    );
+    assert_public_key_service_enable_fails_with_no_valid_keys(&context);
 }
 
 #[test]
@@ -32,10 +41,7 @@ fn corrupted_binary_keyring_file() {
         .properties
         .insert("Keyring File".to_string(), get_test_key_path("garbage.gpg"));
 
-    assert_eq!(
-        PGPPublicKeyService::enable(&context, &MockLogger::new()),
-        Err(ControllerServiceError("Could not load any valid keys"))
-    );
+    assert_public_key_service_enable_fails_with_no_valid_keys(&context);
 }
 
 #[test]
@@ -46,10 +52,7 @@ fn armored_private_key_file() {
         get_test_key_path("alice_private.asc"),
     );
 
-    assert_eq!(
-        PGPPublicKeyService::enable(&context, &MockLogger::new()),
-        Err(ControllerServiceError("Could not load any valid keys"))
-    );
+    assert_public_key_service_enable_fails_with_no_valid_keys(&context);
 }
 
 #[test]
@@ -60,10 +63,7 @@ fn corrupted_armored_key_file() {
         get_test_key_path("truncated.asc"),
     );
 
-    assert_eq!(
-        PGPPublicKeyService::enable(&context, &MockLogger::new()),
-        Err(ControllerServiceError("Could not load any valid keys"))
-    );
+    assert_public_key_service_enable_fails_with_no_valid_keys(&context);
 }
 
 #[test]
@@ -74,10 +74,7 @@ fn non_existent_keyfile() {
         get_test_key_path("non_existent.asc"),
     );
 
-    assert_eq!(
-        PGPPublicKeyService::enable(&context, &MockLogger::new()),
-        Err(ControllerServiceError("Could not load any valid keys"))
-    );
+    assert_public_key_service_enable_fails_with_no_valid_keys(&context);
 }
 
 #[test]
@@ -201,10 +198,7 @@ fn corrupted_armored_key() {
         .properties
         .insert("Keyring".to_string(), file_content);
 
-    assert_eq!(
-        PGPPublicKeyService::enable(&context, &MockLogger::new()),
-        Err(ControllerServiceError("Could not load any valid keys"))
-    );
+    assert_public_key_service_enable_fails_with_no_valid_keys(&context);
 }
 
 #[test]
@@ -218,8 +212,5 @@ fn private_ascii_key() {
         .properties
         .insert("Keyring".to_string(), file_content);
 
-    assert_eq!(
-        PGPPublicKeyService::enable(&context, &MockLogger::new()),
-        Err(ControllerServiceError("Could not load any valid keys"))
-    );
+    assert_public_key_service_enable_fails_with_no_valid_keys(&context);
 }

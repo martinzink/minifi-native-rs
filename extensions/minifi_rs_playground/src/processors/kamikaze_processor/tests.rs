@@ -21,8 +21,7 @@ fn on_schedule_err() {
         "ReturnErr".to_string(),
     );
     let processor = KamikazeProcessorRs::schedule(&context, &MockLogger::new());
-    assert!(processor.is_err());
-    assert_eq!(processor.err().unwrap(), UnknownError);
+    assert!(std::matches!(processor, Err(UnknownError)));
 }
 
 #[test]
@@ -45,8 +44,10 @@ fn on_trigger_ok() {
 
     let mut session = MockProcessSession::new();
     assert_eq!(
-        processor.trigger(&mut context, &mut session, &MockLogger::new()),
-        Ok(OnTriggerResult::Ok)
+        processor
+            .trigger(&mut context, &mut session, &MockLogger::new())
+            .expect("Should trigger successfully"),
+        OnTriggerResult::Ok
     );
 }
 
@@ -60,10 +61,10 @@ fn on_trigger_err() {
     let processor = KamikazeProcessorRs::schedule(&context, &MockLogger::new()).unwrap();
 
     let mut session = MockProcessSession::new();
-    assert_eq!(
+    assert!(std::matches!(
         processor.trigger(&mut context, &mut session, &MockLogger::new()),
         Err(UnknownError)
-    );
+    ));
 }
 
 #[test]

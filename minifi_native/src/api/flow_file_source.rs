@@ -60,7 +60,7 @@ where
                         session.write(&mut ff, &buffer)?;
                     }
                     Some(Content::Stream(stream)) => {
-                        session.write_stream(&mut ff, stream)?;
+                        session.write_lazy(&mut ff, stream)?;
                     }
                 }
                 for (k, v) in &new_flow_file_data.attributes_to_add {

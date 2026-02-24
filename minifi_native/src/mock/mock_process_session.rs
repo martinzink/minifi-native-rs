@@ -69,7 +69,7 @@ impl ProcessSession for MockProcessSession {
         Ok(())
     }
 
-    fn write_stream<'a>(
+    fn write_lazy<'a>(
         &self,
         flow_file: &Self::FlowFile,
         mut stream: Box<dyn Read + 'a>,
@@ -78,6 +78,17 @@ impl ProcessSession for MockProcessSession {
             .read_to_end(&mut flow_file.content.borrow_mut())
             .expect("Mock data should be readable");
         Ok(())
+    }
+
+    fn write_stream<F, R>(
+        &self,
+        _flow_file: &Self::FlowFile,
+        _callback: F,
+    ) -> Result<R, MinifiError>
+    where
+        F: FnOnce(&mut dyn crate::api::process_session::OutputStream) -> Result<R, MinifiError>,
+    {
+        todo!()
     }
 
     fn read(&self, flow_file: &Self::FlowFile) -> Option<Vec<u8>> {
@@ -137,7 +148,7 @@ mod tests {
             Ok(())
         });
 
-        assert_eq!(res, Ok(()));
+        assert!(res.is_ok());
 
         assert_eq!(vec.len(), 13);
         assert_eq!(vec, b"Hello, World!");

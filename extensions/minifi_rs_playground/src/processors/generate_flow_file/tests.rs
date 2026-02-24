@@ -26,8 +26,10 @@ fn generate_flow_file_empty_test() {
     let processor = GenerateFlowFileRs::schedule(&context, &logger).unwrap();
     let mut session = MockProcessSession::new();
     assert_eq!(
-        processor.trigger(&mut context, &mut session, &logger),
-        Ok(OnTriggerResult::Ok)
+        processor
+            .trigger(&mut context, &mut session, &logger)
+            .unwrap(),
+        OnTriggerResult::Ok
     );
     let result_flow_files = session.transferred_flow_files.borrow();
     assert_eq!(result_flow_files.len(), 1);
@@ -55,8 +57,10 @@ fn generate_custom_text() {
 
     let mut session = MockProcessSession::new();
     assert_eq!(
-        processor.trigger(&mut context, &mut session, &logger),
-        Ok(OnTriggerResult::Ok)
+        processor
+            .trigger(&mut context, &mut session, &logger)
+            .expect("Should trigger successfully"),
+        OnTriggerResult::Ok
     );
     let result_flow_files = session.transferred_flow_files.borrow();
     assert_eq!(result_flow_files.len(), 1);
@@ -83,8 +87,10 @@ fn random_bytes_unique() {
     let processor = GenerateFlowFileRs::schedule(&context, &logger).unwrap();
     let mut session = MockProcessSession::new();
     assert_eq!(
-        processor.trigger(&mut context, &mut session, &logger),
-        Ok(OnTriggerResult::Ok)
+        processor
+            .trigger(&mut context, &mut session, &logger)
+            .expect("Should trigger successfully"),
+        OnTriggerResult::Ok
     );
     let result_flow_files = session.transferred_flow_files.borrow();
     assert_eq!(result_flow_files.len(), 2);
@@ -116,8 +122,10 @@ fn random_bytes_non_unique() {
     let processor = GenerateFlowFileRs::schedule(&context, &logger).unwrap();
     let mut session = MockProcessSession::new();
     assert_eq!(
-        processor.trigger(&mut context, &mut session, &logger),
-        Ok(OnTriggerResult::Ok)
+        processor
+            .trigger(&mut context, &mut session, &logger)
+            .expect("Should trigger successfully"),
+        OnTriggerResult::Ok
     );
     let result_flow_files = session.transferred_flow_files.borrow();
     assert_eq!(result_flow_files.len(), 2);

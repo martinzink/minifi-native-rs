@@ -11,7 +11,8 @@ pub use api::component_definition_traits::{
 pub use api::controller_service::{ControllerService, EnableControllerService};
 pub use api::flow_file_source::{FlowFileSource, FlowFileSourceProcessorType, GeneratedFlowFile};
 pub use api::flow_file_transform::{
-    FlowFileTransform, FlowFileTransformProcessorType, TransformedFlowFile,
+    FlowFileTransform, FlowFileTransformProcessorType, FlowFileTransformStream,
+    FlowFileTransformStreamProcessorType, StreamTransformResult, TransformedFlowFile,
 };
 pub use api::processor::{CalculateMetrics, Processor, Schedule};
 
@@ -22,8 +23,8 @@ pub use api::logger::{LogLevel, Logger};
 
 pub use api::{
     ControllerServiceContext, FlowFile, InputStream, OnTriggerResult, OutputAttribute,
-    ProcessContext, ProcessSession, ProcessorInputRequirement, Property, Relationship,
-    StandardPropertyValidator,
+    OutputStream, ProcessContext, ProcessSession, ProcessorInputRequirement, Property,
+    Relationship, StandardPropertyValidator,
 };
 
 pub use minifi_native_macros as macros;

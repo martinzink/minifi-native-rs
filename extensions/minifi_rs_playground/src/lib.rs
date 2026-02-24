@@ -2,7 +2,10 @@ mod controller_services;
 mod processors;
 
 #[cfg(not(test))]
-use minifi_native::{ComplexProcessorType, Concurrent, Exclusive, FlowFileSourceProcessorType};
+use minifi_native::{
+    ComplexProcessorType, Concurrent, Exclusive, FlowFileSourceProcessorType,
+    FlowFileTransformStreamProcessorType,
+};
 
 #[cfg(not(test))]
 minifi_native::declare_minifi_extension!(
@@ -13,6 +16,7 @@ processors: [
     minifi_native::Processor<processors::kamikaze_processor::KamikazeProcessorRs, ComplexProcessorType, Concurrent>,
     minifi_native::Processor<processors::lorem_ipsum_cs_user::LoremIpsumCSUser, FlowFileSourceProcessorType, Concurrent>,
     minifi_native::Processor<processors::put_file::PutFileRs, ComplexProcessorType, Exclusive>,
+    minifi_native::Processor<processors::asciify_german::AsciifyGerman, FlowFileTransformStreamProcessorType, Concurrent>,
 ],
 controllers: [
     minifi_native::ControllerService<controller_services::lorem_ipsum_controller_service::LoremIpsumControllerService>

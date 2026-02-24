@@ -1,6 +1,8 @@
 use crate::MinifiError;
 use crate::api::flow_file::FlowFile;
 pub trait InputStream: std::io::BufRead + Send + std::fmt::Debug {}
+pub trait OutputStream: std::io::Write + Send + std::fmt::Debug {}
+impl<T: std::io::Write + Send + std::fmt::Debug> OutputStream for T {}
 impl<T: std::io::BufRead + Send + std::fmt::Debug> InputStream for T {}
 
 pub trait ProcessSession {
@@ -25,11 +27,15 @@ pub trait ProcessSession {
     ) -> bool;
 
     fn write(&self, flow_file: &Self::FlowFile, data: &[u8]) -> Result<(), MinifiError>;
-    fn write_stream<'a>(
+    fn write_lazy<'a>(
         &self,
         flow_file: &Self::FlowFile,
         stream: Box<dyn std::io::Read + 'a>,
     ) -> Result<(), MinifiError>;
+
+    fn write_stream<F, R>(&self, flow_file: &Self::FlowFile, callback: F) -> Result<R, MinifiError>
+    where
+        F: FnOnce(&mut dyn OutputStream) -> Result<R, MinifiError>;
 
     fn read(&self, flow_file: &Self::FlowFile) -> Option<Vec<u8>>;
     fn read_stream<F, R>(&self, flow_file: &Self::FlowFile, callback: F) -> Result<R, MinifiError>

@@ -1,8 +1,9 @@
 use super::c_ffi_flow_file::CffiFlowFile;
 use crate::MinifiError;
+use crate::api::process_session::OutputStream;
 use crate::api::{InputStream, ProcessSession};
-use crate::c_ffi::c_ffi_input_stream::CffiInputStream;
 use crate::c_ffi::c_ffi_primitives::{ConvertMinifiStringView, StringView};
+use crate::c_ffi::c_ffi_streams::{CffiInputStream, CffiOutputStream};
 use minifi_native_sys::{
     MinifiFlowFileGetAttribute, MinifiFlowFileGetAttributes, MinifiFlowFileSetAttribute,
     MinifiInputStream, MinifiInputStreamRead, MinifiInputStreamSize, MinifiOutputStream,
@@ -261,7 +262,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
         }
     }
 
-    fn write_stream<'b>(
+    fn write_lazy<'b>(
         &self,
         flow_file: &Self::FlowFile,
         mut stream: Box<dyn Read + 'b>,
@@ -273,6 +274,56 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                 Err(_e) => None, // Signal failure/EOF
             }
         })
+    }
+
+    fn write_stream<F, R>(&self, flow_file: &Self::FlowFile, callback: F) -> Result<R, MinifiError>
+    where
+        F: FnOnce(&mut dyn OutputStream) -> Result<R, MinifiError>,
+    {
+        struct WriteCallbackCtx<F, R> {
+            callback: Option<F>,
+            result: Option<Result<R, MinifiError>>,
+        }
+
+        let mut ctx = WriteCallbackCtx {
+            callback: Some(callback),
+            result: None,
+        };
+
+        unsafe extern "C" fn write_cb<F, R>(
+            user_data: *mut c_void,
+            stream_ptr: *mut MinifiOutputStream,
+        ) -> i64
+        where
+            F: FnOnce(&mut dyn OutputStream) -> Result<R, MinifiError>,
+        {
+            unsafe {
+                let ctx = &mut *(user_data as *mut WriteCallbackCtx<F, R>);
+
+                let mut writer = CffiOutputStream::new(stream_ptr);
+
+                if let Some(cb) = ctx.callback.take() {
+                    ctx.result = Some(cb(&mut writer));
+                }
+            }
+
+            0
+        }
+
+        unsafe {
+            let session_status = MinifiProcessSessionWrite(
+                self.ptr,
+                flow_file.ptr,
+                Some(write_cb::<F, R>),
+                &mut ctx as *mut _ as *mut c_void,
+            );
+            if session_status != MinifiStatus_MINIFI_STATUS_SUCCESS {
+                return Err(MinifiError::StatusError(session_status));
+            }
+        }
+
+        ctx.result
+            .unwrap_or(Err(MinifiError::OtherError("Callback execution failed")))
     }
 
     fn read(&self, flow_file: &Self::FlowFile) -> Option<Vec<u8>> {

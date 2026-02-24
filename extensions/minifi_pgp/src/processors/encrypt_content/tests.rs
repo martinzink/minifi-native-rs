@@ -21,7 +21,7 @@ fn cannot_schedule_without_password_or_public_key() {
 }
 
 fn assert_content(transform_result: &TransformedFlowFile, is_ascii: bool) {
-    assert_eq!(transform_result.target_relationship(), &SUCCESS);
+    assert_eq!(transform_result.target_relationship(), SUCCESS.name);
     match transform_result.new_content() {
         Some(Content::Buffer(content)) => {
             assert_eq!(content.is_ascii(), is_ascii);
@@ -156,7 +156,7 @@ fn cannot_encrypt_for_carol() {
         )
         .expect("should transform");
 
-    assert_eq!(transformed_ff.target_relationship(), &FAILURE);
+    assert_eq!(transformed_ff.target_relationship(), FAILURE.name);
     assert!(transformed_ff.new_content().is_none());
     assert!(transformed_ff.attributes_to_add().is_empty());
 }
