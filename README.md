@@ -41,17 +41,17 @@ There is a handy alias to initiate all behave tests.
 
 `cargo behave`
 
+## How to Use the Library in the MiNiFi C++ Application
+Copy the built shared library (.so, .dll, or .dylib) to the MiNiFi C++ application's extensions/ directory.
+
 ## Extensions
-### [minifi_rs_playground](minifi_rs_playground)
+### [minifi_rs_playground](extensions/minifi_rs_playground)
 A concrete example of a processor extension built using the minifi-native crate.
 - Demonstrates how to implement the Processor traits. Shows how to define properties and relationships.
 - Includes comprehensive unit tests using the mocking framework.
 - Includes integration testing that verifies the processor works as expected in a real MiNiFi environment.
 
-### [minifi_pgp](minifi_pgp)
+### [minifi_pgp](extensions/minifi_pgp)
 An extension that uses [rpgp](https://docs.rs/pgp/latest/pgp/) to mimic NiFi's [pgp-nar's](https://nifi.apache.org/docs/nifi-docs/components/org.apache.nifi/nifi-pgp-nar/) functionality
 - EncryptContentPGP
 - DecryptContentPGP
-
-## How to Use the Library in the MiNiFi C++ Application
-Copy the shared library (.so, .dll, or .dylib) to the MiNiFi C++ application's extensions/ directory.

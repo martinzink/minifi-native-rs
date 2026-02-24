@@ -16,9 +16,9 @@ pub(crate) const FILE_ENCODING: Property = Property {
     allowed_type: "",
 };
 
-pub(crate) const PASSPHRASE: Property = Property {
-    name: "Passphrase",
-    description: "Passphrase used for encrypting data with Password-Based Encryption",
+pub(crate) const PASSWORD: Property = Property {
+    name: "Symmetric Password",
+    description: "Password used for encrypting data with Password-Based Encryption",
     is_required: false,
     is_sensitive: true,
     supports_expr_lang: false,

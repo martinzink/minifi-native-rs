@@ -18,14 +18,14 @@ limitations under the License.
 ### Processors
 
 - [GenerateFlowFileRs](#GenerateFlowFileRs)
-- [LogAttributeRs](#LogAttributeRs)
 - [GetFileRs](#GetFileRs)
 - [KamikazeProcessorRs](#KamikazeProcessorRs)
-- [DummyProcessorRs](#DummyProcessorRs)
+- [LogAttributeRs](#LogAttributeRs)
+- [LoremIpsumCSUser](#LoremIpsumCSUser)
 - [PutFileRs](#PutFileRs)
 ### Controller Services
 
-- [DummyControllerService](#DummyControllerService)
+- [LoremIpsumControllerService](#LoremIpsumControllerService)
 
 
 ## GenerateFlowFileRs
@@ -51,33 +51,6 @@ In the list below, the names of required properties appear in bold. Any other pr
 | Name    | Description                            |
 |---------|----------------------------------------|
 | success | success operational on the flow record |
-
-
-## LogAttributeRs
-
-### Description
-
-Logs attributes of flow files in the MiNiFi application log.
-
-### Properties
-
-In the list below, the names of required properties appear in bold. Any other properties (not in bold) are considered optional. The table also indicates any default values, and whether a property supports the NiFi Expression Language.
-
-| Name                  | Default Value | Allowable Values                                                 | Description                                                                                                                                                    |
-|-----------------------|---------------|------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Log Level**         | Info          | Trace<br/>Debug<br/>Info<br/>Warn<br/>Error<br/>Critical<br/>Off | The Log Level to use when logging the Attributes                                                                                                               |
-| Attributes to Log     |               |                                                                  | A comma-separated list of Attributes to Log. If not specified, all attributes will be logged.                                                                  |
-| Attributes to Ignore  |               |                                                                  | A comma-separated list of Attributes to ignore. If not specified, no attributes will be ignored.                                                               |
-| **Log Payload**       | false         | true<br/>false                                                   | If true, the FlowFile's payload will be logged, in addition to its attributes. Otherwise, just the Attributes will be logged.                                  |
-| Log Prefix            |               |                                                                  | Log prefix appended to the log lines. It helps to distinguish the output of multiple LogAttribute processors.                                                  |
-| **FlowFiles To Log**  | 1             |                                                                  | Number of flow files to log. If set to zero all flow files will be logged. Please note that this may block other threads from running if not used judiciously. |
-| **Hexencode Payload** | false         | true<br/>false                                                   | If true, the FlowFile's payload will be logged in a hexencoded format                                                                                          |
-
-### Relationships
-
-| Name    | Description                                  |
-|---------|----------------------------------------------|
-| success | FlowFiles are transferred here after logging |
 
 
 ## GetFileRs
@@ -139,7 +112,34 @@ In the list below, the names of required properties appear in bold. Any other pr
 | success | success relationship |
 
 
-## DummyProcessorRs
+## LogAttributeRs
+
+### Description
+
+Logs attributes of flow files in the MiNiFi application log.
+
+### Properties
+
+In the list below, the names of required properties appear in bold. Any other properties (not in bold) are considered optional. The table also indicates any default values, and whether a property supports the NiFi Expression Language.
+
+| Name                  | Default Value | Allowable Values                                                 | Description                                                                                                                                                    |
+|-----------------------|---------------|------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Log Level**         | Info          | Trace<br/>Debug<br/>Info<br/>Warn<br/>Error<br/>Critical<br/>Off | The Log Level to use when logging the Attributes                                                                                                               |
+| Attributes to Log     |               |                                                                  | A comma-separated list of Attributes to Log. If not specified, all attributes will be logged.                                                                  |
+| Attributes to Ignore  |               |                                                                  | A comma-separated list of Attributes to ignore. If not specified, no attributes will be ignored.                                                               |
+| **Log Payload**       | false         | true<br/>false                                                   | If true, the FlowFile's payload will be logged, in addition to its attributes. Otherwise, just the Attributes will be logged.                                  |
+| Log Prefix            |               |                                                                  | Log prefix appended to the log lines. It helps to distinguish the output of multiple LogAttribute processors.                                                  |
+| **FlowFiles To Log**  | 1             |                                                                  | Number of flow files to log. If set to zero all flow files will be logged. Please note that this may block other threads from running if not used judiciously. |
+| **Hexencode Payload** | false         | true<br/>false                                                   | If true, the FlowFile's payload will be logged in a hexencoded format                                                                                          |
+
+### Relationships
+
+| Name    | Description                                  |
+|---------|----------------------------------------------|
+| success | FlowFiles are transferred here after logging |
+
+
+## LoremIpsumCSUser
 
 ### Description
 
@@ -149,14 +149,16 @@ Processor to test Controller Service API
 
 In the list below, the names of required properties appear in bold. Any other properties (not in bold) are considered optional. The table also indicates any default values, and whether a property supports the NiFi Expression Language.
 
-| Name                         | Default Value | Allowable Values | Description                          |
-|------------------------------|---------------|------------------|--------------------------------------|
-| **Dummy Controller Service** |               |                  | Name of the dummy controller service |
+| Name                               | Default Value | Allowable Values  | Description                                |
+|------------------------------------|---------------|-------------------|--------------------------------------------|
+| **Lorem Ipsum Controller Service** |               |                   | Name of the lorem ipsum controller service |
+| **Write Method**                   | Buffer        | Buffer<br/>Stream | Which API to test                          |
 
 ### Relationships
 
-| Name | Description |
-|------|-------------|
+| Name    | Description                  |
+|---------|------------------------------|
+| success | All flowfile are routed here |
 
 
 ## PutFileRs
@@ -186,7 +188,7 @@ In the list below, the names of required properties appear in bold. Any other pr
 | failure | Failed files (conflict, write failure, etc.) are transferred to failure           |
 
 
-## DummyControllerService
+## LoremIpsumControllerService
 
 ### Description
 
@@ -196,6 +198,6 @@ Simple Rusty Controller Service to test API
 
 In the list below, the names of required properties appear in bold. Any other properties (not in bold) are considered optional. The table also indicates any default values, and whether a property supports the NiFi Expression Language.
 
-| Name     | Default Value | Allowable Values | Description                           |
-|----------|---------------|------------------|---------------------------------------|
-| **Data** |               |                  | data<br/>**Sensitive Property: true** |
+| Name       | Default Value | Allowable Values | Description                                                 |
+|------------|---------------|------------------|-------------------------------------------------------------|
+| **Length** | 25            |                  | How many words to generate<br/>**Sensitive Property: true** |

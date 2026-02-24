@@ -9,8 +9,6 @@ echo "$PROJECT_ROOT"
 DOCKERFILE="minifi_rs_behave/rocky.dockerfile"
 TARGET_DIR="target/release"
 
-SOURCE_PATHS="src Cargo.toml Cargo.lock $DOCKERFILE"
-
 mkdir -p "$TARGET_DIR"
 
 docker buildx build \

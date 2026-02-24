@@ -2,7 +2,4 @@
 .vscode
 .gitmodules
 .idea
-.target
 output
-docker_builder
-**/target

@@ -13,7 +13,7 @@ mod relationships;
 use crate::controller_services::public_key_service::PGPPublicKeyService;
 use crate::processors::encrypt_content::output_attributes::FILE_ENCODING;
 use crate::processors::encrypt_content::properties::{
-    PASSPHRASE, PUBLIC_KEY_SEARCH, PUBLIC_KEY_SERVICE,
+    PASSWORD, PUBLIC_KEY_SEARCH, PUBLIC_KEY_SERVICE,
 };
 use crate::processors::encrypt_content::relationships::{FAILURE, SUCCESS};
 use minifi_native::macros::{ComponentIdentifier, DefaultMetrics};
@@ -80,7 +80,7 @@ impl Schedule for EncryptContentPGP {
             .expect("required property")
             .parse::<FileEncoding>()?;
 
-        let has_password = context.get_property(&PASSPHRASE, None)?.is_some();
+        let has_password = context.get_property(&PASSWORD, None)?.is_some();
         let has_public_key = context.get_property(&PUBLIC_KEY_SERVICE, None)?.is_some()
             && context.get_property(&PUBLIC_KEY_SEARCH, None)?.is_some();
 
@@ -114,7 +114,7 @@ impl FlowFileTransform for EncryptContentPGP {
         } else {
             None
         };
-        let password = context.get_property(&PASSPHRASE, Some(&flow_file))?;
+        let password = context.get_property(&PASSWORD, Some(&flow_file))?;
         if public_key.is_none() && password.is_none() {
             logger.debug("No password or public key to encrypt with");
             return Ok(TransformedFlowFile::route_without_changes(&FAILURE));

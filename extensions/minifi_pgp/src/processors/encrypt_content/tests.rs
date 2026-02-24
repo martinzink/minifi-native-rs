@@ -42,7 +42,7 @@ fn assert_content(transform_result: &TransformedFlowFile, is_ascii: bool) {
 #[test]
 fn encrypts_via_passphrase() {
     let mut context = MockProcessContext::new();
-    context.properties.insert("Passphrase", "password");
+    context.properties.insert(PASSWORD.name, "password");
 
     let input_ff = MockFlowFile::with_content("foo".as_bytes());
     let mut input_stream = input_ff.get_stream();
