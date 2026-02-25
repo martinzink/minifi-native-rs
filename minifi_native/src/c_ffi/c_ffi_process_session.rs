@@ -1,12 +1,13 @@
 use super::c_ffi_flow_file::CffiFlowFile;
 use crate::MinifiError;
-use crate::api::process_session::OutputStream;
+use crate::api::process_session::{IoState, OutputStream};
 use crate::api::{InputStream, ProcessSession};
 use crate::c_ffi::c_ffi_primitives::{ConvertMinifiStringView, StringView};
 use crate::c_ffi::c_ffi_streams::{CffiInputStream, CffiOutputStream};
 use minifi_native_sys::{
     MinifiFlowFileGetAttribute, MinifiFlowFileGetAttributes, MinifiFlowFileSetAttribute,
-    MinifiInputStream, MinifiInputStreamRead, MinifiInputStreamSize, MinifiOutputStream,
+    MinifiInputStream, MinifiInputStreamRead, MinifiInputStreamSize,
+    MinifiIoStatus_MINIFI_IO_CANCEL, MinifiIoStatus_MINIFI_IO_ERROR, MinifiOutputStream,
     MinifiOutputStreamWrite, MinifiProcessSession, MinifiProcessSessionCreate,
     MinifiProcessSessionGet, MinifiProcessSessionRead, MinifiProcessSessionRemove,
     MinifiProcessSessionTransfer, MinifiProcessSessionWrite, MinifiStatus_MINIFI_STATUS_SUCCESS,
@@ -67,7 +68,7 @@ impl<'a> CffiProcessSession<'a> {
                         );
 
                         if written < 0 {
-                            return -1;
+                            return MinifiIoStatus_MINIFI_IO_ERROR;
                         }
                         overall_writes += written;
                     }
@@ -160,7 +161,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
         }
     }
 
-    fn get_attribute(&self, flow_file: &mut Self::FlowFile, attr_key: &str) -> Option<String> {
+    fn get_attribute(&self, flow_file: &Self::FlowFile, attr_key: &str) -> Option<String> {
         let mut attr_value: Option<String> = None;
         unsafe {
             unsafe extern "C" fn cb(
@@ -238,7 +239,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                 unsafe {
                     let result_target = &mut *(user_ctx as *mut Option<&str>);
                     if result_target.is_none() {
-                        return -1;
+                        return MinifiIoStatus_MINIFI_IO_ERROR;
                     }
 
                     MinifiOutputStreamWrite(
@@ -278,7 +279,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
 
     fn write_stream<F, R>(&self, flow_file: &Self::FlowFile, callback: F) -> Result<R, MinifiError>
     where
-        F: FnOnce(&mut dyn OutputStream) -> Result<R, MinifiError>,
+        F: FnOnce(&mut dyn OutputStream) -> Result<(R, IoState), MinifiError>,
     {
         struct WriteCallbackCtx<F, R> {
             callback: Option<F>,
@@ -295,7 +296,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
             stream_ptr: *mut MinifiOutputStream,
         ) -> i64
         where
-            F: FnOnce(&mut dyn OutputStream) -> Result<R, MinifiError>,
+            F: FnOnce(&mut dyn OutputStream) -> Result<(R, IoState), MinifiError>,
         {
             unsafe {
                 let ctx = &mut *(user_data as *mut WriteCallbackCtx<F, R>);
@@ -303,11 +304,22 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                 let mut writer = CffiOutputStream::new(stream_ptr);
 
                 if let Some(cb) = ctx.callback.take() {
-                    ctx.result = Some(cb(&mut writer));
+                    let (cb_result, state) = match cb(&mut writer) {
+                        Ok((f, b)) => (Ok(f), b),
+                        Err(e) => (Err(e), IoState::Cancel),
+                    };
+                    let is_err = cb_result.is_err();
+                    ctx.result = Some(cb_result);
+                    if is_err {
+                        return MinifiIoStatus_MINIFI_IO_ERROR;
+                    }
+                    if state == IoState::Cancel {
+                        return MinifiIoStatus_MINIFI_IO_CANCEL;
+                    }
                 }
-            }
 
-            0
+                writer.written_bytes() as i64
+            }
         }
 
         unsafe {
@@ -373,17 +385,15 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
 
     fn read_stream<F, R>(&self, flow_file: &Self::FlowFile, callback: F) -> Result<R, MinifiError>
     where
-        F: FnOnce(&mut dyn InputStream, &Self::FlowFile) -> Result<R, MinifiError>,
+        F: FnOnce(&mut dyn InputStream) -> Result<R, MinifiError>,
     {
         unsafe {
-            struct CallbackCtx<'a, F, R> {
+            struct CallbackCtx<F, R> {
                 callback: Option<F>,
-                flow_file: &'a CffiFlowFile,
                 result: Option<Result<R, MinifiError>>,
             }
             let mut ctx = CallbackCtx {
                 callback: Some(callback),
-                flow_file,
                 result: None,
             };
 
@@ -392,20 +402,19 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                 stream_ptr: *mut MinifiInputStream,
             ) -> i64
             where
-                F: FnOnce(&mut dyn InputStream, &CffiFlowFile) -> Result<R, MinifiError>,
+                F: FnOnce(&mut dyn InputStream) -> Result<R, MinifiError>,
             {
                 unsafe {
                     let ctx = &mut *(user_data as *mut CallbackCtx<F, R>);
 
-                    // Construct the Rust Reader wrapper here.
                     let mut reader = CffiInputStream::new(stream_ptr);
 
                     if let Some(cb) = ctx.callback.take() {
-                        ctx.result = Some(cb(&mut reader, ctx.flow_file));
+                        ctx.result = Some(cb(&mut reader));
                     }
-                }
 
-                0
+                    reader.total_bytes_read() as i64
+                }
             }
 
             MinifiProcessSessionRead(
@@ -464,7 +473,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                             read_size,
                         );
                         if bytes_read < 0 || bytes_read > read_size as i64 {
-                            return -1;
+                            return MinifiIoStatus_MINIFI_IO_ERROR;
                         }
 
                         buffer.set_len(bytes_read as usize);
@@ -473,7 +482,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                             Ok(_) => {}
                             Err(err) => {
                                 eprintln!("Error during read_in_batch {:?}", err);
-                                return -1;
+                                return MinifiIoStatus_MINIFI_IO_ERROR;
                             }
                         }
                         remaining_size -= bytes_read as usize;

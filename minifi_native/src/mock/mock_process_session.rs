@@ -1,3 +1,4 @@
+use crate::api::process_session::IoState;
 use crate::api::{InputStream, ProcessSession};
 use crate::{MinifiError, MockFlowFile};
 use itertools::Itertools;
@@ -48,7 +49,7 @@ impl ProcessSession for MockProcessSession {
             .insert(attr_key.to_string(), attr_value.to_string());
         Ok(())
     }
-    fn get_attribute(&self, flow_file: &mut Self::FlowFile, attr_key: &str) -> Option<String> {
+    fn get_attribute(&self, flow_file: &Self::FlowFile, attr_key: &str) -> Option<String> {
         flow_file.attributes.get(attr_key).cloned()
     }
 
@@ -86,7 +87,9 @@ impl ProcessSession for MockProcessSession {
         _callback: F,
     ) -> Result<R, MinifiError>
     where
-        F: FnOnce(&mut dyn crate::api::process_session::OutputStream) -> Result<R, MinifiError>,
+        F: FnOnce(
+            &mut dyn crate::api::process_session::OutputStream,
+        ) -> Result<(R, IoState), MinifiError>,
     {
         todo!()
     }
@@ -97,7 +100,7 @@ impl ProcessSession for MockProcessSession {
 
     fn read_stream<F, R>(&self, _flow_file: &Self::FlowFile, _callback: F) -> Result<R, MinifiError>
     where
-        F: FnOnce(&mut dyn InputStream, &Self::FlowFile) -> Result<R, MinifiError>,
+        F: FnOnce(&mut dyn InputStream) -> Result<R, MinifiError>,
     {
         unimplemented!("Not implemented yet")
     }

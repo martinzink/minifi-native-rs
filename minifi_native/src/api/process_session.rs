@@ -5,6 +5,12 @@ pub trait OutputStream: std::io::Write + Send + std::fmt::Debug {}
 impl<T: std::io::Write + Send + std::fmt::Debug> OutputStream for T {}
 impl<T: std::io::BufRead + Send + std::fmt::Debug> InputStream for T {}
 
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum IoState {
+    Ok,
+    Cancel,
+}
+
 pub trait ProcessSession {
     type FlowFile: FlowFile;
 
@@ -19,7 +25,7 @@ pub trait ProcessSession {
         attr_key: &str,
         attr_value: &str,
     ) -> Result<(), MinifiError>;
-    fn get_attribute(&self, flow_file: &mut Self::FlowFile, attr_key: &str) -> Option<String>;
+    fn get_attribute(&self, flow_file: &Self::FlowFile, attr_key: &str) -> Option<String>;
     fn on_attributes<F: FnMut(&str, &str)>(
         &self,
         flow_file: &Self::FlowFile,
@@ -35,12 +41,12 @@ pub trait ProcessSession {
 
     fn write_stream<F, R>(&self, flow_file: &Self::FlowFile, callback: F) -> Result<R, MinifiError>
     where
-        F: FnOnce(&mut dyn OutputStream) -> Result<R, MinifiError>;
+        F: FnOnce(&mut dyn OutputStream) -> Result<(R, IoState), MinifiError>;
 
     fn read(&self, flow_file: &Self::FlowFile) -> Option<Vec<u8>>;
     fn read_stream<F, R>(&self, flow_file: &Self::FlowFile, callback: F) -> Result<R, MinifiError>
     where
-        F: FnOnce(&mut dyn InputStream, &Self::FlowFile) -> Result<R, MinifiError>;
+        F: FnOnce(&mut dyn InputStream) -> Result<R, MinifiError>;
     fn read_in_batches<F>(
         &self,
         flow_file: &Self::FlowFile,

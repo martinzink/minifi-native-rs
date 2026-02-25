@@ -15,6 +15,7 @@ pub(crate) mod processor;
 mod property;
 pub(crate) mod raw;
 mod relationship;
+pub(crate) mod simple_context;
 
 pub use component_definition_traits::ProcessorDefinition;
 

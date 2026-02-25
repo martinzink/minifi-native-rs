@@ -9,6 +9,7 @@ pub struct CffiInputStream<'a> {
     buffer: [u8; 8192],
     pos: usize,
     cap: usize,
+    total_read: usize,
     _marker: std::marker::PhantomData<&'a ()>,
 }
 
@@ -21,8 +22,13 @@ impl<'a> CffiInputStream<'a> {
             buffer: [0u8; 8192],
             pos: 0,
             cap: 0,
+            total_read: 0,
             _marker: std::marker::PhantomData,
         }
+    }
+
+    pub fn total_bytes_read(&self) -> usize {
+        self.total_read
     }
 }
 
@@ -58,13 +64,16 @@ impl<'a> BufRead for CffiInputStream<'a> {
     }
 
     fn consume(&mut self, amount: usize) {
-        self.pos = std::cmp::min(self.pos + amount, self.cap);
+        let actual_consumed = std::cmp::min(amount, self.cap - self.pos);
+        self.pos += actual_consumed;
+        self.total_read += actual_consumed;
     }
 }
 
 #[derive(Debug)]
 pub struct CffiOutputStream<'a> {
     ptr: *mut MinifiOutputStream,
+    written_bytes: usize,
     _marker: std::marker::PhantomData<&'a ()>,
 }
 
@@ -72,8 +81,15 @@ impl<'a> CffiOutputStream<'a> {
     pub(crate) fn new(ptr: *mut MinifiOutputStream) -> Self {
         Self {
             ptr,
+            written_bytes: 0,
             _marker: std::marker::PhantomData,
         }
+    }
+}
+
+impl<'a> CffiOutputStream<'a> {
+    pub fn written_bytes(&self) -> usize {
+        self.written_bytes
     }
 }
 
@@ -90,6 +106,7 @@ impl<'a> std::io::Write for CffiOutputStream<'a> {
             if ret < 0 {
                 return Err(Error::new(ErrorKind::Other, "Minifi Write Error"));
             }
+            self.written_bytes += ret as usize;
             Ok(ret as usize)
         }
     }

@@ -1,5 +1,5 @@
 use crate::api::flow_file_content::Content;
-use crate::api::process_session::OutputStream;
+use crate::api::process_session::{IoState, OutputStream};
 use crate::api::processor::Processor;
 use crate::api::raw::raw_processor::RawMultiThreadedTrigger;
 use crate::api::{InputStream, ProcessorDefinition, RawProcessor};
@@ -64,7 +64,7 @@ pub trait FlowFileTransform {
 pub struct StreamTransformResult {
     target_relationship_name: &'static str,
     attributes_to_add: HashMap<String, String>,
-    modify_content: bool,
+    write_status: IoState,
 }
 
 impl StreamTransformResult {
@@ -75,7 +75,7 @@ impl StreamTransformResult {
         Self {
             target_relationship_name: target_relationship.name,
             attributes_to_add,
-            modify_content: true,
+            write_status: IoState::Ok,
         }
     }
 
@@ -83,23 +83,16 @@ impl StreamTransformResult {
         Self {
             target_relationship_name: target_relationship.name,
             attributes_to_add: HashMap::new(),
-            modify_content: false,
-        }
-    }
-
-    pub fn cancel_write(
-        target_relationship: &Relationship,
-        attributes_to_add: HashMap<String, String>,
-    ) -> Self {
-        Self {
-            target_relationship_name: target_relationship.name,
-            attributes_to_add,
-            modify_content: false,
+            write_status: IoState::Cancel,
         }
     }
 
     pub fn target_relationship_name(&self) -> &'static str {
         self.target_relationship_name
+    }
+
+    pub fn modify_content(&self) -> IoState {
+        self.write_status
     }
 }
 
@@ -133,7 +126,7 @@ where
         if let Some(ref scheduled_impl) = self.scheduled_impl {
             if let Some(mut flow_file) = session.get() {
                 let (attrs_to_add, relationship) =
-                    session.read_stream(&flow_file, |input_stream, ff| {
+                    session.read_stream(&flow_file, |input_stream| {
                         let transformed = scheduled_impl.transform(
                             context,
                             &flow_file,
@@ -144,10 +137,10 @@ where
                         match transformed.new_content {
                             None => {}
                             Some(Content::Buffer(buffer)) => {
-                                session.write(ff, &buffer)?;
+                                session.write(&flow_file, &buffer)?;
                             }
                             Some(Content::Stream(stream)) => {
-                                session.write_lazy(ff, stream)?;
+                                session.write_lazy(&flow_file, stream)?;
                             }
                         };
                         Ok((
@@ -219,23 +212,25 @@ where
     {
         if let Some(ref scheduled_impl) = self.scheduled_impl {
             if let Some(mut flow_file) = session.get() {
-                let (relationship, attrs) =
-                    session.read_stream(&flow_file, |input_stream, _ff| {
-                        // todo!(remove ff)
-                        session.write_stream(&flow_file, |output_stream| {
-                            let transformed = scheduled_impl.transform(
-                                context,
-                                &flow_file,
-                                input_stream,
-                                output_stream,
-                                &self.logger,
-                            )?;
-                            Ok((
+                let (relationship, attrs) = session.read_stream(&flow_file, |input_stream| {
+                    session.write_stream(&flow_file, |output_stream| {
+                        let transformed = scheduled_impl.transform(
+                            context,
+                            &flow_file,
+                            input_stream,
+                            output_stream,
+                            &self.logger,
+                        )?;
+
+                        Ok((
+                            (
                                 transformed.target_relationship_name,
                                 transformed.attributes_to_add,
-                            ))
-                        })
-                    })?;
+                            ),
+                            transformed.write_status,
+                        ))
+                    })
+                })?;
                 for (k, v) in attrs {
                     session.set_attribute(&mut flow_file, &k, &v)?;
                 }
