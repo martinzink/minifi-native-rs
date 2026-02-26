@@ -1,5 +1,7 @@
 use crate::api::{ProcessContext, RawControllerService};
-use crate::{ComponentIdentifier, EnableControllerService, MinifiError, MockFlowFile, Property};
+use crate::{
+    ComponentIdentifier, EnableControllerService, GetAttribute, MinifiError, MockFlowFile, Property,
+};
 use std::any::Any;
 use std::collections::HashMap;
 
@@ -56,6 +58,7 @@ impl MockPropertyMap {
 pub struct MockProcessContext {
     pub properties: MockPropertyMap,
     pub controller_services: HashMap<String, Box<dyn Any>>,
+    pub attributes: HashMap<String, String>,
 }
 
 impl ProcessContext for MockProcessContext {
@@ -99,6 +102,13 @@ impl MockProcessContext {
         Self {
             properties: MockPropertyMap::new(),
             controller_services: HashMap::new(),
+            attributes: HashMap::new(),
         }
+    }
+}
+
+impl GetAttribute for MockProcessContext {
+    fn get_attribute(&self, name: &str) -> Result<Option<String>, MinifiError> {
+        Ok(self.attributes.get(name).cloned())
     }
 }

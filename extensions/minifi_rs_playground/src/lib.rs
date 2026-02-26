@@ -3,8 +3,8 @@ mod processors;
 
 #[cfg(not(test))]
 use minifi_native::{
-    ComplexProcessorType, Concurrent, Exclusive, FlowFileSourceProcessorType,
-    FlowFileStreamTransformProcessorType,
+    ComplexProcessorType, Concurrent, FlowFileSourceProcessorType,
+    FlowFileStreamTransformProcessorType, FlowFileTransformProcessorType,
 };
 
 #[cfg(not(test))]
@@ -15,7 +15,7 @@ processors: [
     minifi_native::Processor<processors::get_file::GetFileRs, ComplexProcessorType, Concurrent>,
     minifi_native::Processor<processors::kamikaze_processor::KamikazeProcessorRs, ComplexProcessorType, Concurrent>,
     minifi_native::Processor<processors::lorem_ipsum_cs_user::LoremIpsumCSUser, FlowFileSourceProcessorType, Concurrent>,
-    minifi_native::Processor<processors::put_file::PutFileRs, ComplexProcessorType, Exclusive>,
+    minifi_native::Processor<processors::put_file::PutFileRs, FlowFileTransformProcessorType, Concurrent>,
     minifi_native::Processor<processors::asciify_german::AsciifyGerman, FlowFileStreamTransformProcessorType, Concurrent>,
 ],
 controllers: [

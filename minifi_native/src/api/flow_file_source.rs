@@ -26,6 +26,10 @@ impl<'a> GeneratedFlowFile<'a> {
             attributes_to_add,
         }
     }
+
+    pub fn target_relationship_name(&self) -> &'static str {
+        self.target_relationship_name
+    }
 }
 
 pub trait FlowFileSource {
@@ -33,7 +37,7 @@ pub trait FlowFileSource {
         &self,
         context: &'a mut Context,
         logger: &LoggerImpl,
-    ) -> Result<Option<GeneratedFlowFile<'a>>, MinifiError>;
+    ) -> Result<Vec<GeneratedFlowFile<'a>>, MinifiError>;
 }
 
 pub struct FlowFileSourceProcessorType {}
@@ -53,7 +57,12 @@ where
         PS: ProcessSession<FlowFile = PC::FlowFile>,
     {
         if let Some(ref scheduled_impl) = self.scheduled_impl {
-            if let Some(new_flow_file_data) = scheduled_impl.generate(context, &self.logger)? {
+            let generated_flow_files = scheduled_impl.generate(context, &self.logger)?;
+            if generated_flow_files.is_empty() {
+                return Ok(OnTriggerResult::Yield);
+            }
+
+            for new_flow_file_data in generated_flow_files {
                 let mut ff = session.create()?;
                 match new_flow_file_data.new_content {
                     None => {}
@@ -68,10 +77,8 @@ where
                     session.set_attribute(&mut ff, k, v)?;
                 }
                 session.transfer(ff, new_flow_file_data.target_relationship_name)?;
-                Ok(OnTriggerResult::Ok)
-            } else {
-                Ok(OnTriggerResult::Yield)
             }
+            Ok(OnTriggerResult::Ok)
         } else {
             Err(MinifiError::TriggerError(
                 "The processor hasn't been scheduled yet".to_string(),

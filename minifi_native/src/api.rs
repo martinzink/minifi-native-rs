@@ -1,4 +1,4 @@
-mod attribute;
+pub(crate) mod attribute;
 pub(crate) mod complex_processor;
 pub(crate) mod component_definition_traits;
 pub(crate) mod context_session_flowfile_bundle;
@@ -19,7 +19,6 @@ mod relationship;
 
 pub use component_definition_traits::ProcessorDefinition;
 
-pub use attribute::OutputAttribute;
 pub use flow_file::FlowFile;
 pub use logger::{LogLevel, Logger};
 pub use process_context::ProcessContext;

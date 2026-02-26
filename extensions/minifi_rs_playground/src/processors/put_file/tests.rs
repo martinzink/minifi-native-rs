@@ -17,27 +17,17 @@ fn simple_put_file_test() {
         "Directory".to_string(),
         put_file_dir.to_str().unwrap().to_string(),
     );
-    let mut put_file = PutFileRs::schedule(&context, &MockLogger::new()).expect("Should succeed");
+    let put_file = PutFileRs::schedule(&context, &MockLogger::new()).expect("Should succeed");
 
-    let mut session = MockProcessSession::new();
-    let mut flow_file = MockFlowFile::with_content("test".as_bytes());
-    flow_file
+    let mut input_stream = std::io::Cursor::new("test".as_bytes());
+    context
         .attributes
         .insert("filename".to_string(), "test.txt".to_string());
-    session.input_flow_files.push(flow_file);
+    let result = put_file
+        .transform(&context, &mut input_stream, &MockLogger::new())
+        .expect("Should succeed");
 
-    assert_eq!(
-        put_file
-            .trigger(&mut context, &mut session, &MockLogger::new())
-            .expect("Should trigger successfully"),
-        OnTriggerResult::Ok
-    );
-
-    assert_eq!(session.num_of_transferred_flow_files(), 1);
-    assert_eq!(
-        session.transferred_flow_files.borrow()[0].relationship,
-        SUCCESS.name
-    );
+    assert_eq!(result.target_relationship(), SUCCESS.name);
 
     let expected_path = temp_dir.path().join("subdir/test.txt");
     assert!(expected_path.exists());
@@ -61,27 +51,17 @@ fn put_file_without_create_dirs() {
         "false".to_string(),
     );
 
-    let mut put_file = PutFileRs::schedule(&context, &MockLogger::new()).expect("Should succeed");
+    let put_file = PutFileRs::schedule(&context, &MockLogger::new()).expect("Should succeed");
 
-    let mut session = MockProcessSession::new();
-    let mut flow_file = MockFlowFile::with_content("test".as_bytes());
-    flow_file
+    let mut input_stream = std::io::Cursor::new("test".as_bytes());
+    context
         .attributes
         .insert("filename".to_string(), "test.txt".to_string());
-    session.input_flow_files.push(flow_file);
+    let result = put_file
+        .transform(&context, &mut input_stream, &MockLogger::new())
+        .expect("Should succeed");
 
-    assert_eq!(
-        put_file
-            .trigger(&mut context, &mut session, &MockLogger::new())
-            .expect("Should trigger successfully"),
-        OnTriggerResult::Ok
-    );
-
-    assert_eq!(session.num_of_transferred_flow_files(), 1);
-    assert_eq!(
-        session.transferred_flow_files.borrow()[0].relationship,
-        FAILURE.name
-    );
+    assert_eq!(result.target_relationship(), FAILURE.name);
 
     let expected_path = temp_dir.path().join("subdir/test.txt");
     assert!(!expected_path.exists());
@@ -107,27 +87,17 @@ fn put_file_test_permissions() {
     context
         .properties
         .insert("Permissions".to_string(), "0777".to_string());
-    let mut put_file = PutFileRs::schedule(&context, &MockLogger::new()).expect("Should succeed");
+    let put_file = PutFileRs::schedule(&context, &MockLogger::new()).expect("Should succeed");
 
-    let mut session = MockProcessSession::new();
-    let mut flow_file = MockFlowFile::with_content("test".as_bytes());
-    flow_file
+    let mut input_stream = std::io::Cursor::new("test".as_bytes());
+    context
         .attributes
         .insert("filename".to_string(), "test.txt".to_string());
-    session.input_flow_files.push(flow_file);
+    let result = put_file
+        .transform(&context, &mut input_stream, &MockLogger::new())
+        .expect("Should succeed");
 
-    assert_eq!(
-        put_file
-            .trigger(&mut context, &mut session, &MockLogger::new())
-            .expect("Should trigger successfully"),
-        OnTriggerResult::Ok
-    );
-
-    assert_eq!(session.num_of_transferred_flow_files(), 1);
-    assert_eq!(
-        session.transferred_flow_files.borrow()[0].relationship,
-        SUCCESS.name
-    );
+    assert_eq!(result.target_relationship(), SUCCESS.name);
 
     let expected_path = temp_dir.path().join("subdir/test.txt");
     assert!(expected_path.exists());

@@ -41,7 +41,7 @@ impl FlowFileSource for LoremIpsumCSUser {
         &self,
         context: &'a mut Context,
         logger: &LoggerImpl,
-    ) -> Result<Option<GeneratedFlowFile<'a>>, MinifiError> {
+    ) -> Result<Vec<GeneratedFlowFile<'a>>, MinifiError> {
         logger.trace(&format!("generate call {:?}", self));
         let controller_service = context
             .get_controller_service::<LoremIpsumControllerService>(&CONTROLLER_SERVICE)?
@@ -55,14 +55,14 @@ impl FlowFileSource for LoremIpsumCSUser {
                     Some(Content::from(controller_service.data.clone())),
                     HashMap::new(),
                 );
-                Ok(Some(generated_flow_file))
+                Ok(vec![generated_flow_file])
             }
             WriteMethod::Stream => {
                 let reader = controller_service.data.as_bytes();
                 let content = Content::Stream(Box::new(reader));
                 let generated_flow_file =
                     GeneratedFlowFile::new(&SUCCESS, Some(content), HashMap::new());
-                Ok(Some(generated_flow_file))
+                Ok(vec![generated_flow_file])
             }
         }
     }

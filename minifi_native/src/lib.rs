@@ -26,9 +26,13 @@ pub use api::logger::{LogLevel, Logger};
 
 pub use api::property::{GetControllerService, GetProperty, Property};
 
+pub use api::process_session::IoState;
+
+pub use api::attribute::{GetAttribute, OutputAttribute};
+
 pub use api::{
-    FlowFile, InputStream, OnTriggerResult, OutputAttribute, OutputStream, ProcessContext,
-    ProcessSession, ProcessorInputRequirement, Relationship, StandardPropertyValidator,
+    FlowFile, InputStream, OnTriggerResult, OutputStream, ProcessContext, ProcessSession,
+    ProcessorInputRequirement, Relationship, StandardPropertyValidator,
 };
 
 pub use minifi_native_macros as macros;

@@ -81,17 +81,16 @@ impl ProcessSession for MockProcessSession {
         Ok(())
     }
 
-    fn write_stream<F, R>(
-        &self,
-        _flow_file: &Self::FlowFile,
-        _callback: F,
-    ) -> Result<R, MinifiError>
+    fn write_stream<F, R>(&self, flow_file: &Self::FlowFile, callback: F) -> Result<R, MinifiError>
     where
         F: FnOnce(
             &mut dyn crate::api::process_session::OutputStream,
         ) -> Result<(R, IoState), MinifiError>,
     {
-        todo!()
+        let mut borrowed_content = flow_file.content.borrow_mut();
+        let mut flow_file_content = std::io::Cursor::new(&mut *borrowed_content);
+        let (r, state) = callback(&mut flow_file_content)?;
+        Ok(r)
     }
 
     fn read(&self, flow_file: &Self::FlowFile) -> Option<Vec<u8>> {

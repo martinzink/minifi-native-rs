@@ -6,7 +6,7 @@ use crate::api::raw::raw_processor::RawMultiThreadedTrigger;
 use crate::api::{InputStream, ProcessorDefinition, RawProcessor};
 use crate::c_ffi::{DynRawProcessorDefinition, RawProcessorDefinition, RawRegisterableProcessor};
 use crate::{
-    CalculateMetrics, ComponentIdentifier, Concurrent, LogLevel, Logger, MinifiError,
+    CalculateMetrics, ComponentIdentifier, Concurrent, GetAttribute, LogLevel, Logger, MinifiError,
     OnTriggerResult, ProcessContext, ProcessSession, Relationship, Schedule,
 };
 use std::collections::HashMap;
@@ -51,7 +51,12 @@ impl<'a> TransformedFlowFile<'a> {
 }
 
 pub trait FlowFileTransform {
-    fn transform<'ctx, 'stream, Context: GetProperty + GetControllerService, LoggerImpl: Logger>(
+    fn transform<
+        'ctx,
+        'stream,
+        Context: GetProperty + GetControllerService + GetAttribute,
+        LoggerImpl: Logger,
+    >(
         &self,
         context: &'ctx Context,
         input_stream: &'stream mut dyn InputStream,

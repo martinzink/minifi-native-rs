@@ -1,7 +1,8 @@
-use minifi_native::macros::ComponentIdentifier;
+use crate::processors::put_file::relationships::{FAILURE, SUCCESS};
+use minifi_native::macros::{ComponentIdentifier, DefaultMetrics};
 use minifi_native::{
-    CalculateMetrics, GetProperty, Logger, MinifiError, MutTrigger, OnTriggerResult,
-    ProcessContext, ProcessSession, Schedule,
+    FlowFileTransform, GetAttribute, GetControllerService, GetProperty, InputStream, Logger,
+    MinifiError, OnTriggerResult, Schedule, TransformedFlowFile,
 };
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -60,7 +61,7 @@ impl PutFileUnixPermissions {
     }
 }
 
-#[derive(Debug, ComponentIdentifier)]
+#[derive(Debug, ComponentIdentifier, DefaultMetrics)]
 pub(crate) struct PutFileRs {
     conflict_resolution_strategy: ConflictResolutionStrategy,
     try_make_dirs: bool,
@@ -79,21 +80,16 @@ impl PutFileRs {
         }
     }
 
-    fn get_destination_path<C, S>(
-        context: &C,
-        session: &S,
-        ff: &mut S::FlowFile,
-    ) -> Result<PathBuf, MinifiError>
+    fn get_destination_path<Ctx>(context: &Ctx) -> Result<PathBuf, MinifiError>
     where
-        C: ProcessContext,
-        S: ProcessSession<FlowFile = C::FlowFile>,
+        Ctx: GetProperty + GetAttribute,
     {
         let directory = context
-            .get_property(&properties::DIRECTORY, Some(ff))?
+            .get_property(&properties::DIRECTORY)?
             .expect("required property");
 
-        let file_name = session
-            .get_attribute(ff, "filename")
+        let file_name = context
+            .get_attribute("filename")?
             .unwrap_or("foo.txt".to_string()); // fallback to UUID
         Ok(PathBuf::from(directory + "/" + file_name.as_str()))
     }
@@ -108,16 +104,13 @@ impl PutFileRs {
         Ok(())
     }
 
-    fn put_file<C, S, L>(
+    fn put_file<L>(
         &self,
-        session: &mut S,
+        input_stream: &mut dyn InputStream,
         logger: &L,
         destination: &Path,
-        ff: &S::FlowFile,
     ) -> Result<(), MinifiError>
     where
-        C: ProcessContext,
-        S: ProcessSession<FlowFile = C::FlowFile>,
         L: Logger,
     {
         match self.prepare_destination(destination) {
@@ -135,11 +128,7 @@ impl PutFileRs {
             }
         }
 
-        session.read_in_batches(ff, 1024, |batch| {
-            file.write_all(batch)
-                .map_err(|e| MinifiError::TriggerError(e.to_string()))
-        })?;
-
+        std::io::copy(input_stream, &mut file)?;
         Ok(())
     }
 
@@ -197,67 +186,53 @@ impl Schedule for PutFileRs {
     }
 }
 
-impl MutTrigger for PutFileRs {
-    fn trigger<PC, PS, L>(
-        &mut self,
-        context: &mut PC,
-        session: &mut PS,
-        logger: &L,
-    ) -> Result<OnTriggerResult, MinifiError>
+impl FlowFileTransform for PutFileRs {
+    fn transform<
+        'ctx,
+        'stream,
+        Context: GetProperty + GetControllerService + GetAttribute,
+        LoggerImpl: Logger,
+    >(
+        &self,
+        context: &'ctx Context,
+        input_stream: &'stream mut dyn InputStream,
+        logger: &LoggerImpl,
+    ) -> Result<TransformedFlowFile<'stream>, MinifiError>
     where
-        PC: ProcessContext,
-        PS: ProcessSession<FlowFile = PC::FlowFile>,
-        L: Logger,
+        'ctx: 'stream,
     {
         logger.trace(format!("on_trigger: {:?}", self).as_str());
-        let Some(mut ff) = session.get() else {
-            return Ok(OnTriggerResult::Yield);
-        };
 
-        let Ok(destination_path) = Self::get_destination_path::<PC, PS>(context, session, &mut ff)
-        else {
+        let Ok(destination_path) = Self::get_destination_path(context) else {
             logger.warn("Invalid destination path");
-            session.transfer(ff, relationships::FAILURE.name)?;
-            return Ok(OnTriggerResult::Yield);
+            return Ok(TransformedFlowFile::route_without_changes(&FAILURE));
         };
 
         if self.directory_is_full(&destination_path) {
             logger.warn("Directory is full");
-            session.transfer(ff, relationships::FAILURE.name)?;
-            return Ok(OnTriggerResult::Yield);
+            return Ok(TransformedFlowFile::route_without_changes(&FAILURE));
         }
 
         if destination_path.exists() {
             match self.conflict_resolution_strategy {
                 ConflictResolutionStrategy::Fail => {
-                    session.transfer(ff, relationships::FAILURE.name)?;
-                    return Ok(OnTriggerResult::Ok);
+                    return Ok(TransformedFlowFile::route_without_changes(&FAILURE));
                 }
                 ConflictResolutionStrategy::Replace => {
                     // continue with PutFile operation
                 }
                 ConflictResolutionStrategy::Ignore => {
-                    session.transfer(ff, relationships::SUCCESS.name)?;
-                    return Ok(OnTriggerResult::Ok);
+                    return Ok(TransformedFlowFile::route_without_changes(&SUCCESS));
                 }
             }
         }
 
-        match self.put_file::<PC, PS, L>(session, logger, &destination_path, &ff) {
-            Ok(_) => {
-                session.transfer(ff, relationships::SUCCESS.name)?;
-                Ok(OnTriggerResult::Ok)
-            }
-            Err(e) => {
-                logger.warn(format!("Failed to put file due to {:?}", e).as_str());
-                session.transfer(ff, relationships::FAILURE.name)?;
-                Ok(OnTriggerResult::Ok)
-            }
+        match self.put_file(input_stream, logger, &destination_path) {
+            Ok(_) => Ok(TransformedFlowFile::route_without_changes(&SUCCESS)),
+            Err(e) => Ok(TransformedFlowFile::route_without_changes(&FAILURE)),
         }
     }
 }
-
-impl CalculateMetrics for PutFileRs {}
 
 #[cfg(not(test))]
 pub(crate) mod processor_definition;

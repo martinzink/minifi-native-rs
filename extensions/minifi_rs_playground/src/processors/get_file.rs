@@ -7,11 +7,12 @@ use crate::processors::get_file::properties::{
 };
 use minifi_native::macros::ComponentIdentifier;
 use minifi_native::{
-    CalculateMetrics, ConstTrigger, GetProperty, Logger, MinifiError, OnTriggerResult,
+    CalculateMetrics, ConstTrigger, GetProperty, IoState, Logger, MinifiError, OnTriggerResult,
     ProcessContext, ProcessSession, Schedule,
 };
 use std::collections::VecDeque;
 use std::error;
+use std::fs::File;
 use std::path::PathBuf;
 use std::sync::Mutex;
 use std::time::{Duration, Instant, SystemTime};
@@ -185,8 +186,11 @@ impl GetFileRs {
             path.to_string_lossy().trim(),
         )?;
 
-        let contents = std::fs::read_to_string(&path).expect("Failed to read file");
-        session.write(&mut ff, contents.as_bytes())?;
+        session.write_stream(&ff, |output_stream| {
+            let mut file = File::open(&path)?;
+            std::io::copy(&mut file, output_stream)?;
+            Ok(((), IoState::Ok))
+        })?;
         if !self.keep_source_file {
             match std::fs::remove_file(&path) {
                 Ok(_) => {}
