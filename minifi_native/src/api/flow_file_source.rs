@@ -2,13 +2,14 @@ use crate::api::Content;
 use crate::api::raw::raw_processor::RawMultiThreadedTrigger;
 use crate::c_ffi::{DynRawProcessorDefinition, RawProcessorDefinition, RawRegisterableProcessor};
 use crate::{
-    CalculateMetrics, ComponentIdentifier, Concurrent, Logger, MinifiError, OnTriggerResult,
-    ProcessContext, ProcessSession, Processor, ProcessorDefinition, Relationship, Schedule,
+    CalculateMetrics, ComponentIdentifier, Concurrent, GetControllerService, GetProperty, Logger,
+    MinifiError, OnTriggerResult, ProcessContext, ProcessSession, Processor, ProcessorDefinition,
+    Relationship, Schedule,
 };
 use std::collections::HashMap;
 
 pub struct GeneratedFlowFile<'a> {
-    target_relationship: &'a Relationship,
+    target_relationship_name: &'static str,
     new_content: Option<Content<'a>>,
     attributes_to_add: HashMap<String, String>,
 }
@@ -20,7 +21,7 @@ impl<'a> GeneratedFlowFile<'a> {
         attributes_to_add: HashMap<String, String>,
     ) -> Self {
         Self {
-            target_relationship,
+            target_relationship_name: target_relationship.name,
             new_content,
             attributes_to_add,
         }
@@ -28,7 +29,7 @@ impl<'a> GeneratedFlowFile<'a> {
 }
 
 pub trait FlowFileSource {
-    fn generate<'a, Context: ProcessContext, LoggerImpl: Logger>(
+    fn generate<'a, Context: GetProperty + GetControllerService, LoggerImpl: Logger>(
         &self,
         context: &'a mut Context,
         logger: &LoggerImpl,
@@ -66,7 +67,7 @@ where
                 for (k, v) in &new_flow_file_data.attributes_to_add {
                     session.set_attribute(&mut ff, k, v)?;
                 }
-                session.transfer(ff, new_flow_file_data.target_relationship.name)?;
+                session.transfer(ff, new_flow_file_data.target_relationship_name)?;
                 Ok(OnTriggerResult::Ok)
             } else {
                 Ok(OnTriggerResult::Yield)

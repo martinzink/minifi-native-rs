@@ -1,8 +1,8 @@
 use crate::processors::asciify_german::relationships::FAILURE;
 use minifi_native::macros::{ComponentIdentifier, DefaultMetrics};
 use minifi_native::{
-    FlowFileTransformStream, GetProperty, InputStream, Logger, MinifiError, OutputStream, Schedule,
-    StreamTransformResult,
+    FlowFileStreamTransform, GetProperty, InputStream, Logger, MinifiError, OutputStream, Schedule,
+    TransformStreamResult,
 };
 use std::collections::HashMap;
 
@@ -20,14 +20,14 @@ impl Schedule for AsciifyGerman {
     }
 }
 
-impl FlowFileTransformStream for AsciifyGerman {
+impl FlowFileStreamTransform for AsciifyGerman {
     fn transform<Ctx: GetProperty, LoggerImpl: Logger>(
         &self,
         _context: &Ctx,
         input_stream: &mut dyn InputStream,
         output_stream: &mut dyn OutputStream,
         _logger: &LoggerImpl,
-    ) -> Result<StreamTransformResult, MinifiError> {
+    ) -> Result<TransformStreamResult, MinifiError> {
         let mut byte = [0u8; 1];
 
         while input_stream.read(&mut byte)? > 0 {
@@ -46,16 +46,16 @@ impl FlowFileTransformStream for AsciifyGerman {
                             0x96 => output_stream.write_all(b"Oe")?, // Ö
                             0x9C => output_stream.write_all(b"Ue")?, // Ü
                             0x9F => output_stream.write_all(b"ss")?, // ß
-                            _ => return Ok(StreamTransformResult::route_without_changes(&FAILURE)),
+                            _ => return Ok(TransformStreamResult::route_without_changes(&FAILURE)),
                         }
                     }
                 }
-                _ => return Ok(StreamTransformResult::route_without_changes(&FAILURE)),
+                _ => return Ok(TransformStreamResult::route_without_changes(&FAILURE)),
             }
         }
 
         output_stream.flush()?;
-        Ok(StreamTransformResult::new(
+        Ok(TransformStreamResult::new(
             &relationships::SUCCESS,
             HashMap::new(),
         ))

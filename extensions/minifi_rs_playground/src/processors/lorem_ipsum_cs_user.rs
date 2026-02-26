@@ -5,8 +5,8 @@ use crate::processors::lorem_ipsum_cs_user::properties::CONTROLLER_SERVICE;
 use crate::processors::lorem_ipsum_cs_user::relationships::SUCCESS;
 use minifi_native::macros::{ComponentIdentifier, DefaultMetrics};
 use minifi_native::{
-    Content, FlowFileSource, GeneratedFlowFile, GetProperty, Logger, MinifiError, ProcessContext,
-    Schedule,
+    Content, FlowFileSource, GeneratedFlowFile, GetControllerService, GetProperty, Logger,
+    MinifiError, Schedule,
 };
 use std::collections::HashMap;
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
@@ -37,7 +37,7 @@ impl Schedule for LoremIpsumCSUser {
 }
 
 impl FlowFileSource for LoremIpsumCSUser {
-    fn generate<'a, Context: ProcessContext, LoggerImpl: Logger>(
+    fn generate<'a, Context: GetProperty + GetControllerService, LoggerImpl: Logger>(
         &self,
         context: &'a mut Context,
         logger: &LoggerImpl,

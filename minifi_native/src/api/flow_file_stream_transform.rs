@@ -1,72 +1,66 @@
+use crate::api::RawProcessor;
 use crate::api::context_session_flowfile_bundle::ContextSessionFlowFileBundle;
-use crate::api::flow_file_content::Content;
-use crate::api::processor::Processor;
-use crate::api::property::{GetControllerService, GetProperty};
+use crate::api::process_session::IoState;
 use crate::api::raw::raw_processor::RawMultiThreadedTrigger;
-use crate::api::{InputStream, ProcessorDefinition, RawProcessor};
 use crate::c_ffi::{DynRawProcessorDefinition, RawProcessorDefinition, RawRegisterableProcessor};
 use crate::{
-    CalculateMetrics, ComponentIdentifier, Concurrent, LogLevel, Logger, MinifiError,
-    OnTriggerResult, ProcessContext, ProcessSession, Relationship, Schedule,
+    CalculateMetrics, ComponentIdentifier, Concurrent, GetControllerService, GetProperty,
+    InputStream, LogLevel, Logger, MinifiError, OnTriggerResult, OutputStream, ProcessContext,
+    ProcessSession, Processor, ProcessorDefinition, Relationship, Schedule,
 };
 use std::collections::HashMap;
 
-pub struct TransformedFlowFile<'a> {
+pub struct TransformStreamResult {
     target_relationship_name: &'static str,
-    new_content: Option<Content<'a>>,
     attributes_to_add: HashMap<String, String>,
+    write_status: IoState,
 }
 
-impl<'a> TransformedFlowFile<'a> {
-    pub fn route_without_changes(target_relationship: &Relationship) -> Self {
-        Self {
-            target_relationship_name: target_relationship.name,
-            new_content: None,
-            attributes_to_add: HashMap::new(),
-        }
-    }
+impl TransformStreamResult {
     pub fn new(
         target_relationship: &Relationship,
-        new_content: Option<Vec<u8>>,
         attributes_to_add: HashMap<String, String>,
     ) -> Self {
         Self {
             target_relationship_name: target_relationship.name,
-            new_content: Some(Content::Buffer(new_content.unwrap_or_default())),
             attributes_to_add,
+            write_status: IoState::Ok,
         }
     }
 
-    pub fn new_content(&'_ self) -> Option<&'_ Content<'_>> {
-        self.new_content.as_ref()
+    pub fn route_without_changes(target_relationship: &Relationship) -> Self {
+        Self {
+            target_relationship_name: target_relationship.name,
+            attributes_to_add: HashMap::new(),
+            write_status: IoState::Cancel,
+        }
     }
 
-    pub fn target_relationship(&self) -> &'static str {
+    pub fn target_relationship_name(&self) -> &'static str {
         self.target_relationship_name
     }
 
-    pub fn attributes_to_add(&self) -> &HashMap<String, String> {
-        &self.attributes_to_add
+    pub fn modify_content(&self) -> IoState {
+        self.write_status
     }
 }
 
-pub trait FlowFileTransform {
-    fn transform<'ctx, 'stream, Context: GetProperty + GetControllerService, LoggerImpl: Logger>(
+pub trait FlowFileStreamTransform {
+    fn transform<Ctx: GetProperty + GetControllerService, LoggerImpl: Logger>(
         &self,
-        context: &'ctx Context,
-        input_stream: &'stream mut dyn InputStream,
+        context: &Ctx,
+        input_stream: &mut dyn InputStream,
+        output_stream: &mut dyn OutputStream,
         logger: &LoggerImpl,
-    ) -> Result<TransformedFlowFile<'stream>, MinifiError>
-    where
-        'ctx: 'stream;
+    ) -> Result<TransformStreamResult, MinifiError>;
 }
 
-pub struct FlowFileTransformProcessorType {}
+pub struct FlowFileStreamTransformProcessorType {}
 
 impl<'a, Implementation> RawMultiThreadedTrigger
-    for Processor<Implementation, FlowFileTransformProcessorType, Concurrent>
+    for Processor<Implementation, FlowFileStreamTransformProcessorType, Concurrent>
 where
-    Implementation: Schedule + CalculateMetrics + FlowFileTransform,
+    Implementation: Schedule + CalculateMetrics + FlowFileStreamTransform,
 {
     fn on_trigger<PC, PS>(
         &self,
@@ -81,30 +75,25 @@ where
             if let Some(mut flow_file) = session.get() {
                 let simple_context =
                     ContextSessionFlowFileBundle::new(context, session, Some(&flow_file));
-                let (attrs_to_add, relationship) =
-                    session.read_stream(&flow_file, |input_stream| {
+                let (relationship, attrs) = session.read_stream(&flow_file, |input_stream| {
+                    session.write_stream(&flow_file, |output_stream| {
                         let transformed = scheduled_impl.transform(
                             &simple_context,
                             input_stream,
+                            output_stream,
                             &self.logger,
                         )?;
 
-                        match transformed.new_content {
-                            None => {}
-                            Some(Content::Buffer(buffer)) => {
-                                session.write(&flow_file, &buffer)?;
-                            }
-                            Some(Content::Stream(stream)) => {
-                                session.write_lazy(&flow_file, stream)?;
-                            }
-                        };
                         Ok((
-                            transformed.attributes_to_add,
-                            transformed.target_relationship_name,
+                            (
+                                transformed.target_relationship_name,
+                                transformed.attributes_to_add,
+                            ),
+                            transformed.write_status,
                         ))
-                    })?;
-
-                for (k, v) in attrs_to_add {
+                    })
+                })?;
+                for (k, v) in attrs {
                     session.set_attribute(&mut flow_file, &k, &v)?;
                 }
 
@@ -124,10 +113,10 @@ where
 }
 
 impl<Implementation> RawRegisterableProcessor
-    for Processor<Implementation, FlowFileTransformProcessorType, Concurrent>
+    for Processor<Implementation, FlowFileStreamTransformProcessorType, Concurrent>
 where
     Implementation: Schedule
-        + FlowFileTransform
+        + FlowFileStreamTransform
         + CalculateMetrics
         + ComponentIdentifier
         + ProcessorDefinition
@@ -135,7 +124,7 @@ where
 {
     fn get_definition() -> Box<dyn DynRawProcessorDefinition> {
         Box::new(RawProcessorDefinition::<
-            Processor<Implementation, FlowFileTransformProcessorType, Concurrent>,
+            Processor<Implementation, FlowFileStreamTransformProcessorType, Concurrent>,
         >::new(
             Implementation::CLASS_NAME,
             Implementation::DESCRIPTION,
