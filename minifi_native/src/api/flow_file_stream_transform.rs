@@ -40,7 +40,11 @@ impl TransformStreamResult {
         self.target_relationship_name
     }
 
-    pub fn modify_content(&self) -> IoState {
+    pub fn get_attribute(&self, name: &str) -> Option<String> {
+        self.attributes_to_add.get(name).cloned()
+    }
+
+    pub fn write_status(&self) -> IoState {
         self.write_status
     }
 }

@@ -23,7 +23,7 @@ fn simple_test() {
         let result = asciify_german
             .transform(&context, &mut input_stream, &mut output_vec, &logger)
             .expect("Should succeed");
-        assert_eq!(result.modify_content(), IoState::Ok);
+        assert_eq!(result.write_status(), IoState::Ok);
         assert_eq!(result.target_relationship_name(), SUCCESS.name);
     }
     assert_eq!(
@@ -47,7 +47,7 @@ fn simple_failure_test() {
         let result = asciify_german
             .transform(&context, &mut input_stream, &mut output_vec, &logger)
             .expect("Should succeed");
-        assert_eq!(result.modify_content(), IoState::Cancel);
+        assert_eq!(result.write_status(), IoState::Cancel);
         assert_eq!(result.target_relationship_name(), FAILURE.name);
     }
     assert_eq!(output_vec, "Ueldoeg".as_bytes());

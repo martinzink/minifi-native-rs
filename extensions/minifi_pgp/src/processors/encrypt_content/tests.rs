@@ -1,8 +1,8 @@
 use super::*;
 use crate::test_utils;
 use minifi_native::{
-    ComponentIdentifier, Content, EnableControllerService, MockControllerServiceContext,
-    MockLogger, MockProcessContext, TransformedFlowFile,
+    ComponentIdentifier, EnableControllerService, IoState, MockControllerServiceContext,
+    MockLogger, MockProcessContext,
 };
 
 #[test]
@@ -20,21 +20,11 @@ fn cannot_schedule_without_password_or_public_key() {
     assert!(EncryptContentPGP::schedule(&MockProcessContext::new(), &MockLogger::new()).is_err());
 }
 
-fn assert_content(transform_result: &TransformedFlowFile, is_ascii: bool) {
-    assert_eq!(transform_result.target_relationship(), SUCCESS.name);
-    match transform_result.new_content() {
-        Some(Content::Buffer(content)) => {
-            assert_eq!(content.is_ascii(), is_ascii);
-        }
-        _ => {
-            panic!("should be buffer content");
-        }
-    }
+fn assert_content(transform_result: &TransformStreamResult, is_ascii: bool) {
+    assert_eq!(transform_result.target_relationship_name(), SUCCESS.name);
+    assert_eq!(transform_result.write_status(), IoState::Ok);
     assert_eq!(
-        transform_result
-            .attributes_to_add()
-            .get("pgp.file.encoding")
-            .unwrap(),
+        transform_result.get_attribute("pgp.file.encoding").unwrap(),
         if is_ascii { "ASCII" } else { "BINARY" }
     );
 }
@@ -44,13 +34,20 @@ fn encrypts_via_passphrase() {
     let mut context = MockProcessContext::new();
     context.properties.insert(PASSWORD.name, "password");
 
+    let mut result: Vec<u8> = Vec::new();
     let mut input_stream = std::io::Cursor::new("foo".as_bytes());
     let processor =
         EncryptContentPGP::schedule(&mut context, &MockLogger::new()).expect("should schedule");
     let transformed_ff = processor
-        .transform(&mut context, &mut input_stream, &MockLogger::new())
+        .transform(
+            &mut context,
+            &mut input_stream,
+            &mut result,
+            &MockLogger::new(),
+        )
         .expect("should transform");
 
+    assert!(!result.is_ascii());
     assert_content(&transformed_ff, false);
 }
 
@@ -78,13 +75,20 @@ fn encrypts_ascii_for_alice() {
         Box::new(public_key_service()),
     );
 
+    let mut result: Vec<u8> = Vec::new();
     let mut input_stream = std::io::Cursor::new("foo".as_bytes());
     let processor =
         EncryptContentPGP::schedule(&mut context, &MockLogger::new()).expect("should schedule");
     let transformed_ff = processor
-        .transform(&mut context, &mut input_stream, &MockLogger::new())
+        .transform(
+            &mut context,
+            &mut input_stream,
+            &mut result,
+            &MockLogger::new(),
+        )
         .expect("should transform");
 
+    assert!(result.is_ascii());
     assert_content(&transformed_ff, true);
 }
 
@@ -102,13 +106,20 @@ fn encrypts_binary_for_bob() {
         Box::new(public_key_service()),
     );
 
+    let mut result: Vec<u8> = Vec::new();
     let mut input_stream = std::io::Cursor::new("foo".as_bytes());
     let processor =
         EncryptContentPGP::schedule(&mut context, &MockLogger::new()).expect("should schedule");
     let transformed_ff = processor
-        .transform(&mut context, &mut input_stream, &MockLogger::new())
+        .transform(
+            &mut context,
+            &mut input_stream,
+            &mut result,
+            &MockLogger::new(),
+        )
         .expect("should transform");
 
+    assert!(!result.is_ascii());
     assert_content(&transformed_ff, false);
 }
 
@@ -125,14 +136,19 @@ fn cannot_encrypt_for_carol() {
         Box::new(public_key_service()),
     );
 
+    let mut result: Vec<u8> = Vec::new();
     let mut input_stream = std::io::Cursor::new("foo".as_bytes());
     let processor =
         EncryptContentPGP::schedule(&mut context, &MockLogger::new()).expect("should schedule");
     let transformed_ff = processor
-        .transform(&mut context, &mut input_stream, &MockLogger::new())
+        .transform(
+            &mut context,
+            &mut input_stream,
+            &mut result,
+            &MockLogger::new(),
+        )
         .expect("should transform");
 
-    assert_eq!(transformed_ff.target_relationship(), FAILURE.name);
-    assert!(transformed_ff.new_content().is_none());
-    assert!(transformed_ff.attributes_to_add().is_empty());
+    assert_eq!(transformed_ff.target_relationship_name(), FAILURE.name);
+    assert_eq!(transformed_ff.write_status(), IoState::Cancel);
 }
