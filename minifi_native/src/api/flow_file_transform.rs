@@ -1,7 +1,9 @@
 use crate::api::flow_file_content::Content;
 use crate::api::process_session::{IoState, OutputStream};
 use crate::api::processor::Processor;
+use crate::api::property::{GetControllerService, GetProperty};
 use crate::api::raw::raw_processor::RawMultiThreadedTrigger;
+use crate::api::simple_context::ContextSessionWithFlowFile;
 use crate::api::{InputStream, ProcessorDefinition, RawProcessor};
 use crate::c_ffi::{DynRawProcessorDefinition, RawProcessorDefinition, RawRegisterableProcessor};
 use crate::{
@@ -50,10 +52,9 @@ impl<'a> TransformedFlowFile<'a> {
 }
 
 pub trait FlowFileTransform {
-    fn transform<'ctx, 'stream, Context: ProcessContext, LoggerImpl: Logger>(
+    fn transform<'ctx, 'stream, Context: GetProperty + GetControllerService, LoggerImpl: Logger>(
         &self,
-        context: &'ctx mut Context,
-        _flow_file: &Context::FlowFile,
+        context: &'ctx Context,
         input_stream: &'stream mut dyn InputStream,
         logger: &LoggerImpl,
     ) -> Result<TransformedFlowFile<'stream>, MinifiError>
@@ -97,10 +98,9 @@ impl StreamTransformResult {
 }
 
 pub trait FlowFileTransformStream {
-    fn transform<Context: ProcessContext, LoggerImpl: Logger>(
+    fn transform<Ctx: GetProperty + GetControllerService, LoggerImpl: Logger>(
         &self,
-        context: &mut Context,
-        flow_file: &Context::FlowFile,
+        context: &Ctx,
         input_stream: &mut dyn InputStream,
         output_stream: &mut dyn OutputStream,
         logger: &LoggerImpl,
@@ -125,11 +125,12 @@ where
     {
         if let Some(ref scheduled_impl) = self.scheduled_impl {
             if let Some(mut flow_file) = session.get() {
+                let simple_context =
+                    ContextSessionWithFlowFile::new(context, session, Some(&flow_file));
                 let (attrs_to_add, relationship) =
                     session.read_stream(&flow_file, |input_stream| {
                         let transformed = scheduled_impl.transform(
-                            context,
-                            &flow_file,
+                            &simple_context,
                             input_stream,
                             &self.logger,
                         )?;
@@ -212,11 +213,12 @@ where
     {
         if let Some(ref scheduled_impl) = self.scheduled_impl {
             if let Some(mut flow_file) = session.get() {
+                let simple_context =
+                    ContextSessionWithFlowFile::new(context, session, Some(&flow_file));
                 let (relationship, attrs) = session.read_stream(&flow_file, |input_stream| {
                     session.write_stream(&flow_file, |output_stream| {
                         let transformed = scheduled_impl.transform(
-                            context,
-                            &flow_file,
+                            &simple_context,
                             input_stream,
                             output_stream,
                             &self.logger,

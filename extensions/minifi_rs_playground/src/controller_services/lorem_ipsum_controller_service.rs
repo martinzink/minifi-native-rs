@@ -5,8 +5,8 @@ use lipsum::lipsum;
 use minifi_native::MinifiError::MissingRequiredProperty;
 use minifi_native::macros::ComponentIdentifier;
 use minifi_native::{
-    ControllerServiceContext, ControllerServiceDefinition, EnableControllerService, Logger,
-    MinifiError, Property,
+    ControllerServiceDefinition, EnableControllerService, GetProperty, Logger, MinifiError,
+    Property,
 };
 
 #[derive(Debug, ComponentIdentifier)]
@@ -15,10 +15,7 @@ pub(crate) struct LoremIpsumControllerService {
 }
 
 impl EnableControllerService for LoremIpsumControllerService {
-    fn enable<P: ControllerServiceContext, L: Logger>(
-        context: &P,
-        _logger: &L,
-    ) -> Result<Self, MinifiError>
+    fn enable<P: GetProperty, L: Logger>(context: &P, _logger: &L) -> Result<Self, MinifiError>
     where
         Self: Sized,
     {

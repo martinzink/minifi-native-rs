@@ -1,8 +1,8 @@
 use crate::processors::log_attribute::properties::{FLOW_FILES_TO_LOG, LOG_LEVEL, LOG_PAYLOAD};
 use minifi_native::macros::ComponentIdentifier;
 use minifi_native::{
-    CalculateMetrics, ConstTrigger, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext,
-    ProcessSession, Property, Schedule,
+    CalculateMetrics, ConstTrigger, GetProperty, LogLevel, Logger, MinifiError, OnTriggerResult,
+    ProcessContext, ProcessSession, Property, Schedule,
 };
 
 mod properties;
@@ -104,30 +104,30 @@ impl ConstTrigger for LogAttributeRs {
 }
 
 impl Schedule for LogAttributeRs {
-    fn schedule<P: ProcessContext, L: Logger>(context: &P, _logger: &L) -> Result<Self, MinifiError>
+    fn schedule<P: GetProperty, L: Logger>(context: &P, _logger: &L) -> Result<Self, MinifiError>
     where
         Self: Sized,
     {
         let log_level = context
-            .get_property(&LOG_LEVEL, None)?
+            .get_property(&LOG_LEVEL)?
             .expect("required property")
             .parse::<LogLevel>()?;
 
         let log_payload = context
-            .get_bool_property(&LOG_PAYLOAD, None)?
+            .get_bool_property(&LOG_PAYLOAD)?
             .expect("required property");
 
         let flow_files_to_log = context
-            .get_property(&FLOW_FILES_TO_LOG, None)?
+            .get_property(&FLOW_FILES_TO_LOG)?
             .expect("required property")
             .parse::<usize>()?;
 
-        fn get_csv_property<P: ProcessContext>(
+        fn get_csv_property<P: GetProperty>(
             context: &P,
             property: &Property,
         ) -> Result<Option<Vec<String>>, MinifiError> {
             Ok(context
-                .get_property(property, None)?
+                .get_property(property)?
                 .and_then(|s| Some(s.split(",").map(|s| s.to_string()).collect::<Vec<String>>())))
         }
 
@@ -137,12 +137,12 @@ impl Schedule for LogAttributeRs {
         let dash_line = format!(
             "{:-^50}",
             context
-                .get_property(&properties::LOG_PREFIX, None)?
+                .get_property(&properties::LOG_PREFIX)?
                 .unwrap_or(String::new())
         );
 
         let hex_encode_payload = context
-            .get_bool_property(&properties::HEX_ENCODE_PAYLOAD, None)?
+            .get_bool_property(&properties::HEX_ENCODE_PAYLOAD)?
             .expect("required property");
 
         Ok(LogAttributeRs {

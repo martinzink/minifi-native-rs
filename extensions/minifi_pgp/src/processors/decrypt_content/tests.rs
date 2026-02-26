@@ -4,7 +4,7 @@ use crate::test_utils;
 use crate::test_utils::get_test_message;
 use minifi_native::{
     ComponentIdentifier, EnableControllerService, FlowFileTransform, MockControllerServiceContext,
-    MockFlowFile, MockLogger, MockProcessContext, Schedule,
+    MockLogger, MockProcessContext, Schedule,
 };
 
 #[test]
@@ -93,13 +93,11 @@ fn test_decryption(
 
     let decrypt_content = DecryptContentPGP::schedule(&processor_context, &MockLogger::new())
         .expect("Should schedule without any properties");
-    let flow_file = MockFlowFile::with_content(&get_test_message(message_file_name));
-    let flow_file_stream = &mut flow_file.get_stream();
+    let mut flow_file_stream = std::io::Cursor::new(get_test_message(message_file_name));
     let res = decrypt_content
         .transform(
-            &mut processor_context,
-            &flow_file,
-            flow_file_stream,
+            &processor_context,
+            &mut flow_file_stream,
             &MockLogger::new(),
         )
         .expect("Should be able to transform");
@@ -220,15 +218,9 @@ fn decryption_of_not_encrypted_data() {
 
     let decrypt_content = DecryptContentPGP::schedule(&processor_context, &logger)
         .expect("Should schedule without any properties");
-    let flow_file = MockFlowFile::with_content("something not encrypted".as_bytes());
-    let flow_file_stream = &mut flow_file.get_stream();
+    let mut flow_file_stream = std::io::Cursor::new("something not encrypted".as_bytes());
     let res = decrypt_content
-        .transform(
-            &mut processor_context,
-            &flow_file,
-            flow_file_stream,
-            &logger,
-        )
+        .transform(&mut processor_context, &mut flow_file_stream, &logger)
         .expect("Should be able to transform");
 
     assert_eq!(

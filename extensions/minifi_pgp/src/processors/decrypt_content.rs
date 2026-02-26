@@ -7,8 +7,8 @@ use crate::processors::decrypt_content::properties::{PRIVATE_KEY_SERVICE, SYMMET
 use crate::processors::decrypt_content::relationships::{FAILURE, SUCCESS};
 use minifi_native::macros::{ComponentIdentifier, DefaultMetrics};
 use minifi_native::{
-    FlowFileTransform, InputStream, Logger, MinifiError, ProcessContext, Schedule,
-    TransformedFlowFile,
+    FlowFileTransform, GetControllerService, GetProperty, InputStream, Logger, MinifiError,
+    Schedule, TransformedFlowFile,
 };
 use pgp::composed::{Message, TheRing};
 use std::collections::HashMap;
@@ -29,20 +29,20 @@ pub(crate) struct DecryptContentPGP {
 }
 
 impl Schedule for DecryptContentPGP {
-    fn schedule<P: ProcessContext, L>(context: &P, _logger: &L) -> Result<Self, MinifiError>
+    fn schedule<P: GetProperty, L>(context: &P, _logger: &L) -> Result<Self, MinifiError>
     where
         Self: Sized,
         L: Logger,
     {
         let decryption_strategy = context
-            .get_property(&properties::DECRYPTION_STRATEGY, None)?
+            .get_property(&properties::DECRYPTION_STRATEGY)?
             .expect("required property")
             .parse::<DecryptionStrategy>()?;
 
         let symmetric_password = context
-            .get_property(&SYMMETRIC_PASSWORD, None)?
+            .get_property(&SYMMETRIC_PASSWORD)?
             .and_then(|pwd_str| Option::from(pgp::types::Password::from(pwd_str)));
-        let has_context_service = context.get_property(&PRIVATE_KEY_SERVICE, None)?.is_some();
+        let has_context_service = context.get_property(&PRIVATE_KEY_SERVICE)?.is_some();
         if !has_context_service && symmetric_password.is_none() {
             Err(MinifiError::ScheduleError(
                 "Either Symmetric Password or Private Key Service must be set".to_string(),
@@ -64,7 +64,7 @@ impl DecryptContentPGP {
         _logger: &L,
     ) -> pgp::errors::Result<Message<'a>>
     where
-        PC: ProcessContext,
+        PC: GetProperty + GetControllerService,
         L: Logger,
     {
         let private_key_service = ctx
@@ -106,10 +106,9 @@ impl DecryptContentPGP {
 }
 
 impl FlowFileTransform for DecryptContentPGP {
-    fn transform<'ctx, 'stream, Context: ProcessContext, LoggerImpl: Logger>(
+    fn transform<'ctx, 'stream, Ctx: GetProperty + GetControllerService, LoggerImpl: Logger>(
         &self,
-        context: &'ctx mut Context,
-        _flow_file: &Context::FlowFile,
+        context: &'ctx Ctx,
         input_stream: &'stream mut dyn InputStream,
         logger: &LoggerImpl,
     ) -> Result<TransformedFlowFile<'stream>, MinifiError>

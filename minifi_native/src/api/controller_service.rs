@@ -4,15 +4,11 @@ use crate::c_ffi::{
     RegisterableControllerService,
 };
 use crate::{
-    ComponentIdentifier, ControllerServiceContext, ControllerServiceDefinition, LogLevel, Logger,
-    MinifiError,
+    ComponentIdentifier, ControllerServiceDefinition, GetProperty, LogLevel, Logger, MinifiError,
 };
 
 pub trait EnableControllerService {
-    fn enable<P: ControllerServiceContext, L: Logger>(
-        context: &P,
-        logger: &L,
-    ) -> Result<Self, MinifiError>
+    fn enable<Ctx: GetProperty, L: Logger>(context: &Ctx, logger: &L) -> Result<Self, MinifiError>
     where
         Self: Sized;
 }
@@ -50,7 +46,7 @@ where
         self.logger.log(log_level, message);
     }
 
-    fn enable<P: ControllerServiceContext>(&mut self, context: &P) -> Result<(), MinifiError> {
+    fn enable<P: GetProperty>(&mut self, context: &P) -> Result<(), MinifiError> {
         self.enabled_impl = Some(Implementation::enable(context, &self.logger)?);
         Ok(())
     }

@@ -2,7 +2,7 @@ mod controller_service_definition;
 mod properties;
 
 use minifi_native::macros::ComponentIdentifier;
-use minifi_native::{ControllerServiceContext, EnableControllerService, Logger, MinifiError};
+use minifi_native::{EnableControllerService, GetProperty, Logger, MinifiError};
 use pgp::composed::{Deserializable, SignedSecretKey, TheRing};
 use pgp::types::Password;
 
@@ -13,10 +13,7 @@ pub(crate) struct PGPPrivateKeyService {
 }
 
 impl EnableControllerService for PGPPrivateKeyService {
-    fn enable<P: ControllerServiceContext, L: Logger>(
-        context: &P,
-        _logger: &L,
-    ) -> Result<Self, MinifiError>
+    fn enable<P: GetProperty, L: Logger>(context: &P, _logger: &L) -> Result<Self, MinifiError>
     where
         Self: Sized,
     {

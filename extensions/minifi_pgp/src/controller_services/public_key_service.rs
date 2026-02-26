@@ -3,7 +3,7 @@ mod properties;
 
 use crate::controller_services::public_key_service::properties::{KEYRING, KEYRING_FILE};
 use minifi_native::macros::ComponentIdentifier;
-use minifi_native::{ControllerServiceContext, EnableControllerService, Logger, MinifiError};
+use minifi_native::{EnableControllerService, GetProperty, Logger, MinifiError};
 use pgp::composed::{Deserializable, SignedPublicKey};
 
 #[derive(Debug, ComponentIdentifier, PartialEq)]
@@ -12,10 +12,7 @@ pub(crate) struct PGPPublicKeyService {
 }
 
 impl EnableControllerService for PGPPublicKeyService {
-    fn enable<P: ControllerServiceContext, L: Logger>(
-        context: &P,
-        _logger: &L,
-    ) -> Result<Self, MinifiError>
+    fn enable<P: GetProperty, L: Logger>(context: &P, _logger: &L) -> Result<Self, MinifiError>
     where
         Self: Sized,
     {

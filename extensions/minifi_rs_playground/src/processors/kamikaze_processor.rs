@@ -3,8 +3,8 @@ mod relationships;
 
 use minifi_native::macros::ComponentIdentifier;
 use minifi_native::{
-    CalculateMetrics, ConstTrigger, Logger, MinifiError, OnTriggerResult, ProcessContext,
-    ProcessSession, Schedule,
+    CalculateMetrics, ConstTrigger, GetProperty, Logger, MinifiError, OnTriggerResult,
+    ProcessContext, ProcessSession, Schedule,
 };
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
 
@@ -23,20 +23,20 @@ pub(crate) struct KamikazeProcessorRs {
 }
 
 impl Schedule for KamikazeProcessorRs {
-    fn schedule<P: ProcessContext, L: Logger>(context: &P, _logger: &L) -> Result<Self, MinifiError>
+    fn schedule<P: GetProperty, L: Logger>(context: &P, _logger: &L) -> Result<Self, MinifiError>
     where
         Self: Sized,
     {
         let on_trigger_behaviour = context
-            .get_property(&properties::ON_TRIGGER_BEHAVIOUR, None)?
+            .get_property(&properties::ON_TRIGGER_BEHAVIOUR)?
             .expect("required property")
             .parse::<KamikazeBehaviour>()?;
         let read_behaviour = context
-            .get_property(&properties::READ_BEHAVIOUR, None)?
+            .get_property(&properties::READ_BEHAVIOUR)?
             .map(|s| s.parse::<KamikazeBehaviour>().unwrap());
 
         let on_schedule_behaviour = context
-            .get_property(&properties::ON_SCHEDULE_BEHAVIOUR, None)?
+            .get_property(&properties::ON_SCHEDULE_BEHAVIOUR)?
             .expect("required property")
             .parse::<KamikazeBehaviour>()?;
 

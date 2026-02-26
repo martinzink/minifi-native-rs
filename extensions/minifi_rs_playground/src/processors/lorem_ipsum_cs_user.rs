@@ -5,7 +5,8 @@ use crate::processors::lorem_ipsum_cs_user::properties::CONTROLLER_SERVICE;
 use crate::processors::lorem_ipsum_cs_user::relationships::SUCCESS;
 use minifi_native::macros::{ComponentIdentifier, DefaultMetrics};
 use minifi_native::{
-    Content, FlowFileSource, GeneratedFlowFile, Logger, MinifiError, ProcessContext, Schedule,
+    Content, FlowFileSource, GeneratedFlowFile, GetProperty, Logger, MinifiError, ProcessContext,
+    Schedule,
 };
 use std::collections::HashMap;
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
@@ -23,12 +24,12 @@ pub(crate) struct LoremIpsumCSUser {
 }
 
 impl Schedule for LoremIpsumCSUser {
-    fn schedule<P: ProcessContext, L: Logger>(context: &P, _logger: &L) -> Result<Self, MinifiError>
+    fn schedule<P: GetProperty, L: Logger>(context: &P, _logger: &L) -> Result<Self, MinifiError>
     where
         Self: Sized,
     {
         let write_method = context
-            .get_property(&properties::WRITE_METHOD, None)?
+            .get_property(&properties::WRITE_METHOD)?
             .expect("required property")
             .parse::<WriteMethod>()?;
         Ok(Self { write_method })

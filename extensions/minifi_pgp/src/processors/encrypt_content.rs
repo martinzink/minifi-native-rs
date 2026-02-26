@@ -1,6 +1,6 @@
 use minifi_native::{
-    FlowFileTransform, InputStream, Logger, MinifiError, ProcessContext, Schedule,
-    TransformedFlowFile,
+    FlowFileTransform, GetControllerService, GetProperty, InputStream, Logger, MinifiError,
+    Schedule, TransformedFlowFile,
 };
 use pgp::composed::{ArmorOptions, MessageBuilder, SignedPublicKey};
 use pgp::types::StringToKey;
@@ -71,18 +71,18 @@ impl EncryptContentPGP {
 }
 
 impl Schedule for EncryptContentPGP {
-    fn schedule<P: ProcessContext, L: Logger>(context: &P, _logger: &L) -> Result<Self, MinifiError>
+    fn schedule<P: GetProperty, L: Logger>(context: &P, _logger: &L) -> Result<Self, MinifiError>
     where
         Self: Sized,
     {
         let file_encoding = context
-            .get_property(&properties::FILE_ENCODING, None)?
+            .get_property(&properties::FILE_ENCODING)?
             .expect("required property")
             .parse::<FileEncoding>()?;
 
-        let has_password = context.get_property(&PASSWORD, None)?.is_some();
-        let has_public_key = context.get_property(&PUBLIC_KEY_SERVICE, None)?.is_some()
-            && context.get_property(&PUBLIC_KEY_SEARCH, None)?.is_some();
+        let has_password = context.get_property(&PASSWORD)?.is_some();
+        let has_public_key = context.get_property(&PUBLIC_KEY_SERVICE)?.is_some()
+            && context.get_property(&PUBLIC_KEY_SEARCH)?.is_some();
 
         if !has_password && !has_public_key {
             Err(MinifiError::ScheduleError(
@@ -96,10 +96,9 @@ impl Schedule for EncryptContentPGP {
 }
 
 impl FlowFileTransform for EncryptContentPGP {
-    fn transform<'ctx, 'stream, Context: ProcessContext, LoggerImpl: Logger>(
+    fn transform<'ctx, 'stream, Context: GetProperty + GetControllerService, LoggerImpl: Logger>(
         &self,
-        context: &'ctx mut Context,
-        flow_file: &Context::FlowFile,
+        context: &'ctx Context,
         input_stream: &'stream mut dyn InputStream,
         logger: &LoggerImpl,
     ) -> Result<TransformedFlowFile<'stream>, MinifiError>
@@ -107,14 +106,14 @@ impl FlowFileTransform for EncryptContentPGP {
         'ctx: 'stream,
     {
         let public_key = if let (Some(pub_key_search), Some(public_key_service)) = (
-            context.get_property(&PUBLIC_KEY_SEARCH, Some(&flow_file))?,
+            context.get_property(&PUBLIC_KEY_SEARCH)?,
             context.get_controller_service::<PGPPublicKeyService>(&PUBLIC_KEY_SERVICE)?,
         ) {
             public_key_service.get(&pub_key_search)
         } else {
             None
         };
-        let password = context.get_property(&PASSWORD, Some(&flow_file))?;
+        let password = context.get_property(&PASSWORD)?;
         if public_key.is_none() && password.is_none() {
             logger.debug("No password or public key to encrypt with");
             return Ok(TransformedFlowFile::route_without_changes(&FAILURE));

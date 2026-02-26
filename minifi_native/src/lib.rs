@@ -21,10 +21,11 @@ pub use api::raw::raw_threading_model::{Concurrent, Exclusive};
 pub use api::flow_file_content::Content;
 pub use api::logger::{LogLevel, Logger};
 
+pub use api::property::{GetControllerService, GetProperty, Property};
+
 pub use api::{
-    ControllerServiceContext, FlowFile, InputStream, OnTriggerResult, OutputAttribute,
-    OutputStream, ProcessContext, ProcessSession, ProcessorInputRequirement, Property,
-    Relationship, StandardPropertyValidator,
+    FlowFile, InputStream, OnTriggerResult, OutputAttribute, OutputStream, ProcessContext,
+    ProcessSession, ProcessorInputRequirement, Relationship, StandardPropertyValidator,
 };
 
 pub use minifi_native_macros as macros;

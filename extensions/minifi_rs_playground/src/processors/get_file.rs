@@ -7,8 +7,8 @@ use crate::processors::get_file::properties::{
 };
 use minifi_native::macros::ComponentIdentifier;
 use minifi_native::{
-    CalculateMetrics, ConstTrigger, Logger, MinifiError, OnTriggerResult, ProcessContext,
-    ProcessSession, Schedule,
+    CalculateMetrics, ConstTrigger, GetProperty, Logger, MinifiError, OnTriggerResult,
+    ProcessContext, ProcessSession, Schedule,
 };
 use std::collections::VecDeque;
 use std::error;
@@ -201,12 +201,12 @@ impl GetFileRs {
 }
 
 impl Schedule for GetFileRs {
-    fn schedule<P: ProcessContext, L: Logger>(context: &P, _logger: &L) -> Result<Self, MinifiError>
+    fn schedule<P: GetProperty, L: Logger>(context: &P, _logger: &L) -> Result<Self, MinifiError>
     where
         Self: Sized,
     {
         let input_directory: PathBuf = context
-            .get_property(&DIRECTORY, None)?
+            .get_property(&DIRECTORY)?
             .expect("Required property")
             .into();
         if !input_directory.is_dir() {
@@ -217,23 +217,23 @@ impl Schedule for GetFileRs {
         }
 
         let recursive = context
-            .get_bool_property(&RECURSE, None)?
+            .get_bool_property(&RECURSE)?
             .expect("Required property");
 
         let keep_source_file = context
-            .get_bool_property(&KEEP_SOURCE_FILE, None)?
+            .get_bool_property(&KEEP_SOURCE_FILE)?
             .expect("Required property");
 
-        let poll_interval = context.get_duration_property(&properties::POLLING_INTERVAL, None)?;
-        let min_size = context.get_size_property(&MIN_SIZE, None)?;
-        let max_size = context.get_size_property(&MAX_SIZE, None)?;
-        let min_age = context.get_duration_property(&MIN_AGE, None)?;
-        let max_age = context.get_duration_property(&MAX_AGE, None)?;
+        let poll_interval = context.get_duration_property(&properties::POLLING_INTERVAL)?;
+        let min_size = context.get_size_property(&MIN_SIZE)?;
+        let max_size = context.get_size_property(&MAX_SIZE)?;
+        let min_age = context.get_duration_property(&MIN_AGE)?;
+        let max_age = context.get_duration_property(&MAX_AGE)?;
         let batch_size = context
-            .get_u64_property(&BATCH_SIZE, None)?
+            .get_u64_property(&BATCH_SIZE)?
             .expect("required property");
         let ignore_hidden_files = context
-            .get_bool_property(&IGNORE_HIDDEN_FILES, None)?
+            .get_bool_property(&IGNORE_HIDDEN_FILES)?
             .expect("required property");
 
         Ok(GetFileRs {

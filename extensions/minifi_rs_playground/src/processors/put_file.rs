@@ -1,7 +1,7 @@
 use minifi_native::macros::ComponentIdentifier;
 use minifi_native::{
-    CalculateMetrics, Logger, MinifiError, MutTrigger, OnTriggerResult, ProcessContext,
-    ProcessSession, Schedule,
+    CalculateMetrics, GetProperty, Logger, MinifiError, MutTrigger, OnTriggerResult,
+    ProcessContext, ProcessSession, Schedule,
 };
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -144,14 +144,14 @@ impl PutFileRs {
     }
 
     #[cfg(unix)]
-    fn parse_unix_permissions<P: ProcessContext>(
+    fn parse_unix_permissions<P: GetProperty>(
         context: &P,
     ) -> Result<PutFileUnixPermissions, MinifiError> {
         use std::os::unix::fs::PermissionsExt;
         let parse_permission =
             |property: &minifi_native::Property| -> Result<Option<std::fs::Permissions>, MinifiError> {
                 Ok(context
-                    .get_property(&property, None)?
+                    .get_property(&property)?
                     .map(|perm_str| u32::from_str_radix(&perm_str, 8))
                     .transpose()?
                     .map(|perm| std::fs::Permissions::from_mode(perm)))
@@ -166,7 +166,7 @@ impl PutFileRs {
     }
 
     #[cfg(windows)]
-    fn parse_unix_permissions<P: ProcessContext>(
+    fn parse_unix_permissions<P: GetProperty>(
         _context: &P,
     ) -> Result<PutFileUnixPermissions, MinifiError> {
         Ok(PutFileUnixPermissions {})
@@ -174,20 +174,17 @@ impl PutFileRs {
 }
 
 impl Schedule for PutFileRs {
-    fn schedule<P: ProcessContext, L: Logger>(
-        context: &P,
-        _logger: &L,
-    ) -> Result<Self, MinifiError> {
+    fn schedule<P: GetProperty, L: Logger>(context: &P, _logger: &L) -> Result<Self, MinifiError> {
         let conflict_resolution_strategy = context
-            .get_property(&properties::CONFLICT_RESOLUTION, None)?
+            .get_property(&properties::CONFLICT_RESOLUTION)?
             .expect("required property")
             .parse::<ConflictResolutionStrategy>()?;
 
         let try_make_dirs = context
-            .get_bool_property(&properties::CREATE_DIRS, None)?
+            .get_bool_property(&properties::CREATE_DIRS)?
             .expect("required property");
 
-        let maximum_file_count = context.get_u64_property(&properties::MAX_FILE_COUNT, None)?;
+        let maximum_file_count = context.get_u64_property(&properties::MAX_FILE_COUNT)?;
 
         let unix_permissions = Self::parse_unix_permissions(context)?;
 

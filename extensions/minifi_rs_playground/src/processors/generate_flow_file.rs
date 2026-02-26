@@ -1,7 +1,7 @@
 use minifi_native::macros::ComponentIdentifier;
 use minifi_native::{
-    CalculateMetrics, ConstTrigger, Logger, MinifiError, OnTriggerResult, ProcessContext,
-    ProcessSession, Schedule,
+    CalculateMetrics, ConstTrigger, GetProperty, Logger, MinifiError, OnTriggerResult,
+    ProcessContext, ProcessSession, Schedule,
 };
 use rand::RngExt;
 use rand::distr::Alphanumeric;
@@ -29,27 +29,25 @@ pub(crate) struct GenerateFlowFileRs {
 }
 
 impl Schedule for GenerateFlowFileRs {
-    fn schedule<P: ProcessContext, L: Logger>(context: &P, _logger: &L) -> Result<Self, MinifiError>
+    fn schedule<P: GetProperty, L: Logger>(context: &P, _logger: &L) -> Result<Self, MinifiError>
     where
         Self: Sized,
     {
         let is_unique = context
-            .get_bool_property(&properties::UNIQUE_FLOW_FILES, None)?
+            .get_bool_property(&properties::UNIQUE_FLOW_FILES)?
             .expect("Required property");
         let is_text = context
-            .get_property(&properties::DATA_FORMAT, None)?
+            .get_property(&properties::DATA_FORMAT)?
             .expect("Required property")
             .as_str()
             == "Text";
-        let has_custom_text = context
-            .get_property(&properties::CUSTOM_TEXT, None)?
-            .is_some();
+        let has_custom_text = context.get_property(&properties::CUSTOM_TEXT)?.is_some();
 
         let file_size = context
-            .get_size_property(&properties::FILE_SIZE, None)?
+            .get_size_property(&properties::FILE_SIZE)?
             .expect("Required property");
         let batch_size = context
-            .get_u64_property(&properties::BATCH_SIZE, None)?
+            .get_u64_property(&properties::BATCH_SIZE)?
             .expect("Required property");
 
         let mode = Self::get_mode(is_unique, is_text, has_custom_text, file_size);

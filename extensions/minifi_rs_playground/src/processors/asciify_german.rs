@@ -1,8 +1,8 @@
 use crate::processors::asciify_german::relationships::FAILURE;
 use minifi_native::macros::{ComponentIdentifier, DefaultMetrics};
 use minifi_native::{
-    FlowFileTransformStream, InputStream, Logger, MinifiError, OutputStream, ProcessContext,
-    Schedule, StreamTransformResult,
+    FlowFileTransformStream, GetProperty, InputStream, Logger, MinifiError, OutputStream, Schedule,
+    StreamTransformResult,
 };
 use std::collections::HashMap;
 
@@ -12,10 +12,7 @@ mod relationships;
 pub(crate) struct AsciifyGerman {}
 
 impl Schedule for AsciifyGerman {
-    fn schedule<P: ProcessContext, L: Logger>(
-        _context: &P,
-        _logger: &L,
-    ) -> Result<Self, MinifiError>
+    fn schedule<P: GetProperty, L: Logger>(_context: &P, _logger: &L) -> Result<Self, MinifiError>
     where
         Self: Sized,
     {
@@ -24,10 +21,9 @@ impl Schedule for AsciifyGerman {
 }
 
 impl FlowFileTransformStream for AsciifyGerman {
-    fn transform<Context: ProcessContext, LoggerImpl: Logger>(
+    fn transform<Ctx: GetProperty, LoggerImpl: Logger>(
         &self,
-        _context: &mut Context,
-        _flow_file: &Context::FlowFile,
+        _context: &Ctx,
         input_stream: &mut dyn InputStream,
         output_stream: &mut dyn OutputStream,
         _logger: &LoggerImpl,

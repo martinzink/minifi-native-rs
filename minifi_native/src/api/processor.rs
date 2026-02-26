@@ -1,10 +1,10 @@
 use crate::api::{RawProcessor, RawThreadingModel};
 use crate::c_ffi::CffiLogger;
-use crate::{LogLevel, Logger, MinifiError, ProcessContext};
+use crate::{GetProperty, LogLevel, Logger, MinifiError, ProcessContext};
 use std::marker::PhantomData;
 
 pub trait Schedule {
-    fn schedule<P: ProcessContext, L: Logger>(context: &P, logger: &L) -> Result<Self, MinifiError>
+    fn schedule<P: GetProperty, L: Logger>(context: &P, logger: &L) -> Result<Self, MinifiError>
     where
         Self: Sized;
 

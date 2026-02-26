@@ -2,7 +2,7 @@ use super::*;
 use crate::test_utils;
 use minifi_native::{
     ComponentIdentifier, Content, EnableControllerService, MockControllerServiceContext,
-    MockFlowFile, MockLogger, MockProcessContext, TransformedFlowFile,
+    MockLogger, MockProcessContext, TransformedFlowFile,
 };
 
 #[test]
@@ -44,17 +44,11 @@ fn encrypts_via_passphrase() {
     let mut context = MockProcessContext::new();
     context.properties.insert(PASSWORD.name, "password");
 
-    let input_ff = MockFlowFile::with_content("foo".as_bytes());
-    let mut input_stream = input_ff.get_stream();
+    let mut input_stream = std::io::Cursor::new("foo".as_bytes());
     let processor =
         EncryptContentPGP::schedule(&mut context, &MockLogger::new()).expect("should schedule");
     let transformed_ff = processor
-        .transform(
-            &mut context,
-            &input_ff,
-            &mut input_stream,
-            &MockLogger::new(),
-        )
+        .transform(&mut context, &mut input_stream, &MockLogger::new())
         .expect("should transform");
 
     assert_content(&transformed_ff, false);
@@ -84,17 +78,11 @@ fn encrypts_ascii_for_alice() {
         Box::new(public_key_service()),
     );
 
-    let input_ff = MockFlowFile::with_content("foo".as_bytes());
-    let mut input_stream = input_ff.get_stream();
+    let mut input_stream = std::io::Cursor::new("foo".as_bytes());
     let processor =
         EncryptContentPGP::schedule(&mut context, &MockLogger::new()).expect("should schedule");
     let transformed_ff = processor
-        .transform(
-            &mut context,
-            &input_ff,
-            &mut input_stream,
-            &MockLogger::new(),
-        )
+        .transform(&mut context, &mut input_stream, &MockLogger::new())
         .expect("should transform");
 
     assert_content(&transformed_ff, true);
@@ -114,17 +102,11 @@ fn encrypts_binary_for_bob() {
         Box::new(public_key_service()),
     );
 
-    let input_ff = MockFlowFile::with_content("foo".as_bytes());
-    let mut input_stream = input_ff.get_stream();
+    let mut input_stream = std::io::Cursor::new("foo".as_bytes());
     let processor =
         EncryptContentPGP::schedule(&mut context, &MockLogger::new()).expect("should schedule");
     let transformed_ff = processor
-        .transform(
-            &mut context,
-            &input_ff,
-            &mut input_stream,
-            &MockLogger::new(),
-        )
+        .transform(&mut context, &mut input_stream, &MockLogger::new())
         .expect("should transform");
 
     assert_content(&transformed_ff, false);
@@ -143,17 +125,11 @@ fn cannot_encrypt_for_carol() {
         Box::new(public_key_service()),
     );
 
-    let input_ff = MockFlowFile::with_content("foo".as_bytes());
-    let mut input_stream = input_ff.get_stream();
+    let mut input_stream = std::io::Cursor::new("foo".as_bytes());
     let processor =
         EncryptContentPGP::schedule(&mut context, &MockLogger::new()).expect("should schedule");
     let transformed_ff = processor
-        .transform(
-            &mut context,
-            &input_ff,
-            &mut input_stream,
-            &MockLogger::new(),
-        )
+        .transform(&mut context, &mut input_stream, &MockLogger::new())
         .expect("should transform");
 
     assert_eq!(transformed_ff.target_relationship(), FAILURE.name);
