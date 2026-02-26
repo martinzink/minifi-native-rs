@@ -68,7 +68,6 @@ impl FlowFileSource for LoremIpsumCSUser {
     }
 }
 
-#[cfg(not(test))]
 pub(crate) mod processor_definition;
 
 mod relationships;

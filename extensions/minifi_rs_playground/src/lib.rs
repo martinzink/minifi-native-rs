@@ -1,13 +1,11 @@
 mod controller_services;
 mod processors;
 
-#[cfg(not(test))]
 use minifi_native::{
     ComplexProcessorType, Concurrent, FlowFileSourceProcessorType,
     FlowFileStreamTransformProcessorType, FlowFileTransformProcessorType,
 };
 
-#[cfg(not(test))]
 minifi_native::declare_minifi_extension!(
 processors: [
     minifi_native::Processor<processors::generate_flow_file::GenerateFlowFileRs, ComplexProcessorType, Concurrent>,

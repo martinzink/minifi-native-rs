@@ -1,6 +1,6 @@
 use super::*;
 use crate::processors::put_file::relationships::{FAILURE, SUCCESS};
-use minifi_native::{MockFlowFile, MockLogger, MockProcessContext, MockProcessSession};
+use minifi_native::{MockLogger, MockProcessContext};
 
 #[test]
 fn schedule_succeeds_with_default_values() {

@@ -89,7 +89,7 @@ impl ProcessSession for MockProcessSession {
     {
         let mut borrowed_content = flow_file.content.borrow_mut();
         let mut flow_file_content = std::io::Cursor::new(&mut *borrowed_content);
-        let (r, state) = callback(&mut flow_file_content)?;
+        let (r, _state) = callback(&mut flow_file_content)?;
         Ok(r)
     }
 

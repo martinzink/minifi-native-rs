@@ -42,11 +42,9 @@ fn simple_get_file_test() {
     let get_file = GetFileRs::schedule(&context, &MockLogger::new()).unwrap();
 
     let mut session = MockProcessSession::new();
-    assert!(
-        get_file
-            .trigger(&mut context, &mut session, &MockLogger::new())
-            .is_ok()
-    );
+    get_file
+        .trigger(&mut context, &mut session, &MockLogger::new())
+        .expect("Should succeed");
     assert_eq!(session.num_of_transferred_flow_files(), 1);
 }
 
@@ -83,11 +81,9 @@ fn complex_dir_without_filters() {
 
     let mut session = MockProcessSession::new();
     let get_file = GetFileRs::schedule(&context, &MockLogger::new()).unwrap();
-    assert!(
-        get_file
-            .trigger(&mut context, &mut session, &MockLogger::new())
-            .is_ok()
-    );
+    get_file
+        .trigger(&mut context, &mut session, &MockLogger::new())
+        .expect("Should succeed");
     assert_eq!(session.num_of_transferred_flow_files(), 4);
 }
 
@@ -113,11 +109,9 @@ fn test_complex_dir_with_filter(
 
     let mut session = MockProcessSession::new();
     let get_file = GetFileRs::schedule(&context, &MockLogger::new()).unwrap();
-    assert!(
-        get_file
-            .trigger(&mut context, &mut session, &MockLogger::new())
-            .is_ok()
-    );
+    get_file
+        .trigger(&mut context, &mut session, &MockLogger::new())
+        .expect("Should succeed");
     assert_eq!(session.num_of_transferred_flow_files(), 2);
     let transferred_flow_files = session.transferred_flow_files.borrow();
     assert!(transferred_flow_files.iter().all(|transfer| {
@@ -171,10 +165,8 @@ fn test_hidden_files_and_batch_size() {
 
     let mut session = MockProcessSession::new();
     let get_file = GetFileRs::schedule(&context, &MockLogger::new()).unwrap();
-    assert!(
-        get_file
-            .trigger(&mut context, &mut session, &MockLogger::new())
-            .is_ok()
-    );
+    get_file
+        .trigger(&mut context, &mut session, &MockLogger::new())
+        .expect("Should succeed");
     assert_eq!(session.num_of_transferred_flow_files(), 2);
 }

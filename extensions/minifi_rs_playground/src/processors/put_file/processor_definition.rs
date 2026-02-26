@@ -31,7 +31,6 @@ impl ProcessorDefinition for PutFileRs {
     const SUPPORTS_DYNAMIC_PROPERTIES: bool = false;
     const SUPPORTS_DYNAMIC_RELATIONSHIPS: bool = false;
     const OUTPUT_ATTRIBUTES: &'static [OutputAttribute] = &[];
-    const RELATIONSHIPS: &'static [Relationship] =
-        &[relationships::SUCCESS, relationships::FAILURE];
+    const RELATIONSHIPS: &'static [Relationship] = &[SUCCESS, FAILURE];
     const PROPERTIES: &'static [Property] = get_properties();
 }

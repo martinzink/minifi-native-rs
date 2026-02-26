@@ -2,9 +2,8 @@ use crate::processors::put_file::relationships::{FAILURE, SUCCESS};
 use minifi_native::macros::{ComponentIdentifier, DefaultMetrics};
 use minifi_native::{
     FlowFileTransform, GetAttribute, GetControllerService, GetProperty, InputStream, Logger,
-    MinifiError, OnTriggerResult, Schedule, TransformedFlowFile,
+    MinifiError, Schedule, TransformedFlowFile,
 };
-use std::io::Write;
 use std::path::{Path, PathBuf};
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
 use walkdir::WalkDir;
@@ -229,12 +228,11 @@ impl FlowFileTransform for PutFileRs {
 
         match self.put_file(input_stream, logger, &destination_path) {
             Ok(_) => Ok(TransformedFlowFile::route_without_changes(&SUCCESS)),
-            Err(e) => Ok(TransformedFlowFile::route_without_changes(&FAILURE)),
+            Err(_e) => Ok(TransformedFlowFile::route_without_changes(&FAILURE)),
         }
     }
 }
 
-#[cfg(not(test))]
 pub(crate) mod processor_definition;
 
 #[cfg(test)]

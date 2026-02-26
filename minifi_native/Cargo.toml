@@ -9,8 +9,8 @@ license = "Apache-2.0"
 const_format = "0.2.34"
 minifi_native_sys = { path = "../minifi_native_sys" }
 minifi_native_macros = { path = "../minifi_native_macros" }
-strum = "0.27.2"
-strum_macros = "0.27.2"
+strum = "0.28.0"
+strum_macros = "0.28.0"
 humantime = "2.3.0"
 byte-unit = "5.1.6"
 itertools = "0.14.0"

@@ -164,7 +164,6 @@ impl ConstTrigger for GenerateFlowFileRs {
 
 impl CalculateMetrics for GenerateFlowFileRs {}
 
-#[cfg(not(test))]
 pub(crate) mod processor_definition;
 
 #[cfg(test)]

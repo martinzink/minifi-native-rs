@@ -320,7 +320,6 @@ impl CalculateMetrics for GetFileRs {
     }
 }
 
-#[cfg(not(test))]
 pub(crate) mod processor_definition;
 
 mod output_attributes;

@@ -139,5 +139,4 @@ impl FlowFileTransform for EncryptContentPGP {
 #[cfg(test)]
 mod tests;
 
-#[cfg(not(test))]
 mod processor_definition;

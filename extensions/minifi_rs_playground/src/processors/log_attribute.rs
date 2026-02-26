@@ -159,7 +159,6 @@ impl Schedule for LogAttributeRs {
 
 impl CalculateMetrics for LogAttributeRs {}
 
-#[cfg(not(test))]
 pub(crate) mod processor_definition;
 
 #[cfg(test)]

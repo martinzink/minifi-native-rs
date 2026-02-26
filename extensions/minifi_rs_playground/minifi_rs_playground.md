@@ -17,6 +17,7 @@ limitations under the License.
 
 ### Processors
 
+- [AsciifyGerman](#AsciifyGerman)
 - [GenerateFlowFileRs](#GenerateFlowFileRs)
 - [GetFileRs](#GetFileRs)
 - [KamikazeProcessorRs](#KamikazeProcessorRs)
@@ -26,6 +27,27 @@ limitations under the License.
 ### Controller Services
 
 - [LoremIpsumControllerService](#LoremIpsumControllerService)
+
+
+## AsciifyGerman
+
+### Description
+
+This processor switches German characters with their ascii counterparts. (to test stream API)
+
+### Properties
+
+In the list below, the names of required properties appear in bold. Any other properties (not in bold) are considered optional. The table also indicates any default values, and whether a property supports the NiFi Expression Language.
+
+| Name | Default Value | Allowable Values | Description |
+|------|---------------|------------------|-------------|
+
+### Relationships
+
+| Name    | Description                             |
+|---------|-----------------------------------------|
+| success | All asciified flowfiles are routed here |
+| failure | Non-german flowfiles are routed here    |
 
 
 ## GenerateFlowFileRs
