@@ -1,7 +1,6 @@
 use super::*;
 use crate::processors::asciify_german::relationships::SUCCESS;
-use minifi_native::mock::MockSimpleContext;
-use minifi_native::{MockLogger, MockProcessContext};
+use minifi_native::{IoState, MockLogger, MockProcessContext};
 use std::io::BufReader;
 
 #[test]
@@ -12,7 +11,7 @@ fn schedule_succeeds_with_default_values() {
 #[test]
 fn simple_test() {
     let process_context = MockProcessContext::new();
-    let context = MockSimpleContext::new();
+    let context = MockProcessContext::new();
     let logger = MockLogger::new();
 
     let asciify_german =
@@ -24,7 +23,7 @@ fn simple_test() {
         let result = asciify_german
             .transform(&context, &mut input_stream, &mut output_vec, &logger)
             .expect("Should succeed");
-        // assert_eq!(result.modify_content(), StreamingOperationState::Ok); todo!
+        assert_eq!(result.modify_content(), IoState::Ok);
         assert_eq!(result.target_relationship_name(), SUCCESS.name);
     }
     assert_eq!(
@@ -36,7 +35,7 @@ fn simple_test() {
 #[test]
 fn simple_failure_test() {
     let process_context = MockProcessContext::new();
-    let context = MockSimpleContext::new();
+    let context = MockProcessContext::new();
     let logger = MockLogger::new();
 
     let asciify_german =
@@ -48,7 +47,7 @@ fn simple_failure_test() {
         let result = asciify_german
             .transform(&context, &mut input_stream, &mut output_vec, &logger)
             .expect("Should succeed");
-        // assert!(!result.modify_content()); todo!
+        assert_eq!(result.modify_content(), IoState::Cancel);
         assert_eq!(result.target_relationship_name(), FAILURE.name);
     }
     assert_eq!(output_vec, "Ueldoeg".as_bytes());
