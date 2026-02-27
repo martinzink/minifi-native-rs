@@ -7,8 +7,8 @@ use crate::processors::decrypt_content::properties::{PRIVATE_KEY_SERVICE, SYMMET
 use crate::processors::decrypt_content::relationships::{FAILURE, SUCCESS};
 use minifi_native::macros::{ComponentIdentifier, DefaultMetrics};
 use minifi_native::{
-    FlowFileTransform, GetControllerService, GetProperty, InputStream, Logger, MinifiError,
-    Schedule, TransformedFlowFile,
+    FlowFileStreamTransform, GetControllerService, GetProperty, InputStream, Logger, MinifiError,
+    OutputStream, Schedule, TransformStreamResult,
 };
 use pgp::composed::{Message, TheRing};
 use std::collections::HashMap;
@@ -105,24 +105,22 @@ impl DecryptContentPGP {
     }
 }
 
-impl FlowFileTransform for DecryptContentPGP {
-    fn transform<'ctx, 'stream, Ctx: GetProperty + GetControllerService, LoggerImpl: Logger>(
+impl FlowFileStreamTransform for DecryptContentPGP {
+    fn transform<Ctx: GetProperty + GetControllerService, LoggerImpl: Logger>(
         &self,
-        context: &'ctx Ctx,
-        input_stream: &'stream mut dyn InputStream,
+        context: &Ctx,
+        input_stream: &mut dyn InputStream,
+        output_stream: &mut dyn OutputStream,
         logger: &LoggerImpl,
-    ) -> Result<TransformedFlowFile<'stream>, MinifiError>
-    where
-        'ctx: 'stream,
-    {
+    ) -> Result<TransformStreamResult, MinifiError> {
         let Ok(msg) = Message::from_reader(input_stream).map(|(msg, _header)| msg) else {
             logger.debug("No valid PGP message found");
-            return Ok(TransformedFlowFile::route_without_changes(&FAILURE));
+            return Ok(TransformStreamResult::route_without_changes(&FAILURE));
         };
 
         let Ok(mut decrypted_msg) = self.decrypt_msg(msg, context, logger) else {
             logger.debug("Failed to decrypt data");
-            return Ok(TransformedFlowFile::route_without_changes(&FAILURE));
+            return Ok(TransformStreamResult::route_without_changes(&FAILURE));
         };
 
         if self.decompress_data && decrypted_msg.is_compressed() {
@@ -132,22 +130,19 @@ impl FlowFileTransform for DecryptContentPGP {
                 }
                 Err(e) => {
                     logger.debug(&format!("Failed to decompress data: {}", e));
-                    return Ok(TransformedFlowFile::route_without_changes(&FAILURE));
+                    return Ok(TransformStreamResult::route_without_changes(&FAILURE));
                 }
             }
         };
 
         let attributes_to_add = Self::extract_attributes_from_decrypted_message(&decrypted_msg);
-        let Ok(new_content) = decrypted_msg.as_data_vec() else {
+        let Ok(_written_bytes) = std::io::copy(&mut decrypted_msg.into_inner(), output_stream)
+        else {
             logger.debug("Failed to extract raw data from decrypted message");
-            return Ok(TransformedFlowFile::route_without_changes(&FAILURE));
+            return Ok(TransformStreamResult::route_without_changes(&FAILURE));
         };
 
-        Ok(TransformedFlowFile::new(
-            &SUCCESS,
-            Some(new_content),
-            attributes_to_add,
-        ))
+        Ok(TransformStreamResult::new(&SUCCESS, attributes_to_add))
     }
 }
 

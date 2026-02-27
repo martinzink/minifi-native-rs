@@ -3,8 +3,8 @@ use crate::processors::decrypt_content::{DecryptContentPGP, output_attributes};
 use crate::test_utils;
 use crate::test_utils::get_test_message;
 use minifi_native::{
-    ComponentIdentifier, EnableControllerService, FlowFileTransform, MockControllerServiceContext,
-    MockLogger, MockProcessContext, Schedule,
+    ComponentIdentifier, EnableControllerService, FlowFileStreamTransform, IoState,
+    MockControllerServiceContext, MockLogger, MockProcessContext, Schedule,
 };
 
 #[test]
@@ -93,11 +93,13 @@ fn test_decryption(
 
     let decrypt_content = DecryptContentPGP::schedule(&processor_context, &MockLogger::new())
         .expect("Should schedule without any properties");
+    let mut output: Vec<u8> = Vec::new();
     let mut flow_file_stream = std::io::Cursor::new(get_test_message(message_file_name));
     let res = decrypt_content
         .transform(
             &processor_context,
             &mut flow_file_stream,
+            &mut output,
             &MockLogger::new(),
         )
         .expect("Should be able to transform");
@@ -105,30 +107,28 @@ fn test_decryption(
     match expected_result {
         Ok(_result_bytes) => {
             assert_eq!(
-                res.target_relationship(),
+                res.target_relationship_name(),
                 super::relationships::SUCCESS.name
             );
-            assert!(res.new_content().is_some());
+            assert_eq!(res.write_status(), IoState::Ok);
             let data_modified = res
-                .attributes_to_add()
-                .get(output_attributes::LITERAL_DATA_MODIFIED.name)
+                .get_attribute(output_attributes::LITERAL_DATA_MODIFIED.name)
                 .unwrap()
                 .parse::<u64>()
                 .expect("Should be u64");
             assert!(data_modified > 1770000000000);
             assert!(data_modified < 1780000000000);
             assert!(
-                res.attributes_to_add()
-                    .contains_key(output_attributes::LITERAL_DATA_FILENAME.name)
+                res.get_attribute(output_attributes::LITERAL_DATA_FILENAME.name)
+                    .is_some()
             );
         }
         Err(_) => {
             assert_eq!(
-                res.target_relationship(),
+                res.target_relationship_name(),
                 super::relationships::FAILURE.name
             );
-            assert!(res.new_content().is_none());
-            assert!(res.attributes_to_add().is_empty());
+            assert_eq!(res.write_status(), IoState::Cancel);
         }
     }
 }
@@ -218,14 +218,20 @@ fn decryption_of_not_encrypted_data() {
 
     let decrypt_content = DecryptContentPGP::schedule(&processor_context, &logger)
         .expect("Should schedule without any properties");
+    let mut result: Vec<u8> = vec![];
     let mut flow_file_stream = std::io::Cursor::new("something not encrypted".as_bytes());
     let res = decrypt_content
-        .transform(&mut processor_context, &mut flow_file_stream, &logger)
+        .transform(
+            &mut processor_context,
+            &mut flow_file_stream,
+            &mut result,
+            &logger,
+        )
         .expect("Should be able to transform");
 
     assert_eq!(
-        res.target_relationship(),
+        res.target_relationship_name(),
         super::relationships::FAILURE.name
     );
-    assert!(res.new_content().is_none());
+    assert_eq!(res.write_status(), IoState::Cancel);
 }
