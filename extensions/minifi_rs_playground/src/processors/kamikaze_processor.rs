@@ -3,7 +3,7 @@ mod relationships;
 
 use crate::controller_services::lorem_ipsum_controller_service::LoremIpsumControllerService;
 use crate::processors::kamikaze_processor::properties::NOT_REGISTERED_PROPERTY;
-use minifi_native::macros::ComponentIdentifier;
+use minifi_native::macros::{ComponentIdentifier, NoAdvancedProcessorFeatures};
 use minifi_native::{
     CalculateMetrics, ConstTrigger, GetProperty, Logger, MinifiError, OnTriggerResult,
     ProcessContext, ProcessSession, Schedule,
@@ -20,7 +20,7 @@ enum KamikazeBehaviour {
     Panic,
 }
 
-#[derive(Debug, ComponentIdentifier)]
+#[derive(Debug, ComponentIdentifier, NoAdvancedProcessorFeatures)]
 pub(crate) struct KamikazeProcessorRs {
     on_trigger_behaviour: KamikazeBehaviour,
 }
@@ -57,7 +57,7 @@ impl Schedule for KamikazeProcessorRs {
                 panic!("KamikazeProcessor::on_schedule panic")
             }
             KamikazeBehaviour::GetInvalidControllerService => {
-                todo!()
+                unimplemented!("KamikazeProcessor::get_invalid_controller_service");
             }
         }
     }

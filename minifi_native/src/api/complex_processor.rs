@@ -1,4 +1,4 @@
-use crate::api::processor::CalculateMetrics;
+use crate::api::processor::{AdvancedProcessorFeatures, CalculateMetrics};
 use crate::api::raw::raw_processor::{RawMultiThreadedTrigger, RawSingleThreadedTrigger};
 use crate::c_ffi::{DynRawProcessorDefinition, RawProcessorDefinition, RawRegisterableProcessor};
 use crate::{
@@ -37,8 +37,12 @@ pub struct ComplexProcessorType {}
 impl<Implementation> RawSingleThreadedTrigger
     for Processor<Implementation, ComplexProcessorType, Exclusive>
 where
-    Implementation:
-        Schedule + MutTrigger + ComponentIdentifier + ProcessorDefinition + CalculateMetrics,
+    Implementation: Schedule
+        + MutTrigger
+        + ComponentIdentifier
+        + ProcessorDefinition
+        + CalculateMetrics
+        + AdvancedProcessorFeatures,
 {
     fn on_trigger<PC, PS>(
         &mut self,
@@ -62,8 +66,12 @@ where
 impl<Implementation> RawMultiThreadedTrigger
     for Processor<Implementation, ComplexProcessorType, Concurrent>
 where
-    Implementation:
-        Schedule + ConstTrigger + ComponentIdentifier + ProcessorDefinition + CalculateMetrics,
+    Implementation: Schedule
+        + ConstTrigger
+        + ComponentIdentifier
+        + ProcessorDefinition
+        + CalculateMetrics
+        + AdvancedProcessorFeatures,
 {
     fn on_trigger<PC, PS>(
         &self,
@@ -92,6 +100,7 @@ where
         + ComponentIdentifier
         + ProcessorDefinition
         + CalculateMetrics
+        + AdvancedProcessorFeatures
         + 'static,
 {
     fn get_definition() -> Box<dyn DynRawProcessorDefinition> {
@@ -118,6 +127,7 @@ where
         + ComponentIdentifier
         + ProcessorDefinition
         + CalculateMetrics
+        + AdvancedProcessorFeatures
         + 'static,
 {
     fn get_definition() -> Box<dyn DynRawProcessorDefinition> {

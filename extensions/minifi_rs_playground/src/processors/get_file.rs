@@ -5,7 +5,7 @@ use crate::processors::get_file::properties::{
     BATCH_SIZE, DIRECTORY, IGNORE_HIDDEN_FILES, KEEP_SOURCE_FILE, MAX_AGE, MAX_SIZE, MIN_AGE,
     MIN_SIZE, RECURSE,
 };
-use minifi_native::macros::ComponentIdentifier;
+use minifi_native::macros::{ComponentIdentifier, NoAdvancedProcessorFeatures};
 use minifi_native::{
     CalculateMetrics, ConstTrigger, GetProperty, IoState, Logger, MinifiError, OnTriggerResult,
     ProcessContext, ProcessSession, Schedule,
@@ -42,7 +42,7 @@ impl DirectoryListing {
     }
 }
 
-#[derive(Debug, ComponentIdentifier)]
+#[derive(Debug, ComponentIdentifier, NoAdvancedProcessorFeatures)]
 pub(crate) struct GetFileRs {
     recursive: bool,
     keep_source_file: bool,

@@ -26,6 +26,7 @@ limitations under the License.
 - [PutFileRs](#PutFileRs)
 ### Controller Services
 
+- [DummyControllerService](#DummyControllerService)
 - [LoremIpsumControllerService](#LoremIpsumControllerService)
 
 
@@ -88,6 +89,7 @@ In the list below, the names of required properties appear in bold. Any other pr
 | Name                    | Default Value | Allowable Values | Description                                                                                                                                                |
 |-------------------------|---------------|------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **Input Directory**     |               |                  | The input directory from which to pull files<br/>**Supports Expression Language: true**                                                                    |
+| Polling Interval        |               |                  | Indicates how long to wait before performing a directory listing                                                                                           |
 | Recurse Subdirectories  | true          | true<br/>false   | Indicates whether or not to pull files from subdirectories                                                                                                 |
 | Keep Source File        | false         | true<br/>false   | If true, the file is not deleted after it has been copied to the Content Repository                                                                        |
 | Minimum File Age        |               |                  | The minimum age that a file must be in order to be pulled; any file younger than this amount of time (according to last modification date) will be ignored |
@@ -121,11 +123,10 @@ This processor can fail or panic in on_trigger and on_schedule calls based on co
 
 In the list below, the names of required properties appear in bold. Any other properties (not in bold) are considered optional. The table also indicates any default values, and whether a property supports the NiFi Expression Language.
 
-| Name                      | Default Value | Allowable Values                 | Description                                                                   |
-|---------------------------|---------------|----------------------------------|-------------------------------------------------------------------------------|
-| **On Schedule Behaviour** | ReturnOk      | ReturnErr<br/>ReturnOk<br/>Panic | What to do during the on_schedule method                                      |
-| **On Trigger Behaviour**  | ReturnOk      | ReturnErr<br/>ReturnOk<br/>Panic | What to do during the on_trigger method                                       |
-| Read Behaviour            |               | ReturnErr<br/>ReturnOk<br/>Panic | If specified it will process incoming flowfiles with the specified behaviour. |
+| Name                      | Default Value | Allowable Values                                                                              | Description                              |
+|---------------------------|---------------|-----------------------------------------------------------------------------------------------|------------------------------------------|
+| **On Schedule Behaviour** | ReturnOk      | ReturnErr<br/>ReturnOk<br/>GetNotRegisteredProperty<br/>GetInvalidControllerService<br/>Panic | What to do during the on_schedule method |
+| **On Trigger Behaviour**  | ReturnOk      | ReturnErr<br/>ReturnOk<br/>GetNotRegisteredProperty<br/>GetInvalidControllerService<br/>Panic | What to do during the on_trigger method  |
 
 ### Relationships
 
@@ -208,6 +209,20 @@ In the list below, the names of required properties appear in bold. Any other pr
 |---------|-----------------------------------------------------------------------------------|
 | success | Flowfiles that are successfully written to a file are routed to this relationship |
 | failure | Failed files (conflict, write failure, etc.) are transferred to failure           |
+
+
+## DummyControllerService
+
+### Description
+
+Dummy Controller Service
+
+### Properties
+
+In the list below, the names of required properties appear in bold. Any other properties (not in bold) are considered optional. The table also indicates any default values, and whether a property supports the NiFi Expression Language.
+
+| Name | Default Value | Allowable Values | Description |
+|------|---------------|------------------|-------------|
 
 
 ## LoremIpsumControllerService

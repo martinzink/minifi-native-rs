@@ -17,7 +17,7 @@ pub use api::flow_file_transform::{
     FlowFileTransform, FlowFileTransformProcessorType, TransformedFlowFile,
 };
 
-pub use api::processor::{CalculateMetrics, Processor, Schedule};
+pub use api::processor::{AdvancedProcessorFeatures, CalculateMetrics, Processor, Schedule};
 
 pub use api::raw::raw_threading_model::{Concurrent, Exclusive};
 

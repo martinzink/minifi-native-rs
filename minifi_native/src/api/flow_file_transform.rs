@@ -1,6 +1,6 @@
 use crate::api::context_session_flowfile_bundle::ContextSessionFlowFileBundle;
 use crate::api::flow_file_content::Content;
-use crate::api::processor::Processor;
+use crate::api::processor::{AdvancedProcessorFeatures, Processor};
 use crate::api::property::{GetControllerService, GetProperty};
 use crate::api::raw::raw_processor::RawMultiThreadedTrigger;
 use crate::api::{InputStream, ProcessorDefinition, RawProcessor};
@@ -71,7 +71,7 @@ pub struct FlowFileTransformProcessorType {}
 impl<'a, Implementation> RawMultiThreadedTrigger
     for Processor<Implementation, FlowFileTransformProcessorType, Concurrent>
 where
-    Implementation: Schedule + CalculateMetrics + FlowFileTransform,
+    Implementation: Schedule + CalculateMetrics + FlowFileTransform + AdvancedProcessorFeatures,
 {
     fn on_trigger<PC, PS>(
         &self,
@@ -136,6 +136,7 @@ where
         + CalculateMetrics
         + ComponentIdentifier
         + ProcessorDefinition
+        + AdvancedProcessorFeatures
         + 'static,
 {
     fn get_definition() -> Box<dyn DynRawProcessorDefinition> {

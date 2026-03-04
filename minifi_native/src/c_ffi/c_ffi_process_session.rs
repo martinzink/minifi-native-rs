@@ -359,7 +359,8 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
             }
         }
 
-        ctx.result.unwrap_or(Err(MinifiError::UnknownError)) // todo! Agent returned with success but callback couldn't set the ctx.result maybe panic?
+        ctx.result
+            .expect("Agent returned with success, so ctx.result should be set")
     }
 
     fn read(&self, flow_file: &Self::FlowFile) -> Option<Vec<u8>> {
@@ -448,7 +449,8 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                 &mut ctx as *mut _ as *mut c_void,
             );
 
-            ctx.result.unwrap_or(Err(MinifiError::UnknownError)) // todo! Agent returned with success but callback couldn't set the ctx.result maybe panic?
+            ctx.result
+                .expect("Agent returned with success, so ctx.result should be set")
         }
     }
 

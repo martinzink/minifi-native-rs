@@ -1,4 +1,4 @@
-use minifi_native::macros::ComponentIdentifier;
+use minifi_native::macros::{ComponentIdentifier, NoAdvancedProcessorFeatures};
 use minifi_native::{
     CalculateMetrics, ConstTrigger, GetProperty, Logger, MinifiError, OnTriggerResult,
     ProcessContext, ProcessSession, Schedule,
@@ -20,7 +20,7 @@ enum Mode {
     Empty,
 }
 
-#[derive(Debug, ComponentIdentifier)]
+#[derive(Debug, ComponentIdentifier, NoAdvancedProcessorFeatures)]
 pub(crate) struct GenerateFlowFileRs {
     mode: Mode,
     batch_size: u64,

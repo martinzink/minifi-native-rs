@@ -1,5 +1,5 @@
 use crate::processors::put_file::relationships::{FAILURE, SUCCESS};
-use minifi_native::macros::{ComponentIdentifier, DefaultMetrics};
+use minifi_native::macros::{ComponentIdentifier, DefaultMetrics, NoAdvancedProcessorFeatures};
 use minifi_native::{
     FlowFileTransform, GetAttribute, GetControllerService, GetProperty, InputStream, Logger,
     MinifiError, Schedule, TransformedFlowFile,
@@ -60,7 +60,7 @@ impl PutFileUnixPermissions {
     }
 }
 
-#[derive(Debug, ComponentIdentifier, DefaultMetrics)]
+#[derive(Debug, ComponentIdentifier, DefaultMetrics, NoAdvancedProcessorFeatures)]
 pub(crate) struct PutFileRs {
     conflict_resolution_strategy: ConflictResolutionStrategy,
     try_make_dirs: bool,

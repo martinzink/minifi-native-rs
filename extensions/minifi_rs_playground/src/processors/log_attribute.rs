@@ -1,14 +1,14 @@
 use crate::processors::log_attribute::properties::{FLOW_FILES_TO_LOG, LOG_LEVEL, LOG_PAYLOAD};
-use minifi_native::macros::ComponentIdentifier;
+use minifi_native::macros::{ComponentIdentifier, DefaultMetrics, NoAdvancedProcessorFeatures};
 use minifi_native::{
-    CalculateMetrics, ConstTrigger, GetProperty, LogLevel, Logger, MinifiError, OnTriggerResult,
-    ProcessContext, ProcessSession, Property, Schedule,
+    ConstTrigger, GetProperty, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext,
+    ProcessSession, Property, Schedule,
 };
 
 mod properties;
 mod relationships;
 
-#[derive(Debug, ComponentIdentifier)]
+#[derive(Debug, ComponentIdentifier, DefaultMetrics, NoAdvancedProcessorFeatures)]
 pub(crate) struct LogAttributeRs {
     log_level: LogLevel,
     attributes_to_log: Option<Vec<String>>,
@@ -156,8 +156,6 @@ impl Schedule for LogAttributeRs {
         })
     }
 }
-
-impl CalculateMetrics for LogAttributeRs {}
 
 pub(crate) mod processor_definition;
 

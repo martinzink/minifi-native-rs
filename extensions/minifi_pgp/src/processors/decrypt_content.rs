@@ -5,7 +5,7 @@ mod relationships;
 use crate::controller_services::private_key_service::PGPPrivateKeyService;
 use crate::processors::decrypt_content::properties::{PRIVATE_KEY_SERVICE, SYMMETRIC_PASSWORD};
 use crate::processors::decrypt_content::relationships::{FAILURE, SUCCESS};
-use minifi_native::macros::{ComponentIdentifier, DefaultMetrics};
+use minifi_native::macros::{ComponentIdentifier, DefaultMetrics, NoAdvancedProcessorFeatures};
 use minifi_native::{
     FlowFileStreamTransform, GetControllerService, GetProperty, InputStream, Logger, MinifiError,
     OutputStream, Schedule, TransformStreamResult,
@@ -22,7 +22,7 @@ enum DecryptionStrategy {
     Packaged,
 }
 
-#[derive(Debug, ComponentIdentifier, DefaultMetrics)]
+#[derive(Debug, ComponentIdentifier, DefaultMetrics, NoAdvancedProcessorFeatures)]
 pub(crate) struct DecryptContentPGP {
     decompress_data: bool,
     symmetric_password: Option<pgp::types::Password>,

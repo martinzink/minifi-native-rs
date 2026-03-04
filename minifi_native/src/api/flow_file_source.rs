@@ -1,4 +1,5 @@
 use crate::api::Content;
+use crate::api::processor::AdvancedProcessorFeatures;
 use crate::api::raw::raw_processor::RawMultiThreadedTrigger;
 use crate::c_ffi::{DynRawProcessorDefinition, RawProcessorDefinition, RawRegisterableProcessor};
 use crate::{
@@ -45,7 +46,7 @@ pub struct FlowFileSourceProcessorType {}
 impl<'a, Implementation> RawMultiThreadedTrigger
     for Processor<Implementation, FlowFileSourceProcessorType, Concurrent>
 where
-    Implementation: Schedule + CalculateMetrics + FlowFileSource,
+    Implementation: Schedule + CalculateMetrics + FlowFileSource + AdvancedProcessorFeatures,
 {
     fn on_trigger<PC, PS>(
         &self,
@@ -95,6 +96,7 @@ where
         + CalculateMetrics
         + ComponentIdentifier
         + ProcessorDefinition
+        + AdvancedProcessorFeatures
         + 'static,
 {
     fn get_definition() -> Box<dyn DynRawProcessorDefinition> {

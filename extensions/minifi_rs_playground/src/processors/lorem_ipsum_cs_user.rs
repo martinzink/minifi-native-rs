@@ -3,7 +3,7 @@ mod properties;
 use crate::controller_services::lorem_ipsum_controller_service::LoremIpsumControllerService;
 use crate::processors::lorem_ipsum_cs_user::properties::CONTROLLER_SERVICE;
 use crate::processors::lorem_ipsum_cs_user::relationships::SUCCESS;
-use minifi_native::macros::{ComponentIdentifier, DefaultMetrics};
+use minifi_native::macros::{ComponentIdentifier, DefaultMetrics, NoAdvancedProcessorFeatures};
 use minifi_native::{
     Content, FlowFileSource, GeneratedFlowFile, GetControllerService, GetProperty, Logger,
     MinifiError, Schedule,
@@ -18,7 +18,7 @@ enum WriteMethod {
     Stream,
 }
 
-#[derive(Debug, ComponentIdentifier, DefaultMetrics)]
+#[derive(Debug, ComponentIdentifier, DefaultMetrics, NoAdvancedProcessorFeatures)]
 pub(crate) struct LoremIpsumCSUser {
     write_method: WriteMethod,
 }

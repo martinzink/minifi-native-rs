@@ -1,5 +1,5 @@
 use crate::processors::asciify_german::relationships::FAILURE;
-use minifi_native::macros::{ComponentIdentifier, DefaultMetrics};
+use minifi_native::macros::{ComponentIdentifier, DefaultMetrics, NoAdvancedProcessorFeatures};
 use minifi_native::{
     FlowFileStreamTransform, GetProperty, InputStream, Logger, MinifiError, OutputStream, Schedule,
     TransformStreamResult,
@@ -8,7 +8,7 @@ use std::collections::HashMap;
 
 mod relationships;
 
-#[derive(Debug, ComponentIdentifier, DefaultMetrics)]
+#[derive(Debug, ComponentIdentifier, DefaultMetrics, NoAdvancedProcessorFeatures)]
 pub(crate) struct AsciifyGerman {}
 
 impl Schedule for AsciifyGerman {

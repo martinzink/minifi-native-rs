@@ -17,17 +17,15 @@ pub trait CalculateMetrics {
     }
 }
 
-pub trait IsWorkAvailable {
+pub trait AdvancedProcessorFeatures {
+    fn restore(&self) -> bool;
+    fn get_trigger_when_empty(&self) -> bool;
     fn is_work_available(&self) -> bool;
-}
-
-pub trait RestoreProcessor {
-    fn restore(&mut self) -> Result<(), MinifiError>;
 }
 
 pub struct Processor<Impl, Kind, T>
 where
-    Impl: Schedule + CalculateMetrics,
+    Impl: Schedule + CalculateMetrics + AdvancedProcessorFeatures,
     T: RawThreadingModel,
 {
     pub(crate) logger: CffiLogger,
@@ -38,7 +36,7 @@ where
 
 impl<Impl, Kind, T> RawProcessor for Processor<Impl, Kind, T>
 where
-    Impl: Schedule + CalculateMetrics,
+    Impl: Schedule + CalculateMetrics + AdvancedProcessorFeatures,
     T: RawThreadingModel,
 {
     type Threading = T;
@@ -53,15 +51,24 @@ where
     }
 
     fn restore(&self) -> bool {
-        false // TODO(mzink)
+        self.scheduled_impl
+            .as_ref()
+            .and_then(|i| Some(i.restore()))
+            .unwrap_or(false)
     }
 
     fn get_trigger_when_empty(&self) -> bool {
-        false // TODO(mzink)
+        self.scheduled_impl
+            .as_ref()
+            .and_then(|i| Some(i.get_trigger_when_empty()))
+            .unwrap_or(false)
     }
 
     fn is_work_available(&self) -> bool {
-        false // TODO(mzink)
+        self.scheduled_impl
+            .as_ref()
+            .and_then(|i| Some(i.is_work_available()))
+            .unwrap_or(false)
     }
 
     fn log(&self, log_level: LogLevel, message: &str) {

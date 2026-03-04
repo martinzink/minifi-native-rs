@@ -33,3 +33,18 @@ pub fn derive_default_metrics(input: TokenStream) -> TokenStream {
 
     TokenStream::from(expanded)
 }
+
+#[proc_macro_derive(NoAdvancedProcessorFeatures)]
+pub fn derive_no_advanced_processor_features(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let name = &input.ident;
+    let expanded = quote! {
+        impl ::minifi_native::AdvancedProcessorFeatures for #name {
+                fn restore(&self) -> bool { false }
+                fn get_trigger_when_empty(&self) -> bool { false }
+                fn is_work_available(&self) -> bool { false }
+        }
+    };
+
+    TokenStream::from(expanded)
+}

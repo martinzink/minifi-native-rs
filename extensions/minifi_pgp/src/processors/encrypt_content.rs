@@ -16,7 +16,7 @@ use crate::processors::encrypt_content::properties::{
     PASSWORD, PUBLIC_KEY_SEARCH, PUBLIC_KEY_SERVICE,
 };
 use crate::processors::encrypt_content::relationships::{FAILURE, SUCCESS};
-use minifi_native::macros::{ComponentIdentifier, DefaultMetrics};
+use minifi_native::macros::{ComponentIdentifier, DefaultMetrics, NoAdvancedProcessorFeatures};
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
 
 #[derive(Debug, Clone, Copy, PartialEq, Display, EnumString, VariantNames, IntoStaticStr)]
@@ -26,7 +26,7 @@ enum FileEncoding {
     Binary,
 }
 
-#[derive(Debug, ComponentIdentifier, DefaultMetrics)]
+#[derive(Debug, ComponentIdentifier, DefaultMetrics, NoAdvancedProcessorFeatures)]
 pub(crate) struct EncryptContentPGP {
     file_encoding: FileEncoding,
 }
