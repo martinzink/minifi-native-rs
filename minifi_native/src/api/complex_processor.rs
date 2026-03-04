@@ -52,8 +52,8 @@ where
         if let Some(ref mut scheduled_impl) = self.scheduled_impl {
             scheduled_impl.trigger(context, session, &self.logger)
         } else {
-            Err(MinifiError::TriggerError(
-                "The processor hasnt been scheduled yet".to_string(),
+            Err(MinifiError::trigger_err(
+                "The processor hasnt been scheduled yet",
             ))
         }
     }
@@ -77,8 +77,8 @@ where
         if let Some(ref scheduled_impl) = self.scheduled_impl {
             scheduled_impl.trigger(context, session, &self.logger)
         } else {
-            Err(MinifiError::TriggerError(
-                "The processor hasnt been scheduled yet".to_string(),
+            Err(MinifiError::trigger_err(
+                "The processor hasnt been scheduled yet",
             ))
         }
     }

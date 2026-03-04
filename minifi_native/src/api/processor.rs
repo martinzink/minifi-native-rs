@@ -17,6 +17,14 @@ pub trait CalculateMetrics {
     }
 }
 
+pub trait IsWorkAvailable {
+    fn is_work_available(&self) -> bool;
+}
+
+pub trait RestoreProcessor {
+    fn restore(&mut self) -> Result<(), MinifiError>;
+}
+
 pub struct Processor<Impl, Kind, T>
 where
     Impl: Schedule + CalculateMetrics,

@@ -121,8 +121,8 @@ where
                 Ok(OnTriggerResult::Yield)
             }
         } else {
-            Err(MinifiError::TriggerError(
-                "The processor hasn't been scheduled yet".to_string(),
+            Err(MinifiError::trigger_err(
+                "The processor hasn't been scheduled yet",
             ))
         }
     }

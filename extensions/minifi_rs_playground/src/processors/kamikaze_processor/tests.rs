@@ -2,7 +2,7 @@ use super::*;
 use crate::processors::kamikaze_processor::properties::{
     ON_SCHEDULE_BEHAVIOUR, ON_TRIGGER_BEHAVIOUR,
 };
-use minifi_native::MinifiError::UnknownError;
+use minifi_native::MinifiError::{ScheduleError, TriggerError};
 use minifi_native::{MockLogger, MockProcessContext, MockProcessSession};
 use std::panic::AssertUnwindSafe;
 
@@ -21,7 +21,7 @@ fn on_schedule_err() {
         "ReturnErr".to_string(),
     );
     let processor = KamikazeProcessorRs::schedule(&context, &MockLogger::new());
-    assert!(std::matches!(processor, Err(UnknownError)));
+    assert!(std::matches!(processor, Err(ScheduleError(_))));
 }
 
 #[test]
@@ -63,7 +63,7 @@ fn on_trigger_err() {
     let mut session = MockProcessSession::new();
     assert!(std::matches!(
         processor.trigger(&mut context, &mut session, &MockLogger::new()),
-        Err(UnknownError)
+        Err(TriggerError(_))
     ));
 }
 

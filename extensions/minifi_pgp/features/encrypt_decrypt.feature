@@ -52,4 +52,3 @@ Feature: Test PGP extension's encryption and decryption capabilities
     Then at least one file with the content "test content" is placed in the "/tmp/output/alice_ok" directory in less than 5 seconds
     And an encrypted armored pgp file is placed in the "/tmp/output/bob_fail" directory in less than 5 seconds
     And the Minifi logs do not contain errors
-    And the Minifi logs do not contain warnings

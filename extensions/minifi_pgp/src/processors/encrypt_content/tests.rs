@@ -33,6 +33,9 @@ fn assert_content(transform_result: &TransformStreamResult, is_ascii: bool) {
 fn encrypts_via_passphrase() {
     let mut context = MockProcessContext::new();
     context.properties.insert(PASSWORD.name, "password");
+    context
+        .attributes
+        .insert("filename".to_owned(), "mammut".to_owned());
 
     let mut result: Vec<u8> = Vec::new();
     let mut input_stream = std::io::Cursor::new("foo".as_bytes());

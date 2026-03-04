@@ -26,14 +26,14 @@ pub(crate) const ON_TRIGGER_BEHAVIOUR: Property = Property {
     allowed_type: "",
 };
 
-pub(crate) const READ_BEHAVIOUR: Property = Property {
-    name: "Read Behaviour",
-    description: "If specified it will process incoming flowfiles with the specified behaviour.",
+pub(crate) const NOT_REGISTERED_PROPERTY: Property = Property {
+    name: "Kamikaze Processor Property",
+    description: "Property purposely left out of Processor description",
     is_required: false,
     is_sensitive: false,
     supports_expr_lang: false,
     default_value: None,
     validator: StandardPropertyValidator::AlwaysValidValidator,
-    allowed_values: &KamikazeBehaviour::VARIANTS,
+    allowed_values: &[],
     allowed_type: "",
 };

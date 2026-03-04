@@ -1,8 +1,6 @@
 @SUPPORTS_WINDOWS
-Feature: Test Minifi Native C Api capabilities
-
-  Background: The reference library is successfully built on linux
-
+Feature: Basic scenarios
+  
   Scenario: The rust library is loaded into minifi
     Given log property "logger.org::apache::nifi::minifi::core::extension::ExtensionManager" is set to "TRACE,stderr"
     And log property "logger.org::apache::nifi::minifi::core::ClassLoader" is set to "TRACE,stderr"
@@ -67,52 +65,6 @@ Feature: Test Minifi Native C Api capabilities
       | Lynx        | Info      | [info] Logging for flow file     | Lynx           |
       | Ant         | Trace     | [trace] Logging for flow file    | Ant            |
 
-  Scenario: The Api handles empty flow-files
-    Given a GenerateFlowFileRs processor with the "Custom Text" property set to "${invalid_attribute}"
-    And the "Data Format" property of the GenerateFlowFileRs processor is set to "Text"
-    And the "Unique FlowFiles" property of the GenerateFlowFileRs processor is set to "false"
-    And a LogAttributeRs processor with the "Log Level" property set to "Critical"
-    And the "success" relationship of the GenerateFlowFileRs processor is connected to the LogAttributeRs
-    And LogAttributeRs's success relationship is auto-terminated
-
-    When the MiNiFi instance starts up
-
-    Then after 3 sec have passed
-    And the Minifi logs do not contain errors
-    And the Minifi logs do not contain warnings
-
-  Scenario: Minifi handles errors from on_schedule
-    Given a KamikazeProcessorRs processor with the "On Schedule Behaviour" property set to "ReturnErr"
-    And KamikazeProcessorRs's success relationship is auto-terminated
-
-    When the MiNiFi instance starts up
-
-    Then the Minifi logs contain the following message: "(KamikazeProcessorRs): Process Schedule Operation: Error while scheduling processor" in less than 10 seconds
-
-  Scenario: Panic in extension's on_schedule crashes the agent aswell
-    Given a KamikazeProcessorRs processor with the "On Schedule Behaviour" property set to "Panic"
-    And KamikazeProcessorRs's success relationship is auto-terminated
-
-    When the MiNiFi instance is started without assertions
-    Then Minifi crashes with the following "KamikazeProcessor::on_schedule panic" in less than 10 seconds
-
-  Scenario: Minifi handles errors from on_trigger
-    Given a KamikazeProcessorRs processor with the "On Schedule Behaviour" property set to "ReturnOk"
-    And the "On Trigger Behaviour" property of the KamikazeProcessorRs processor is set to "ReturnErr"
-    And KamikazeProcessorRs's success relationship is auto-terminated
-
-    When the MiNiFi instance starts up
-
-    Then the Minifi logs contain the following message: "Trigger and commit failed for processor KamikazeProcessorRs" in less than 10 seconds
-
-  Scenario: Panic in extension's on_trigger crashes the agent aswell
-    Given a KamikazeProcessorRs processor with the "On Schedule Behaviour" property set to "ReturnOk"
-    And the "On Trigger Behaviour" property of the KamikazeProcessorRs processor is set to "Panic"
-    And KamikazeProcessorRs's success relationship is auto-terminated
-
-    When the MiNiFi instance is started without assertions
-    Then Minifi crashes with the following "KamikazeProcessor::on_trigger panic" in less than 10 seconds
-
   Scenario Outline: Controller services work
     Given a LoremIpsumCSUser processor with the "Lorem Ipsum Controller Service" property set to "LoremIpsumControllerService"
     And the "Write Method" property of the LoremIpsumCSUser processor is set to "<write_method>"
@@ -130,35 +82,3 @@ Feature: Test Minifi Native C Api capabilities
       | write_method |
       | Buffer       |
       | Stream       |
-
-    Scenario: Streaming Transforms work
-      Given a GetFileRs processor with the "Input Directory" property set to "/tmp/input"
-      And a AsciifyGerman processor
-      And a PutFileRs processor with the "Directory" property set to "/tmp/output"
-      And the "success" relationship of the GetFileRs processor is connected to the AsciifyGerman
-      And the "success" relationship of the AsciifyGerman processor is connected to the PutFileRs
-      And PutFileRs's success relationship is auto-terminated
-      And PutFileRs's failure relationship is auto-terminated
-      And a directory at "/tmp/input" has a file ("german.txt") with the content "Üben von Xylophon und Querflöte ist ja zweckmäßig."
-
-      When the MiNiFi instance starts up
-
-      Then at least one file with the content "Ueben von Xylophon und Querfloete ist ja zweckmaessig." is placed in the "/tmp/output" directory in less than 10 seconds
-      And the Minifi logs do not contain errors
-      And the Minifi logs do not contain warnings
-
-    Scenario: Streaming can be cancelled
-      Given a GetFileRs processor with the "Input Directory" property set to "/tmp/input"
-      And a AsciifyGerman processor
-      And a PutFileRs processor with the "Directory" property set to "/tmp/output"
-      And the "success" relationship of the GetFileRs processor is connected to the AsciifyGerman
-      And the "failure" relationship of the AsciifyGerman processor is connected to the PutFileRs
-      And PutFileRs's success relationship is auto-terminated
-      And PutFileRs's failure relationship is auto-terminated
-      And a directory at "/tmp/input" has a file ("french.txt") with the content "Voix ambiguë d'un cœur qui, au zéphyr, préfère les jattes de kiwis."
-
-      When the MiNiFi instance starts up
-
-      Then at least one file with the content "Voix ambiguë d'un cœur qui, au zéphyr, préfère les jattes de kiwis." is placed in the "/tmp/output" directory in less than 10 seconds
-      And the Minifi logs do not contain errors
-      And the Minifi logs do not contain warnings

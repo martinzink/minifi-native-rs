@@ -1,6 +1,6 @@
 use minifi_native::{
-    FlowFileStreamTransform, GetControllerService, GetProperty, InputStream, Logger, MinifiError,
-    OutputStream, Schedule, TransformStreamResult,
+    FlowFileStreamTransform, GetAttribute, GetControllerService, GetProperty, InputStream, Logger,
+    MinifiError, OutputStream, Schedule, TransformStreamResult,
 };
 use pgp::composed::{ArmorOptions, MessageBuilder, SignedPublicKey};
 use pgp::types::StringToKey;
@@ -48,8 +48,9 @@ impl EncryptContentPGP {
         output_stream: &mut dyn OutputStream,
         pub_key: Option<&SignedPublicKey>,
         passphrase: Option<&str>,
+        file_name: String,
     ) -> pgp::errors::Result<()> {
-        let mut builder = MessageBuilder::from_reader("", input_stream).seipd_v1(
+        let mut builder = MessageBuilder::from_reader(file_name, input_stream).seipd_v1(
             rand::thread_rng(),
             pgp::crypto::sym::SymmetricKeyAlgorithm::AES256,
         );
@@ -90,7 +91,7 @@ impl Schedule for EncryptContentPGP {
         if !has_password && !has_public_key {
             Err(MinifiError::ScheduleError(
                 "Either a password or Public Key Service with Public Key Search should be configured to encrypt files"
-                    .to_string(),
+                    .into(),
             ))
         } else {
             Ok(EncryptContentPGP { file_encoding })
@@ -99,13 +100,14 @@ impl Schedule for EncryptContentPGP {
 }
 
 impl FlowFileStreamTransform for EncryptContentPGP {
-    fn transform<Ctx: GetProperty + GetControllerService, LoggerImpl: Logger>(
+    fn transform<Ctx: GetProperty + GetControllerService + GetAttribute, LoggerImpl: Logger>(
         &self,
         context: &Ctx,
         input_stream: &mut dyn InputStream,
         output_stream: &mut dyn OutputStream,
         logger: &LoggerImpl,
     ) -> Result<TransformStreamResult, MinifiError> {
+        let file_name = context.get_attribute("filename")?.unwrap_or_default();
         let public_key = if let (Some(pub_key_search), Some(public_key_service)) = (
             context.get_property(&PUBLIC_KEY_SEARCH)?,
             context.get_controller_service::<PGPPublicKeyService>(&PUBLIC_KEY_SERVICE)?,
@@ -116,7 +118,7 @@ impl FlowFileStreamTransform for EncryptContentPGP {
         };
         let password = context.get_property(&PASSWORD)?;
         if public_key.is_none() && password.is_none() {
-            logger.debug("No password or public key to encrypt with");
+            logger.warn("No password or public key to encrypt with");
             return Ok(TransformStreamResult::route_without_changes(&FAILURE));
         }
 
@@ -125,6 +127,7 @@ impl FlowFileStreamTransform for EncryptContentPGP {
             output_stream,
             public_key.as_deref(),
             password.as_deref(),
+            file_name,
         ) {
             Ok(_) => Ok(TransformStreamResult::new(
                 &SUCCESS,
@@ -134,7 +137,7 @@ impl FlowFileStreamTransform for EncryptContentPGP {
                 )]),
             )),
             Err(e) => {
-                logger.debug(&format!("Failed to encrypt content {:?}", e));
+                logger.warn(&format!("Failed to encrypt content {:?}", e));
                 Ok(TransformStreamResult::route_without_changes(&FAILURE))
             }
         }

@@ -15,7 +15,14 @@ use minifi_native_sys::{
 };
 use std::ffi::{CString, c_void};
 use std::io::Read;
+use std::num::NonZeroU32;
 use std::os::raw::c_char;
+
+const _: () = {
+    if MinifiStatus_MINIFI_STATUS_SUCCESS != 0 {
+        panic!("MinifiStatus_MINIFI_STATUS_SUCCESS expected to be 0");
+    }
+};
 
 pub struct CffiProcessSession<'a> {
     ptr: *mut MinifiProcessSession,
@@ -84,7 +91,10 @@ impl<'a> CffiProcessSession<'a> {
             ) {
                 #[allow(non_upper_case_globals)]
                 MinifiStatus_MINIFI_STATUS_SUCCESS => Ok(()),
-                error_code => Err(MinifiError::StatusError(error_code)),
+                error_code => Err(MinifiError::StatusError((
+                    "MinifiProcessSessionWrite".into(),
+                    NonZeroU32::new_unchecked(error_code),
+                ))),
             }
         }
     }
@@ -124,7 +134,10 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
             ) {
                 #[allow(non_upper_case_globals)]
                 MinifiStatus_MINIFI_STATUS_SUCCESS => Ok(()),
-                err_code => Err(MinifiError::StatusError(err_code)),
+                err_code => Err(MinifiError::StatusError((
+                    "MinifiProcessSessionTransfer".into(),
+                    NonZeroU32::new_unchecked(err_code),
+                ))),
             }
         }
     }
@@ -134,7 +147,10 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
             match MinifiProcessSessionRemove(self.ptr, flow_file.ptr) {
                 #[allow(non_upper_case_globals)]
                 MinifiStatus_MINIFI_STATUS_SUCCESS => Ok(()),
-                err_code => Err(MinifiError::StatusError(err_code)),
+                err_code => Err(MinifiError::StatusError((
+                    "MinifiProcessSessionRemove".into(),
+                    NonZeroU32::new_unchecked(err_code),
+                ))),
             }
         }
     }
@@ -156,7 +172,10 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
             ) {
                 #[allow(non_upper_case_globals)]
                 MinifiStatus_MINIFI_STATUS_SUCCESS => Ok(()),
-                err_code => Err(MinifiError::StatusError(err_code)),
+                err_code => Err(MinifiError::StatusError((
+                    format!("MinifiFlowFileSetAttribute({}, {})", attr_key, attr_value).into(),
+                    NonZeroU32::new_unchecked(err_code),
+                ))),
             }
         }
     }
@@ -258,7 +277,10 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
             ) {
                 #[allow(non_upper_case_globals)]
                 MinifiStatus_MINIFI_STATUS_SUCCESS => Ok(()),
-                err_code => Err(MinifiError::StatusError(err_code)),
+                err_code => Err(MinifiError::StatusError((
+                    "MinifiProcessSessionWrite".into(),
+                    NonZeroU32::new_unchecked(err_code),
+                ))),
             }
         }
     }
@@ -330,12 +352,14 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                 &mut ctx as *mut _ as *mut c_void,
             );
             if session_status != MinifiStatus_MINIFI_STATUS_SUCCESS {
-                return Err(MinifiError::StatusError(session_status));
+                return Err(MinifiError::StatusError((
+                    "MinifiProcessSessionWrite".into(),
+                    NonZeroU32::new_unchecked(session_status),
+                )));
             }
         }
 
-        ctx.result
-            .unwrap_or(Err(MinifiError::OtherError("Callback execution failed")))
+        ctx.result.unwrap_or(Err(MinifiError::UnknownError)) // todo! Agent returned with success but callback couldn't set the ctx.result maybe panic?
     }
 
     fn read(&self, flow_file: &Self::FlowFile) -> Option<Vec<u8>> {
@@ -424,8 +448,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
                 &mut ctx as *mut _ as *mut c_void,
             );
 
-            ctx.result
-                .unwrap_or(Err(MinifiError::OtherError("Callback execution failed")))
+            ctx.result.unwrap_or(Err(MinifiError::UnknownError)) // todo! Agent returned with success but callback couldn't set the ctx.result maybe panic?
         }
     }
 
@@ -500,7 +523,10 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
             ) {
                 #[allow(non_upper_case_globals)]
                 MinifiStatus_MINIFI_STATUS_SUCCESS => Ok(()),
-                status_code => Err(MinifiError::StatusError(status_code)),
+                status_code => Err(MinifiError::StatusError((
+                    "MinifiProcessSessionRead".into(),
+                    NonZeroU32::new_unchecked(status_code),
+                ))),
             }
         }
     }

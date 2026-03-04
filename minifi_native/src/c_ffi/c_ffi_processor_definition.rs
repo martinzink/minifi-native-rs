@@ -36,7 +36,13 @@ where
             match processor.on_trigger(&mut context, &mut session) {
                 Ok(OnTriggerResult::Ok) => MinifiStatus_MINIFI_STATUS_SUCCESS,
                 Ok(OnTriggerResult::Yield) => MinifiStatus_MINIFI_STATUS_PROCESSOR_YIELD,
-                Err(error_code) => error_code.to_status(),
+                Err(minifi_error) => {
+                    processor.log(
+                        LogLevel::Error,
+                        &format!("Error during on_trigger {}", minifi_error),
+                    );
+                    minifi_error.to_status()
+                }
             }
         }
     }
@@ -150,7 +156,10 @@ where
             match processor.on_schedule(&context) {
                 Ok(_) => 0,
                 Err(error_code) => {
-                    processor.log(LogLevel::Error, format!("{:?}", error_code).as_str());
+                    processor.log(
+                        LogLevel::Error,
+                        &format!("Error during on_schedule: {}", error_code),
+                    );
                     error_code.to_status()
                 }
             }

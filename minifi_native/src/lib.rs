@@ -47,13 +47,7 @@ pub use mock::{
 #[cfg_attr(target_os = "linux", unsafe(link_section = ".rodata"))]
 #[cfg_attr(target_os = "macos", unsafe(link_section = "__DATA,__const"))]
 #[cfg_attr(target_os = "windows", unsafe(link_section = ".rdata"))]
-pub static MinifiApiVersion: &str = const_format::concatcp!(
-    minifi_native_sys::MINIFI_API_MAJOR_VERSION,
-    ".",
-    minifi_native_sys::MINIFI_API_MINOR_VERSION,
-    ".",
-    minifi_native_sys::MINIFI_API_PATCH_VERSION,
-);
+pub static MinifiApiVersion: u32 = minifi_native_sys::MINIFI_API_VERSION;
 
 #[macro_export]
 macro_rules! declare_minifi_extension {
@@ -65,8 +59,9 @@ macro_rules! declare_minifi_extension {
         #[unsafe(no_mangle)]
         #[allow(non_snake_case)]
         pub extern "C" fn MinifiInitExtension(
+            extension: *mut minifi_native::sys::MinifiExtension,
             _config: *mut minifi_native::sys::MinifiConfig,
-        ) -> *mut minifi_native::sys::MinifiExtension {
+        ) {
 
             use minifi_native::c_ffi::StaticStrAsMinifiCStr;
 
@@ -98,7 +93,7 @@ macro_rules! declare_minifi_extension {
                     controller_services_ptr: controller_list.get_controller_service_ptr(),
                 };
 
-                minifi_native::sys::MinifiCreateExtension(&extension_create_info)
+                assert_eq!(minifi_native::sys::MinifiCreateExtension(extension, &extension_create_info), minifi_native::sys::MinifiStatus_MINIFI_STATUS_SUCCESS);
             }
         }
     };

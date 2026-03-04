@@ -1,6 +1,8 @@
 mod properties;
 mod relationships;
 
+use crate::controller_services::lorem_ipsum_controller_service::LoremIpsumControllerService;
+use crate::processors::kamikaze_processor::properties::NOT_REGISTERED_PROPERTY;
 use minifi_native::macros::ComponentIdentifier;
 use minifi_native::{
     CalculateMetrics, ConstTrigger, GetProperty, Logger, MinifiError, OnTriggerResult,
@@ -13,13 +15,14 @@ use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
 enum KamikazeBehaviour {
     ReturnErr,
     ReturnOk,
+    GetNotRegisteredProperty,
+    GetInvalidControllerService,
     Panic,
 }
 
 #[derive(Debug, ComponentIdentifier)]
 pub(crate) struct KamikazeProcessorRs {
     on_trigger_behaviour: KamikazeBehaviour,
-    read_behaviour: Option<KamikazeBehaviour>,
 }
 
 impl Schedule for KamikazeProcessorRs {
@@ -31,9 +34,6 @@ impl Schedule for KamikazeProcessorRs {
             .get_property(&properties::ON_TRIGGER_BEHAVIOUR)?
             .expect("required property")
             .parse::<KamikazeBehaviour>()?;
-        let read_behaviour = context
-            .get_property(&properties::READ_BEHAVIOUR)?
-            .map(|s| s.parse::<KamikazeBehaviour>().unwrap());
 
         let on_schedule_behaviour = context
             .get_property(&properties::ON_SCHEDULE_BEHAVIOUR)?
@@ -41,13 +41,23 @@ impl Schedule for KamikazeProcessorRs {
             .parse::<KamikazeBehaviour>()?;
 
         match on_schedule_behaviour {
-            KamikazeBehaviour::ReturnErr => Err(MinifiError::UnknownError),
+            KamikazeBehaviour::ReturnErr => Err(MinifiError::schedule_err(
+                "it was designed to fail during schedule",
+            )),
             KamikazeBehaviour::ReturnOk => Ok(KamikazeProcessorRs {
                 on_trigger_behaviour,
-                read_behaviour,
             }),
+            KamikazeBehaviour::GetNotRegisteredProperty => {
+                let _ = context.get_property(&NOT_REGISTERED_PROPERTY)?;
+                Ok(KamikazeProcessorRs {
+                    on_trigger_behaviour,
+                })
+            }
             KamikazeBehaviour::Panic => {
                 panic!("KamikazeProcessor::on_schedule panic")
+            }
+            KamikazeBehaviour::GetInvalidControllerService => {
+                todo!()
             }
         }
     }
@@ -56,8 +66,8 @@ impl Schedule for KamikazeProcessorRs {
 impl ConstTrigger for KamikazeProcessorRs {
     fn trigger<PC, PS, L>(
         &self,
-        _context: &mut PC,
-        session: &mut PS,
+        context: &mut PC,
+        _session: &mut PS,
         _logger: &L,
     ) -> Result<OnTriggerResult, MinifiError>
     where
@@ -65,25 +75,23 @@ impl ConstTrigger for KamikazeProcessorRs {
         PS: ProcessSession<FlowFile = PC::FlowFile>,
         L: Logger,
     {
-        if let Some(read_behaviour) = self.read_behaviour
-            && let Some(flow_file) = session.get()
-        {
-            let _read = session.read_in_batches(&flow_file, 1, |_data| match read_behaviour {
-                KamikazeBehaviour::ReturnErr => Err(MinifiError::UnknownError),
-                KamikazeBehaviour::ReturnOk => Ok(()),
-                KamikazeBehaviour::Panic => {
-                    panic!("KamikazeProcessor::on_trigger panic")
-                }
-            });
-
-            session.transfer(flow_file, relationships::SUCCESS.name)?;
-        }
-
         match self.on_trigger_behaviour {
-            KamikazeBehaviour::ReturnErr => Err(MinifiError::UnknownError),
+            KamikazeBehaviour::ReturnErr => Err(MinifiError::trigger_err(
+                "it was designed to fail in trigger",
+            )),
             KamikazeBehaviour::ReturnOk => Ok(OnTriggerResult::Ok),
             KamikazeBehaviour::Panic => {
                 panic!("KamikazeProcessor::on_trigger panic")
+            }
+            KamikazeBehaviour::GetNotRegisteredProperty => {
+                let _ = context.get_property(&NOT_REGISTERED_PROPERTY, None)?;
+                Ok(OnTriggerResult::Ok)
+            }
+            KamikazeBehaviour::GetInvalidControllerService => {
+                let _ = context.get_controller_service::<LoremIpsumControllerService>(
+                    &NOT_REGISTERED_PROPERTY,
+                )?;
+                Ok(OnTriggerResult::Ok)
             }
         }
     }

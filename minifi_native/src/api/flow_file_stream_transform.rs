@@ -4,9 +4,9 @@ use crate::api::process_session::IoState;
 use crate::api::raw::raw_processor::RawMultiThreadedTrigger;
 use crate::c_ffi::{DynRawProcessorDefinition, RawProcessorDefinition, RawRegisterableProcessor};
 use crate::{
-    CalculateMetrics, ComponentIdentifier, Concurrent, GetControllerService, GetProperty,
-    InputStream, LogLevel, Logger, MinifiError, OnTriggerResult, OutputStream, ProcessContext,
-    ProcessSession, Processor, ProcessorDefinition, Relationship, Schedule,
+    CalculateMetrics, ComponentIdentifier, Concurrent, GetAttribute, GetControllerService,
+    GetProperty, InputStream, LogLevel, Logger, MinifiError, OnTriggerResult, OutputStream,
+    ProcessContext, ProcessSession, Processor, ProcessorDefinition, Relationship, Schedule,
 };
 use std::collections::HashMap;
 
@@ -50,7 +50,7 @@ impl TransformStreamResult {
 }
 
 pub trait FlowFileStreamTransform {
-    fn transform<Ctx: GetProperty + GetControllerService, LoggerImpl: Logger>(
+    fn transform<Ctx: GetProperty + GetControllerService + GetAttribute, LoggerImpl: Logger>(
         &self,
         context: &Ctx,
         input_stream: &mut dyn InputStream,
@@ -109,8 +109,8 @@ where
                 Ok(OnTriggerResult::Yield)
             }
         } else {
-            Err(MinifiError::TriggerError(
-                "The processor hasn't been scheduled yet".to_string(),
+            Err(MinifiError::trigger_err(
+                "The processor hasn't been scheduled yet",
             ))
         }
     }

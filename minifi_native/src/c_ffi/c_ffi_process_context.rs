@@ -5,6 +5,7 @@ use crate::api::{ProcessContext, RawControllerService};
 use crate::{ComponentIdentifier, EnableControllerService, MinifiError, Property};
 use minifi_native_sys::*;
 use std::ffi::c_void;
+use std::num::NonZeroU32;
 
 /// A safe wrapper around a `MinifiProcessContext` pointer.
 pub struct CffiProcessContext<'a> {
@@ -98,23 +99,25 @@ impl<'a> ProcessContext for CffiProcessContext<'a> {
         let mut result: Option<String> = None;
         let property_name: StringView = StringView::new(property.name);
 
-        let status = unsafe {
-            MinifiProcessContextGetProperty(
+        #[allow(non_upper_case_globals)]
+        unsafe {
+            match MinifiProcessContextGetProperty(
                 self.ptr,
                 property_name.as_raw(),
                 ff_ptr,
                 Some(get_property_callback),
                 &mut result as *mut _ as *mut c_void,
-            )
-        };
-
-        #[allow(non_upper_case_globals)]
-        match status {
-            MinifiStatus_MINIFI_STATUS_SUCCESS => Ok(result),
-            _ => match property.is_required {
-                true => Err(MinifiError::MissingRequiredProperty(property.name)),
-                false => Ok(None),
-            },
+            ) {
+                MinifiStatus_MINIFI_STATUS_SUCCESS => Ok(result),
+                MinifiStatus_MINIFI_STATUS_PROPERTY_NOT_SET => match property.is_required {
+                    true => Err(MinifiError::MissingRequiredProperty(property.name)),
+                    false => Ok(None),
+                },
+                err_code => Err(MinifiError::StatusError((
+                    format!("MinifiProcessContextGetProperty({:?})", property.name).into(),
+                    NonZeroU32::new_unchecked(err_code),
+                ))),
+            }
         }
     }
 
@@ -141,7 +144,15 @@ impl<'a> ProcessContext for CffiProcessContext<'a> {
                     &mut helper as *mut _ as *mut c_void,
                 );
                 if get_cs_status != MinifiStatus_MINIFI_STATUS_SUCCESS {
-                    return Err(MinifiError::StatusError(get_cs_status));
+                    return Err(MinifiError::StatusError((
+                        format!(
+                            "MinifiProcessContextGetControllerService::<{:?}>({:?})",
+                            Cs::CLASS_NAME,
+                            service_name
+                        )
+                        .into(),
+                        NonZeroU32::new_unchecked(get_cs_status),
+                    )));
                 }
             }
 

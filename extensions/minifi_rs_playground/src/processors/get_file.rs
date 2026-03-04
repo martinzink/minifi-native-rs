@@ -214,7 +214,7 @@ impl Schedule for GetFileRs {
             .expect("Required property")
             .into();
         if !input_directory.is_dir() {
-            return Err(MinifiError::ScheduleError(format!(
+            return Err(MinifiError::schedule_err(format!(
                 "{:?} is not a valid directory",
                 input_directory
             )));

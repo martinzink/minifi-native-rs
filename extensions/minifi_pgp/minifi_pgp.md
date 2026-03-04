@@ -50,10 +50,10 @@ In the list below, the names of required properties appear in bold. Any other pr
 
 ### Output Attributes
 
-| Attribute                 | Relationship | Description                               |
-|---------------------------|--------------|-------------------------------------------|
-| pgp.literal.data.filename | success      | Filename from decrypted Literal Data      |
-| pgp.literal.data.modified | success      | Modified Date from decrypted Literal Data |
+| Attribute                 | Relationship | Description                                                                                                                                                                                                                                                                                                                                                  |
+|---------------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| pgp.literal.data.filename | success      | Filename from decrypted Literal Data (Note that OpenPGP signatures do not include the formatting octet, the file name, and the date field of the Literal Data packet in a signature hash; therefore, those fields are not protected against tampering in a signed document. Therefore a lot of implementation omit these inherently malleable metadata)      |
+| pgp.literal.data.modified | success      | Modified Date from decrypted Literal Data (Note that OpenPGP signatures do not include the formatting octet, the file name, and the date field of the Literal Data packet in a signature hash; therefore, those fields are not protected against tampering in a signed document. Therefore a lot of implementation omit these inherently malleable metadata) |
 
 
 ## EncryptContentPGP

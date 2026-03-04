@@ -13,6 +13,5 @@ impl ProcessorDefinition for KamikazeProcessorRs {
     const PROPERTIES: &'static [Property] = &[
         properties::ON_SCHEDULE_BEHAVIOUR,
         properties::ON_TRIGGER_BEHAVIOUR,
-        properties::READ_BEHAVIOUR,
     ];
 }

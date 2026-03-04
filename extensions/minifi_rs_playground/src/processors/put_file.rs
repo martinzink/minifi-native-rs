@@ -118,8 +118,7 @@ impl PutFileRs {
                 logger.warn(format!("Failed to prepare destination due to {:?}", err).as_str());
             }
         }
-        let mut file = std::fs::File::create(destination)
-            .map_err(|e| MinifiError::TriggerError(e.to_string()))?;
+        let mut file = std::fs::File::create(destination)?;
         match self.unix_permissions.set_file_permissions(destination) {
             Ok(_) => {}
             Err(err) => {

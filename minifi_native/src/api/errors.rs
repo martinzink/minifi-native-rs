@@ -1,26 +1,17 @@
-use minifi_native_sys::{MinifiStatus, MinifiStatus_MINIFI_STATUS_UNKNOWN_ERROR};
+use minifi_native_sys::MinifiStatus;
+use std::borrow::Cow;
 use std::ffi::NulError;
-use std::num::ParseIntError;
+use std::fmt;
+use std::num::{NonZeroU32, ParseIntError};
 use std::str::ParseBoolError;
 
 #[derive(Debug, Clone)]
-pub struct SizeParseError(pub byte_unit::ParseError);
-
-impl PartialEq for SizeParseError {
-    fn eq(&self, _other: &Self) -> bool {
-        true
-    }
-}
-
-impl Eq for SizeParseError {}
-
-#[derive(Debug, Clone, PartialEq)]
 pub enum ParseError {
     Strum(strum::ParseError),
     Bool(ParseBoolError),
     Int(ParseIntError),
     Duration(humantime::DurationError),
-    Size(SizeParseError),
+    Size(byte_unit::ParseError),
     Nul(NulError),
     Other,
 }
@@ -28,15 +19,14 @@ pub enum ParseError {
 #[derive(Debug)]
 pub enum MinifiError {
     UnknownError,
-    MissingRequiredProperty(&'static str),
-    ControllerServiceError(&'static str),
-    OtherError(&'static str),
-    InvalidValidator,
+    StatusError((Cow<'static, str>, NonZeroU32)),
+    MissingRequiredProperty(&'static str), // maybe Cow instead?
+    ControllerServiceError(&'static str),  // maybe Cow instead?
+    InvalidValidator,                      // todo! (maybe add more context?)
+    ScheduleError(Cow<'static, str>),
+    TriggerError(Cow<'static, str>),
     Parse(ParseError),
-    ScheduleError(String),
-    TriggerError(String),
     IoError(std::io::Error),
-    StatusError(u32),
 }
 
 impl From<std::io::Error> for MinifiError {
@@ -71,7 +61,7 @@ impl From<humantime::DurationError> for MinifiError {
 
 impl From<byte_unit::ParseError> for MinifiError {
     fn from(err: byte_unit::ParseError) -> Self {
-        MinifiError::Parse(ParseError::Size(SizeParseError(err)))
+        MinifiError::Parse(ParseError::Size(err))
     }
 }
 
@@ -83,6 +73,43 @@ impl From<NulError> for MinifiError {
 
 impl MinifiError {
     pub(crate) fn to_status(&self) -> MinifiStatus {
-        MinifiStatus_MINIFI_STATUS_UNKNOWN_ERROR
+        minifi_native_sys::MinifiStatus_MINIFI_STATUS_UNKNOWN_ERROR
+    }
+
+    pub fn schedule_err<S: Into<Cow<'static, str>>>(msg: S) -> Self {
+        MinifiError::ScheduleError(msg.into())
+    }
+
+    pub fn trigger_err<S: Into<Cow<'static, str>>>(msg: S) -> Self {
+        MinifiError::TriggerError(msg.into())
+    }
+}
+
+impl fmt::Display for MinifiError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            MinifiError::StatusError((context, code)) => match code.get() {
+                minifi_native_sys::MinifiStatus_MINIFI_STATUS_UNKNOWN_ERROR => {
+                    write!(f, "{}, unknown error", context)
+                }
+                minifi_native_sys::MinifiStatus_MINIFI_STATUS_NOT_SUPPORTED_PROPERTY => {
+                    write!(f, "{}, not supported property", context)
+                }
+                minifi_native_sys::MinifiStatus_MINIFI_STATUS_DYNAMIC_PROPERTIES_NOT_SUPPORTED => {
+                    write!(f, "{}, dynamic properties not supported", context)
+                }
+                minifi_native_sys::MinifiStatus_MINIFI_STATUS_PROPERTY_NOT_SET => {
+                    write!(f, "{}, property not set", context)
+                }
+                minifi_native_sys::MinifiStatus_MINIFI_STATUS_VALIDATION_FAILED => {
+                    write!(f, "{}, validation failed", context)
+                }
+                minifi_native_sys::MinifiStatus_MINIFI_STATUS_PROCESSOR_YIELD => {
+                    write!(f, "{}, processor yield", context)
+                }
+                _ => write!(f, "{} (Unknown Status Code: {})", context, code),
+            },
+            _ => write!(f, "{:?}", self),
+        }
     }
 }

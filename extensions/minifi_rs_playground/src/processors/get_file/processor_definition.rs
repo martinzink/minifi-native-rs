@@ -17,6 +17,7 @@ impl ProcessorDefinition for GetFileRs {
     const RELATIONSHIPS: &'static [Relationship] = &[relationships::SUCCESS];
     const PROPERTIES: &'static [Property] = &[
         DIRECTORY,
+        POLLING_INTERVAL,
         RECURSE,
         KEEP_SOURCE_FILE,
         MIN_AGE,

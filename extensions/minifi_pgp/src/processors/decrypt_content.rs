@@ -44,8 +44,8 @@ impl Schedule for DecryptContentPGP {
             .and_then(|pwd_str| Option::from(pgp::types::Password::from(pwd_str)));
         let has_context_service = context.get_property(&PRIVATE_KEY_SERVICE)?.is_some();
         if !has_context_service && symmetric_password.is_none() {
-            Err(MinifiError::ScheduleError(
-                "Either Symmetric Password or Private Key Service must be set".to_string(),
+            Err(MinifiError::schedule_err(
+                "Either Symmetric Password or Private Key Service must be set",
             ))
         } else {
             Ok(DecryptContentPGP {
@@ -98,7 +98,7 @@ impl DecryptContentPGP {
             }
             attributes_to_add.insert(
                 output_attributes::LITERAL_DATA_MODIFIED.name.to_string(),
-                (literal_data_header.created().as_secs() as u64 * 1000).to_string(), // Nifi uses ms timestamp
+                (1000u64 * literal_data_header.created().as_secs() as u64).to_string(), // Nifi uses ms timestamp
             );
         }
         attributes_to_add
@@ -119,7 +119,7 @@ impl FlowFileStreamTransform for DecryptContentPGP {
         };
 
         let Ok(mut decrypted_msg) = self.decrypt_msg(msg, context, logger) else {
-            logger.debug("Failed to decrypt data");
+            logger.warn("Failed to decrypt data");
             return Ok(TransformStreamResult::route_without_changes(&FAILURE));
         };
 
@@ -129,7 +129,7 @@ impl FlowFileStreamTransform for DecryptContentPGP {
                     decrypted_msg = decompressed_data;
                 }
                 Err(e) => {
-                    logger.debug(&format!("Failed to decompress data: {}", e));
+                    logger.warn(&format!("Failed to decompress data: {}", e));
                     return Ok(TransformStreamResult::route_without_changes(&FAILURE));
                 }
             }
@@ -138,7 +138,7 @@ impl FlowFileStreamTransform for DecryptContentPGP {
         let attributes_to_add = Self::extract_attributes_from_decrypted_message(&decrypted_msg);
         let Ok(_written_bytes) = std::io::copy(&mut decrypted_msg.into_inner(), output_stream)
         else {
-            logger.debug("Failed to extract raw data from decrypted message");
+            logger.warn("Failed to extract raw data from decrypted message");
             return Ok(TransformStreamResult::route_without_changes(&FAILURE));
         };
 
