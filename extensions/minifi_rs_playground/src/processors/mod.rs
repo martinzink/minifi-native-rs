@@ -1,4 +1,5 @@
 pub(crate) mod asciify_german;
+pub(crate) mod count_actual_logging;
 pub(crate) mod generate_flow_file;
 pub(crate) mod get_file;
 pub(crate) mod kamikaze_processor;

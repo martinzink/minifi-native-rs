@@ -22,7 +22,7 @@ pub enum MinifiError {
     StatusError((Cow<'static, str>, NonZeroU32)),
     MissingRequiredProperty(&'static str), // maybe Cow instead?
     ControllerServiceError(&'static str),  // maybe Cow instead?
-    InvalidValidator,                      // todo! (maybe add more context?)
+    ValidationError(Cow<'static, str>),
     ScheduleError(Cow<'static, str>),
     TriggerError(Cow<'static, str>),
     Parse(ParseError),
@@ -74,6 +74,10 @@ impl From<NulError> for MinifiError {
 impl MinifiError {
     pub(crate) fn to_status(&self) -> MinifiStatus {
         minifi_native_sys::MinifiStatus_MINIFI_STATUS_UNKNOWN_ERROR
+    }
+
+    pub fn validation_err<S: Into<Cow<'static, str>>>(msg: S) -> Self {
+        MinifiError::ValidationError(msg.into())
     }
 
     pub fn schedule_err<S: Into<Cow<'static, str>>>(msg: S) -> Self {

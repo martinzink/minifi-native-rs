@@ -18,6 +18,7 @@ limitations under the License.
 ### Processors
 
 - [AsciifyGerman](#AsciifyGerman)
+- [CountActualLogging](#CountActualLogging)
 - [GenerateFlowFileRs](#GenerateFlowFileRs)
 - [GetFileRs](#GetFileRs)
 - [KamikazeProcessorRs](#KamikazeProcessorRs)
@@ -49,6 +50,25 @@ In the list below, the names of required properties appear in bold. Any other pr
 |---------|-----------------------------------------|
 | success | All asciified flowfiles are routed here |
 | failure | Non-german flowfiles are routed here    |
+
+
+## CountActualLogging
+
+### Description
+
+For testing lazy logging
+
+### Properties
+
+In the list below, the names of required properties appear in bold. Any other properties (not in bold) are considered optional. The table also indicates any default values, and whether a property supports the NiFi Expression Language.
+
+| Name | Default Value | Allowable Values | Description |
+|------|---------------|------------------|-------------|
+
+### Relationships
+
+| Name | Description |
+|------|-------------|
 
 
 ## GenerateFlowFileRs

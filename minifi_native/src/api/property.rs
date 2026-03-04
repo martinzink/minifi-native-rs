@@ -34,7 +34,10 @@ pub trait GetProperty {
     fn get_property(&self, property: &Property) -> Result<Option<String>, MinifiError>;
     fn get_bool_property(&self, property: &Property) -> Result<Option<bool>, MinifiError> {
         if property.validator != BoolValidator {
-            return Err(MinifiError::InvalidValidator);
+            return Err(MinifiError::validation_err(format!(
+                "to use get_bool_property {:?} must have BoolValidator",
+                property
+            )));
         }
 
         if let Some(property_val) = self.get_property(property)? {
@@ -46,7 +49,10 @@ pub trait GetProperty {
 
     fn get_duration_property(&self, property: &Property) -> Result<Option<Duration>, MinifiError> {
         if property.validator != TimePeriodValidator {
-            return Err(MinifiError::InvalidValidator);
+            return Err(MinifiError::validation_err(format!(
+                "to use get_duration_property {:?} must have TimePeriodValidator",
+                property
+            )));
         }
 
         if let Some(property_val) = self.get_property(property)? {
@@ -58,7 +64,10 @@ pub trait GetProperty {
 
     fn get_size_property(&self, property: &Property) -> Result<Option<u64>, MinifiError> {
         if property.validator != DataSizeValidator {
-            return Err(MinifiError::InvalidValidator);
+            return Err(MinifiError::validation_err(format!(
+                "to use get_size_property {:?} must have DataSizeValidator",
+                property
+            )));
         }
         if let Some(property_val) = self.get_property(property)? {
             Ok(Some(byte_unit::Byte::from_str(&property_val)?.as_u64()))
@@ -69,7 +78,10 @@ pub trait GetProperty {
 
     fn get_u64_property(&self, property: &Property) -> Result<Option<u64>, MinifiError> {
         if property.validator != U64Validator {
-            return Err(MinifiError::InvalidValidator);
+            return Err(MinifiError::validation_err(format!(
+                "to use get_u64_property {:?} must have U64Validator",
+                property
+            )));
         }
         if let Some(property_val) = self.get_property(property)? {
             Ok(Some(u64::from_str(&property_val)?))

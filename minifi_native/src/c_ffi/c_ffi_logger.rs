@@ -34,10 +34,6 @@ impl CffiLogger {
 impl Logger for CffiLogger {
     fn log(&self, level: LogLevel, args: fmt::Arguments) {
         unsafe {
-            if !MinifiLoggerShouldLog(self.ptr, level.into()) {
-                return;
-            }
-
             let message = fmt::format(args);
             if let Ok(c_message) = CString::new(message) {
                 MinifiLoggerLogString(
@@ -50,5 +46,9 @@ impl Logger for CffiLogger {
                 );
             }
         }
+    }
+
+    fn should_log(&self, level: LogLevel) -> bool {
+        unsafe { MinifiLoggerShouldLog(self.ptr, level.into()) }
     }
 }

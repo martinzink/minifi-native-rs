@@ -3,7 +3,7 @@ use std::fmt::Debug;
 
 use strum_macros::{Display, EnumString, VariantNames};
 
-#[derive(Debug, Clone, Copy, PartialEq, Display, EnumString, VariantNames)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Display, EnumString, VariantNames)]
 #[strum(serialize_all = "PascalCase", const_into_str)]
 pub enum LogLevel {
     Trace,
@@ -17,6 +17,7 @@ pub enum LogLevel {
 
 pub trait Logger: std::fmt::Debug {
     fn log(&self, level: LogLevel, args: fmt::Arguments);
+    fn should_log(&self, level: LogLevel) -> bool;
 }
 
 /// The "Master" macro that handles the core logic.
@@ -24,7 +25,9 @@ pub trait Logger: std::fmt::Debug {
 #[macro_export]
 macro_rules! log {
     ($logger:expr, $level:expr, $($arg:tt)+) => {
-        $logger.log($level, format_args!($($arg)+))
+        if $logger.should_log($level) {
+            $logger.log($level, format_args!($($arg)+))
+        }
     };
 }
 
