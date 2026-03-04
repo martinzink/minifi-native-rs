@@ -42,8 +42,8 @@ where
         }
     }
 
-    fn log(&self, log_level: LogLevel, message: &str) {
-        self.logger.log(log_level, message);
+    fn log(&self, log_level: LogLevel, args: std::fmt::Arguments) {
+        self.logger.log(log_level, args);
     }
 
     fn enable<P: GetProperty>(&mut self, context: &P) -> Result<(), MinifiError> {

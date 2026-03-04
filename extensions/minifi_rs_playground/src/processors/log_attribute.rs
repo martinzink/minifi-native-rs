@@ -2,7 +2,7 @@ use crate::processors::log_attribute::properties::{FLOW_FILES_TO_LOG, LOG_LEVEL,
 use minifi_native::macros::{ComponentIdentifier, DefaultMetrics, NoAdvancedProcessorFeatures};
 use minifi_native::{
     ConstTrigger, GetProperty, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext,
-    ProcessSession, Property, Schedule,
+    ProcessSession, Property, Schedule, debug, log, trace,
 };
 
 mod properties;
@@ -74,12 +74,9 @@ impl ConstTrigger for LogAttributeRs {
         PS: ProcessSession<FlowFile = PC::FlowFile>,
         L: Logger,
     {
-        logger.trace(
-            format!(
-                "enter log attribute, attempting to retrieve {} flow files",
-                self.flow_files_to_log
-            )
-            .as_str(),
+        trace!(
+            logger,
+            "enter log attribute, attempting to retrieve {} flow files", self.flow_files_to_log
         );
         let max_flow_files_to_process = if self.flow_files_to_log == 0 {
             usize::MAX
@@ -90,14 +87,14 @@ impl ConstTrigger for LogAttributeRs {
         for _ in 0..max_flow_files_to_process {
             if let Some(mut flow_file) = session.get() {
                 let log_msg = self.generate_log_message(session, &mut flow_file);
-                logger.log(self.log_level, log_msg.as_str());
+                log!(logger, self.log_level, "{}", log_msg);
                 session.transfer(flow_file, relationships::SUCCESS.name)?;
                 flow_files_processed += 1;
             } else {
                 break;
             }
         }
-        logger.debug(format!("Logged {} flow files", flow_files_processed).as_str());
+        debug!(logger, "Logged {} flow files", flow_files_processed);
 
         Ok(OnTriggerResult::Ok)
     }

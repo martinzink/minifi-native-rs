@@ -6,7 +6,7 @@ use crate::processors::lorem_ipsum_cs_user::relationships::SUCCESS;
 use minifi_native::macros::{ComponentIdentifier, DefaultMetrics, NoAdvancedProcessorFeatures};
 use minifi_native::{
     Content, FlowFileSource, GeneratedFlowFile, GetControllerService, GetProperty, Logger,
-    MinifiError, Schedule,
+    MinifiError, Schedule, trace,
 };
 use std::collections::HashMap;
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
@@ -42,7 +42,7 @@ impl FlowFileSource for LoremIpsumCSUser {
         context: &'a mut Context,
         logger: &LoggerImpl,
     ) -> Result<Vec<GeneratedFlowFile<'a>>, MinifiError> {
-        logger.trace(&format!("generate call {:?}", self));
+        trace!(logger, "generate call {:?}", self);
         let controller_service = context
             .get_controller_service::<LoremIpsumControllerService>(&CONTROLLER_SERVICE)?
             .ok_or(MinifiError::MissingRequiredProperty(

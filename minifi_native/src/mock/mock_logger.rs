@@ -1,5 +1,6 @@
 use crate::api::LogLevel;
 use crate::api::Logger;
+use std::fmt;
 use std::sync::Mutex;
 
 #[derive(Debug)]
@@ -8,7 +9,8 @@ pub struct MockLogger {
 }
 
 impl Logger for MockLogger {
-    fn log(&self, level: LogLevel, message: &str) {
+    fn log(&self, level: LogLevel, args: fmt::Arguments) {
+        let message = fmt::format(args);
         let mut logs_guard = self.logs.lock().unwrap();
         logs_guard.push((level, message.to_string()));
     }
@@ -26,7 +28,8 @@ impl MockLogger {
 pub struct StdLogger {}
 
 impl Logger for StdLogger {
-    fn log(&self, level: LogLevel, message: &str) {
+    fn log(&self, level: LogLevel, args: fmt::Arguments) {
+        let message = fmt::format(args);
         println!("[{}] {}", level, message);
     }
 }

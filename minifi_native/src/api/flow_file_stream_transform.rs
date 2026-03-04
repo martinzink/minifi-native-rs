@@ -107,7 +107,7 @@ where
 
                 Ok(OnTriggerResult::Ok)
             } else {
-                self.log(LogLevel::Trace, "No flowfile to transform");
+                self.log(LogLevel::Trace, format_args!("No flowfile to transform"));
                 Ok(OnTriggerResult::Yield)
             }
         } else {

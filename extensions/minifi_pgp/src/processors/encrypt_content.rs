@@ -1,6 +1,6 @@
 use minifi_native::{
     FlowFileStreamTransform, GetAttribute, GetControllerService, GetProperty, InputStream, Logger,
-    MinifiError, OutputStream, Schedule, TransformStreamResult,
+    MinifiError, OutputStream, Schedule, TransformStreamResult, warn,
 };
 use pgp::composed::{ArmorOptions, MessageBuilder, SignedPublicKey};
 use pgp::types::StringToKey;
@@ -118,7 +118,7 @@ impl FlowFileStreamTransform for EncryptContentPGP {
         };
         let password = context.get_property(&PASSWORD)?;
         if public_key.is_none() && password.is_none() {
-            logger.warn("No password or public key to encrypt with");
+            warn!(logger, "No password or public key to encrypt with");
             return Ok(TransformStreamResult::route_without_changes(&FAILURE));
         }
 
@@ -137,7 +137,7 @@ impl FlowFileStreamTransform for EncryptContentPGP {
                 )]),
             )),
             Err(e) => {
-                logger.warn(&format!("Failed to encrypt content {:?}", e));
+                warn!(logger, "Failed to encrypt content {:?}", e);
                 Ok(TransformStreamResult::route_without_changes(&FAILURE))
             }
         }

@@ -8,7 +8,7 @@ use crate::processors::decrypt_content::relationships::{FAILURE, SUCCESS};
 use minifi_native::macros::{ComponentIdentifier, DefaultMetrics, NoAdvancedProcessorFeatures};
 use minifi_native::{
     FlowFileStreamTransform, GetControllerService, GetProperty, InputStream, Logger, MinifiError,
-    OutputStream, Schedule, TransformStreamResult,
+    OutputStream, Schedule, TransformStreamResult, warn,
 };
 use pgp::composed::{Message, TheRing};
 use std::collections::HashMap;
@@ -114,12 +114,12 @@ impl FlowFileStreamTransform for DecryptContentPGP {
         logger: &LoggerImpl,
     ) -> Result<TransformStreamResult, MinifiError> {
         let Ok(msg) = Message::from_reader(input_stream).map(|(msg, _header)| msg) else {
-            logger.debug("No valid PGP message found");
+            warn!(logger, "No valid PGP message found");
             return Ok(TransformStreamResult::route_without_changes(&FAILURE));
         };
 
         let Ok(mut decrypted_msg) = self.decrypt_msg(msg, context, logger) else {
-            logger.warn("Failed to decrypt data");
+            warn!(logger, "Failed to decrypt data");
             return Ok(TransformStreamResult::route_without_changes(&FAILURE));
         };
 
@@ -129,7 +129,7 @@ impl FlowFileStreamTransform for DecryptContentPGP {
                     decrypted_msg = decompressed_data;
                 }
                 Err(e) => {
-                    logger.warn(&format!("Failed to decompress data: {}", e));
+                    warn!(logger, "Failed to decompress data: {}", e);
                     return Ok(TransformStreamResult::route_without_changes(&FAILURE));
                 }
             }
@@ -138,7 +138,7 @@ impl FlowFileStreamTransform for DecryptContentPGP {
         let attributes_to_add = Self::extract_attributes_from_decrypted_message(&decrypted_msg);
         let Ok(_written_bytes) = std::io::copy(&mut decrypted_msg.into_inner(), output_stream)
         else {
-            logger.warn("Failed to extract raw data from decrypted message");
+            warn!(logger, "Failed to extract raw data from decrypted message");
             return Ok(TransformStreamResult::route_without_changes(&FAILURE));
         };
 

@@ -1,6 +1,6 @@
 use crate::api::{RawProcessor, RawThreadingModel};
 use crate::c_ffi::CffiLogger;
-use crate::{GetProperty, LogLevel, Logger, MinifiError, ProcessContext};
+use crate::{GetProperty, LogLevel, Logger, MinifiError, ProcessContext, warn};
 use std::marker::PhantomData;
 
 pub trait Schedule {
@@ -71,8 +71,8 @@ where
             .unwrap_or(false)
     }
 
-    fn log(&self, log_level: LogLevel, message: &str) {
-        self.logger.log(log_level, message);
+    fn log(&self, log_level: LogLevel, args: std::fmt::Arguments) {
+        self.logger.log(log_level, args);
     }
 
     fn on_schedule<P: ProcessContext>(&mut self, context: &P) -> Result<(), MinifiError> {
@@ -90,8 +90,10 @@ where
         if let Some(ref scheduled_impl) = self.scheduled_impl {
             scheduled_impl.calculate_metrics()
         } else {
-            self.logger
-                .warn("Calculating metrics before processor is scheduled.");
+            warn!(
+                self.logger,
+                "Calculating metrics before processor is scheduled."
+            );
             vec![]
         }
     }

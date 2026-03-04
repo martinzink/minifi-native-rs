@@ -1,3 +1,4 @@
+use std::fmt;
 use std::fmt::Debug;
 
 use strum_macros::{Display, EnumString, VariantNames};
@@ -14,25 +15,63 @@ pub enum LogLevel {
     Off,
 }
 
-pub trait Logger: Debug {
-    fn log(&self, level: LogLevel, message: &str);
+pub trait Logger: std::fmt::Debug {
+    fn log(&self, level: LogLevel, args: fmt::Arguments);
+}
 
-    fn trace(&self, message: &str) {
-        self.log(LogLevel::Trace, message);
-    }
-    fn debug(&self, message: &str) {
-        self.log(LogLevel::Debug, message);
-    }
-    fn info(&self, message: &str) {
-        self.log(LogLevel::Info, message);
-    }
-    fn warn(&self, message: &str) {
-        self.log(LogLevel::Warn, message);
-    }
-    fn error(&self, message: &str) {
-        self.log(LogLevel::Error, message);
-    }
-    fn critical(&self, message: &str) {
-        self.log(LogLevel::Critical, message);
-    }
+/// The "Master" macro that handles the core logic.
+/// It takes the logger instance, the level, and the format string/args.
+#[macro_export]
+macro_rules! log {
+    ($logger:expr, $level:expr, $($arg:tt)+) => {
+        $logger.log($level, format_args!($($arg)+))
+    };
+}
+
+/// Log at the Trace level
+#[macro_export]
+macro_rules! trace {
+    ($logger:expr, $($arg:tt)+) => {
+        $crate::log!($logger, $crate::LogLevel::Trace, $($arg)+)
+    };
+}
+
+/// Log at the Debug level
+#[macro_export]
+macro_rules! debug {
+    ($logger:expr, $($arg:tt)+) => {
+        $crate::log!($logger, $crate::LogLevel::Debug, $($arg)+)
+    };
+}
+
+/// Log at the Info level
+#[macro_export]
+macro_rules! info {
+    ($logger:expr, $($arg:tt)+) => {
+        $crate::log!($logger, $crate::LogLevel::Info, $($arg)+)
+    };
+}
+
+/// Log at the Warn level
+#[macro_export]
+macro_rules! warn {
+    ($logger:expr, $($arg:tt)+) => {
+        $crate::log!($logger, $crate::LogLevel::Warn, $($arg)+)
+    };
+}
+
+/// Log at the Error level
+#[macro_export]
+macro_rules! error {
+    ($logger:expr, $($arg:tt)+) => {
+        $crate::log!($logger, $crate::LogLevel::Error, $($arg)+)
+    };
+}
+
+/// Log at the Critical level
+#[macro_export]
+macro_rules! critical {
+    ($logger:expr, $($arg:tt)+) => {
+        $crate::log!($logger, $crate::LogLevel::Critical, $($arg)+)
+    };
 }

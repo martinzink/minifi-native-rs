@@ -2,7 +2,7 @@ use crate::processors::put_file::relationships::{FAILURE, SUCCESS};
 use minifi_native::macros::{ComponentIdentifier, DefaultMetrics, NoAdvancedProcessorFeatures};
 use minifi_native::{
     FlowFileTransform, GetAttribute, GetControllerService, GetProperty, InputStream, Logger,
-    MinifiError, Schedule, TransformedFlowFile,
+    MinifiError, Schedule, TransformedFlowFile, trace, warn,
 };
 use std::path::{Path, PathBuf};
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
@@ -115,14 +115,14 @@ impl PutFileRs {
         match self.prepare_destination(destination) {
             Ok(_) => {}
             Err(err) => {
-                logger.warn(format!("Failed to prepare destination due to {:?}", err).as_str());
+                warn!(logger, "Failed to prepare destination due to {:?}", err);
             }
         }
         let mut file = std::fs::File::create(destination)?;
         match self.unix_permissions.set_file_permissions(destination) {
             Ok(_) => {}
             Err(err) => {
-                logger.warn(format!("Failed to set file permissions due to {:?}", err).as_str());
+                warn!(logger, "Failed to set file permissions due to {:?}", err);
             }
         }
 
@@ -199,15 +199,15 @@ impl FlowFileTransform for PutFileRs {
     where
         'ctx: 'stream,
     {
-        logger.trace(format!("on_trigger: {:?}", self).as_str());
+        trace!(logger, "on_trigger: {:?}", self);
 
         let Ok(destination_path) = Self::get_destination_path(context) else {
-            logger.warn("Invalid destination path");
+            warn!(logger, "Invalid destination path");
             return Ok(TransformedFlowFile::route_without_changes(&FAILURE));
         };
 
         if self.directory_is_full(&destination_path) {
-            logger.warn("Directory is full");
+            warn!(logger, "Directory is full");
             return Ok(TransformedFlowFile::route_without_changes(&FAILURE));
         }
 

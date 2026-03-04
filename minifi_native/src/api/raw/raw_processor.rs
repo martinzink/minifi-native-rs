@@ -22,7 +22,7 @@ pub trait RawProcessor: Sized {
     fn restore(&self) -> bool;
     fn get_trigger_when_empty(&self) -> bool;
     fn is_work_available(&self) -> bool;
-    fn log(&self, log_level: LogLevel, message: &str);
+    fn log(&self, log_level: LogLevel, args: std::fmt::Arguments);
     fn on_schedule<P: ProcessContext>(&mut self, context: &P) -> Result<(), MinifiError>;
     fn on_unschedule(&mut self);
     fn calculate_metrics(&self) -> Vec<(String, f64)>;

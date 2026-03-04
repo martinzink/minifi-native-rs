@@ -39,7 +39,7 @@ where
                 Err(minifi_error) => {
                     processor.log(
                         LogLevel::Error,
-                        &format!("Error during on_trigger {}", minifi_error),
+                        format_args!("Error during on_trigger {}", minifi_error),
                     );
                     minifi_error.to_status()
                 }
@@ -158,7 +158,7 @@ where
                 Err(error_code) => {
                     processor.log(
                         LogLevel::Error,
-                        &format!("Error during on_schedule: {}", error_code),
+                        format_args!("Error during on_schedule: {}", error_code),
                     );
                     error_code.to_status()
                 }

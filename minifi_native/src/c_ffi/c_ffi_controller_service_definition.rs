@@ -81,7 +81,7 @@ where
             match controller_service.enable(&context) {
                 Ok(_) => 0,
                 Err(err) => {
-                    controller_service.log(LogLevel::Error, format!("{:?}", err).as_str());
+                    controller_service.log(LogLevel::Error, format_args!("{:?}", err));
                     err.to_status()
                 }
             }

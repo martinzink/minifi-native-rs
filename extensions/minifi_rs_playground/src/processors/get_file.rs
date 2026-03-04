@@ -8,7 +8,7 @@ use crate::processors::get_file::properties::{
 use minifi_native::macros::{ComponentIdentifier, NoAdvancedProcessorFeatures};
 use minifi_native::{
     CalculateMetrics, ConstTrigger, GetProperty, IoState, Logger, MinifiError, OnTriggerResult,
-    ProcessContext, ProcessSession, Schedule,
+    ProcessContext, ProcessSession, Schedule, debug, info, trace, warn,
 };
 use std::collections::VecDeque;
 use std::error;
@@ -170,7 +170,7 @@ impl GetFileRs {
         logger: &L,
         path: PathBuf,
     ) -> Result<(), MinifiError> {
-        logger.info(format!("GetFile process {:?}", &path).as_str());
+        info!(logger, "GetFile process {:?}", &path);
         let mut ff = session
             .create()
             .expect("Successful FlowFile creation is expected");
@@ -178,7 +178,7 @@ impl GetFileRs {
         if let Some(file_name) = path.file_name().and_then(|f| f.to_str()) {
             session.set_attribute(&mut ff, FILENAME_OUTPUT_ATTRIBUTE.name, file_name)?;
         } else {
-            logger.warn(format!("Couldnt get filename of {:?}", path).as_str());
+            warn!(logger, "Couldnt get filename of {:?}", path);
         }
         session.set_attribute(
             &mut ff,
@@ -195,7 +195,7 @@ impl GetFileRs {
             match std::fs::remove_file(&path) {
                 Ok(_) => {}
                 Err(err) => {
-                    logger.warn(format!("Failed to remove source file {:?}", err).as_str());
+                    warn!(logger, "Failed to remove source file {:?}", err);
                 }
             }
         }
@@ -272,15 +272,12 @@ impl ConstTrigger for GetFileRs {
         PS: ProcessSession<FlowFile = PC::FlowFile>,
         L: Logger,
     {
-        logger.trace(format!("on_trigger: {:?}", self).as_str());
+        trace!(logger, "on_trigger: {:?}", self);
         {
             let is_dir_empty_before_poll = self.is_listing_empty();
-            logger.debug(
-                format!(
-                    "Listing is {} before polling directory",
-                    is_dir_empty_before_poll
-                )
-                .as_str(),
+            debug!(
+                logger,
+                "Listing is {} before polling directory", is_dir_empty_before_poll
             );
             if is_dir_empty_before_poll {
                 if self.should_poll() {
@@ -290,12 +287,9 @@ impl ConstTrigger for GetFileRs {
         }
         {
             let is_dir_empty_after_poll = self.is_listing_empty();
-            logger.debug(
-                format!(
-                    "Listing is {} after polling directory",
-                    is_dir_empty_after_poll
-                )
-                .as_str(),
+            debug!(
+                logger,
+                "Listing is {} after polling directory", is_dir_empty_after_poll
             );
             if is_dir_empty_after_poll {
                 return Ok(OnTriggerResult::Ok);
