@@ -1,7 +1,7 @@
 use crate::api::RawProcessor;
-use crate::api::context_session_flowfile_bundle::ContextSessionFlowFileBundle;
 use crate::api::process_session::IoState;
 use crate::api::processor::AdvancedProcessorFeatures;
+use crate::api::processor_wrappers::utils::context_session_flowfile_bundle::ContextSessionFlowFileBundle;
 use crate::api::raw::raw_processor::RawMultiThreadedTrigger;
 use crate::c_ffi::{DynRawProcessorDefinition, RawProcessorDefinition, RawRegisterableProcessor};
 use crate::{

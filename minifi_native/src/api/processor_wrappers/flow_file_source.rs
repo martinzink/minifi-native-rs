@@ -1,5 +1,5 @@
-use crate::api::Content;
 use crate::api::processor::AdvancedProcessorFeatures;
+use crate::api::processor_wrappers::utils::flow_file_content::Content;
 use crate::api::raw::raw_processor::RawMultiThreadedTrigger;
 use crate::c_ffi::{DynRawProcessorDefinition, RawProcessorDefinition, RawRegisterableProcessor};
 use crate::{

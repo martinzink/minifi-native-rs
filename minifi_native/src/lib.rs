@@ -4,24 +4,29 @@ pub mod mock;
 
 pub use api::errors::MinifiError;
 
-pub use api::complex_processor::{ComplexProcessorType, ConstTrigger, MutTrigger};
 pub use api::component_definition_traits::{
     ComponentIdentifier, ControllerServiceDefinition, ProcessorDefinition,
 };
 pub use api::controller_service::{ControllerService, EnableControllerService};
-pub use api::flow_file_source::{FlowFileSource, FlowFileSourceProcessorType, GeneratedFlowFile};
-pub use api::flow_file_stream_transform::{
+pub use api::processor_wrappers::complex_processor::{
+    ComplexProcessorType, ConstTrigger, MutTrigger,
+};
+pub use api::processor_wrappers::flow_file_source::{
+    FlowFileSource, FlowFileSourceProcessorType, GeneratedFlowFile,
+};
+pub use api::processor_wrappers::flow_file_stream_transform::{
     FlowFileStreamTransform, FlowFileStreamTransformProcessorType, TransformStreamResult,
 };
-pub use api::flow_file_transform::{
+pub use api::processor_wrappers::flow_file_transform::{
     FlowFileTransform, FlowFileTransformProcessorType, TransformedFlowFile,
 };
 
+pub use api::processor_wrappers::utils::flow_file_content::Content;
+
 pub use api::processor::{AdvancedProcessorFeatures, CalculateMetrics, Processor, Schedule};
 
-pub use api::raw::raw_threading_model::{Concurrent, Exclusive};
+pub use api::raw::raw_processor::{Concurrent, Exclusive};
 
-pub use api::flow_file_content::Content;
 pub use api::logger::{LogLevel, Logger};
 
 pub use api::property::{GetControllerService, GetProperty, Property};

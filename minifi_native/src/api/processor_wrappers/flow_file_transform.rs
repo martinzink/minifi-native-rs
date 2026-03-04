@@ -1,6 +1,6 @@
-use crate::api::context_session_flowfile_bundle::ContextSessionFlowFileBundle;
-use crate::api::flow_file_content::Content;
 use crate::api::processor::{AdvancedProcessorFeatures, Processor};
+use crate::api::processor_wrappers::utils::context_session_flowfile_bundle::ContextSessionFlowFileBundle;
+use crate::api::processor_wrappers::utils::flow_file_content::Content;
 use crate::api::property::{GetControllerService, GetProperty};
 use crate::api::raw::raw_processor::RawMultiThreadedTrigger;
 use crate::api::{InputStream, ProcessorDefinition, RawProcessor};
