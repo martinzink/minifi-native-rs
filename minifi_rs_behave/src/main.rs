@@ -56,8 +56,11 @@ fn main() {
         .arg("-m")
         .arg("pip")
         .arg("install")
-        .arg("-e")
-        .arg(root.join("..").join("minifi-cpp").join("behave_framework"))
+        .arg(
+            root.join("..")
+                .join("agent_dependencies")
+                .join("minifi_behave-0.3.0-py3-none-any.whl"),
+        )
         .status()
         .expect("Failed to install dependencies");
 

@@ -4,15 +4,15 @@ from pathlib import Path
 import humanfriendly
 from behave import step, then, when
 
-from minifi_test_framework.steps import checking_steps        # noqa: F401
-from minifi_test_framework.steps import configuration_steps   # noqa: F401
-from minifi_test_framework.steps import core_steps            # noqa: F401
-from minifi_test_framework.steps import flow_building_steps   # noqa: F401
-from minifi_test_framework.containers.docker_image_builder import DockerImageBuilder
-from minifi_test_framework.core.helpers import wait_for_condition
-from minifi_test_framework.core.minifi_test_context import MinifiTestContext
-from minifi_test_framework.minifi.controller_service import ControllerService
-from minifi_test_framework.minifi.processor import Processor
+from minifi_behave.steps import checking_steps        # noqa: F401
+from minifi_behave.steps import configuration_steps   # noqa: F401
+from minifi_behave.steps import core_steps            # noqa: F401
+from minifi_behave.steps import flow_building_steps   # noqa: F401
+from minifi_behave.containers.docker_image_builder import DockerImageBuilder
+from minifi_behave.core.helpers import wait_for_condition
+from minifi_behave.core.minifi_test_context import MinifiTestContext
+from minifi_behave.minifi.controller_service import ControllerService
+from minifi_behave.minifi.processor import Processor
 
 
 @when("MiNiFi is started")

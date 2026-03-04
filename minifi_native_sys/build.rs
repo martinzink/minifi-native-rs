@@ -23,7 +23,7 @@ fn main() {
             );
         }
 
-        let def_file = PathBuf::from("../minifi-cpp/minifi-api/minifi-c-api.def");
+        let def_file = PathBuf::from("../agent_dependencies/minifi-c-api.def");
 
         let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
         let lib_out_path = out_dir.join("minifi-c-api.lib");
@@ -46,7 +46,7 @@ fn main() {
         println!("cargo:rustc-link-search=native={}", out_dir.display());
     }
 
-    let header_path = "../minifi-cpp/minifi-api/include/minifi-c/minifi-c.h";
+    let header_path = "../agent_dependencies/minifi-c.h";
 
     println!("cargo:rerun-if-changed={}", header_path);
 

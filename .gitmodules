@@ -1,4 +1,0 @@
-[submodule "minifi-cpp"]
-	path = minifi-cpp
-	url = https://github.com/apache/nifi-minifi-cpp.git
-	branch = main
