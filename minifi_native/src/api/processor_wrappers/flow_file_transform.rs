@@ -2,7 +2,7 @@ use crate::api::processor::{AdvancedProcessorFeatures, Processor};
 use crate::api::processor_wrappers::utils::context_session_flowfile_bundle::ContextSessionFlowFileBundle;
 use crate::api::processor_wrappers::utils::flow_file_content::Content;
 use crate::api::property::{GetControllerService, GetProperty};
-use crate::api::raw_processor::RawMultiThreadedTrigger;
+use crate::api::raw_processor::MultiThreadedTrigger;
 use crate::api::{InputStream, RawProcessor};
 use crate::{
     CalculateMetrics, Concurrent, GetAttribute, LogLevel, Logger, MinifiError, OnTriggerResult,
@@ -67,7 +67,7 @@ pub trait FlowFileTransform {
 
 pub struct FlowFileTransformProcessorType {}
 
-impl<'a, Implementation, L> RawMultiThreadedTrigger
+impl<'a, Implementation, L> MultiThreadedTrigger
     for Processor<Implementation, FlowFileTransformProcessorType, Concurrent, L>
 where
     Implementation: Schedule + CalculateMetrics + FlowFileTransform + AdvancedProcessorFeatures,

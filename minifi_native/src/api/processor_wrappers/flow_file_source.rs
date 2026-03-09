@@ -1,6 +1,6 @@
 use crate::api::processor::AdvancedProcessorFeatures;
 use crate::api::processor_wrappers::utils::flow_file_content::Content;
-use crate::api::raw_processor::{RawMultiThreadedTrigger, RawSingleThreadedTrigger};
+use crate::api::raw_processor::{MultiThreadedTrigger, SingleThreadedTrigger};
 use crate::{
     CalculateMetrics, Concurrent, Exclusive, GetControllerService, GetProperty, Logger,
     MinifiError, OnTriggerResult, ProcessContext, ProcessSession, Processor, Relationship,
@@ -77,7 +77,7 @@ where
 
 pub struct FlowFileSourceProcessorType {}
 
-impl<'a, Implementation, L> RawMultiThreadedTrigger
+impl<'a, Implementation, L> MultiThreadedTrigger
     for Processor<Implementation, FlowFileSourceProcessorType, Concurrent, L>
 where
     Implementation: Schedule + CalculateMetrics + FlowFileSource + AdvancedProcessorFeatures,
@@ -103,7 +103,7 @@ where
     }
 }
 
-impl<'a, Implementation, L> RawSingleThreadedTrigger
+impl<'a, Implementation, L> SingleThreadedTrigger
     for Processor<Implementation, FlowFileSourceProcessorType, Exclusive, L>
 where
     Implementation: Schedule + CalculateMetrics + MutFlowFileSource + AdvancedProcessorFeatures,

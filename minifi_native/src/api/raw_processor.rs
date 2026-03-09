@@ -15,7 +15,7 @@ pub enum OnTriggerResult {
 
 /// This RawProcessor will be instantiated, and called on by the agent
 pub trait RawProcessor: Sized {
-    type Threading: RawThreadingModel;
+    type Threading: ThreadingModel;
     type LoggerType: Logger;
 
     fn new(logger: Self::LoggerType) -> Self;
@@ -29,19 +29,19 @@ pub trait RawProcessor: Sized {
 }
 
 /// To differentiate between single and multithreaded processors
-pub trait RawThreadingModel: sealed::Sealed {
+pub trait ThreadingModel: sealed::Sealed {
     const IS_EXCLUSIVE: bool;
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Concurrent;
-impl RawThreadingModel for Concurrent {
+impl ThreadingModel for Concurrent {
     const IS_EXCLUSIVE: bool = false;
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Exclusive;
-impl RawThreadingModel for Exclusive {
+impl ThreadingModel for Exclusive {
     const IS_EXCLUSIVE: bool = true;
 }
 
@@ -51,7 +51,7 @@ mod sealed {
     impl Sealed for super::Exclusive {}
 }
 
-pub trait RawSingleThreadedTrigger: RawProcessor<Threading = Exclusive> {
+pub trait SingleThreadedTrigger: RawProcessor<Threading = Exclusive> {
     fn on_trigger<PC, PS>(
         &mut self,
         context: &mut PC,
@@ -62,7 +62,7 @@ pub trait RawSingleThreadedTrigger: RawProcessor<Threading = Exclusive> {
         PS: ProcessSession<FlowFile = PC::FlowFile>;
 }
 
-pub trait RawMultiThreadedTrigger: RawProcessor<Threading = Concurrent> {
+pub trait MultiThreadedTrigger: RawProcessor<Threading = Concurrent> {
     fn on_trigger<PC, PS>(
         &self,
         context: &mut PC,

@@ -21,12 +21,16 @@ from minifi_behave.core.hooks import common_before_scenario, get_minifi_containe
 from minifi_behave.core.minifi_test_context import MinifiTestContext
 
 
-def add_extension_to_minifi_container(extension_name: str, possible_paths: List[str], context: MinifiTestContext):
+def add_extension_to_minifi_container(
+    extension_name: str, possible_paths: List[str], context: MinifiTestContext
+):
     new_container_name = f"apacheminificpp:{extension_name}"
-    is_windows = os.name == 'nt'
+    is_windows = os.name == "nt"
     if is_windows:
         lib_filename = f"{extension_name}.dll"
-        container_extension_dir = "C:/Program Files/ApacheNiFiMiNiFi/nifi-minifi-cpp/extensions"
+        container_extension_dir = (
+            "C:/Program Files/ApacheNiFiMiNiFi/nifi-minifi-cpp/extensions"
+        )
     else:
         lib_filename = f"lib{extension_name}.so"
         container_extension_dir = "/opt/minifi/minifi-current/extensions/"
@@ -37,9 +41,11 @@ def add_extension_to_minifi_container(extension_name: str, possible_paths: List[
             host_path = os.path.join(path, lib_filename)
             break
 
-    assert host_path is not None, f"Could not find {lib_filename} in {[p for p in possible_paths]}"
+    assert host_path is not None, (
+        f"Could not find {lib_filename} in {[p for p in possible_paths]}"
+    )
 
-    with open(host_path, 'rb') as f:
+    with open(host_path, "rb") as f:
         lib_content = f.read()
 
     base_img = get_minifi_container_image()
@@ -56,8 +62,11 @@ COPY --chown=minificpp:minificpp {lib_filename} {container_extension_dir}
 RUN chmod 755 {container_extension_dir}{lib_filename}
 """
 
-    builder = DockerImageBuilder(image_tag=new_container_name, dockerfile_content=dockerfile,
-        files_on_context={lib_filename: lib_content})
+    builder = DockerImageBuilder(
+        image_tag=new_container_name,
+        dockerfile_content=dockerfile,
+        files_on_context={lib_filename: lib_content},
+    )
 
     builder.build()
     return new_container_name

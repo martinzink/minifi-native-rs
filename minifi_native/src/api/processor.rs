@@ -1,4 +1,4 @@
-use crate::api::{RawProcessor, RawThreadingModel};
+use crate::api::{RawProcessor, ThreadingModel};
 use crate::{GetProperty, LogLevel, Logger, MinifiError, ProcessContext};
 use std::marker::PhantomData;
 
@@ -25,7 +25,7 @@ pub trait AdvancedProcessorFeatures {
 pub struct Processor<Impl, Kind, T, L>
 where
     Impl: Schedule + CalculateMetrics + AdvancedProcessorFeatures,
-    T: RawThreadingModel,
+    T: ThreadingModel,
     L: Logger,
 {
     pub(crate) logger: L,
@@ -37,7 +37,7 @@ where
 impl<Impl, Kind, T, L> RawProcessor for Processor<Impl, Kind, T, L>
 where
     Impl: Schedule + CalculateMetrics + AdvancedProcessorFeatures,
-    T: RawThreadingModel,
+    T: ThreadingModel,
     L: Logger,
 {
     type Threading = T;

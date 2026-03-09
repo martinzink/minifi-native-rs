@@ -4,8 +4,8 @@ use std::ptr;
 use super::c_ffi_primitives::{StaticStrAsMinifiCStr, StringView};
 use super::c_ffi_process_context::CffiProcessContext;
 use super::c_ffi_process_session::CffiProcessSession;
-use crate::api::raw_processor::{RawMultiThreadedTrigger, RawSingleThreadedTrigger};
-use crate::api::{ProcessorInputRequirement, RawProcessor, RawThreadingModel};
+use crate::api::raw_processor::{MultiThreadedTrigger, SingleThreadedTrigger};
+use crate::api::{ProcessorInputRequirement, RawProcessor, ThreadingModel};
 use crate::c_ffi::CffiLogger;
 use crate::c_ffi::c_ffi_output_attribute::COutputAttributes;
 use crate::c_ffi::c_ffi_property::CProperties;
@@ -16,7 +16,7 @@ use crate::{
 use crate::{OnTriggerResult, Relationship};
 use minifi_native_sys::*;
 
-pub trait DispatchOnTrigger<M: RawThreadingModel> {
+pub trait DispatchOnTrigger<M: ThreadingModel> {
     unsafe fn dispatch_on_trigger(
         processor: *mut c_void,
         context: *mut MinifiProcessContext,
@@ -26,7 +26,7 @@ pub trait DispatchOnTrigger<M: RawThreadingModel> {
 
 impl<T> DispatchOnTrigger<Concurrent> for T
 where
-    T: RawMultiThreadedTrigger,
+    T: MultiThreadedTrigger,
 {
     unsafe fn dispatch_on_trigger(
         processor_ptr: *mut c_void,
@@ -54,7 +54,7 @@ where
 
 impl<T> DispatchOnTrigger<Exclusive> for T
 where
-    T: RawSingleThreadedTrigger,
+    T: SingleThreadedTrigger,
 {
     unsafe fn dispatch_on_trigger(
         processor_ptr: *mut c_void,
@@ -288,7 +288,7 @@ pub trait RawRegisterableProcessor {
 impl<Implementation, Kind: 'static, Threading> RawRegisterableProcessor
     for Processor<Implementation, Kind, Threading, CffiLogger>
 where
-    Threading: RawThreadingModel + 'static,
+    Threading: ThreadingModel + 'static,
     Implementation: Schedule
         + CalculateMetrics
         + ComponentIdentifier

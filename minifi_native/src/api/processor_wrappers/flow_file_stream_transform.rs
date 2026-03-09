@@ -1,7 +1,7 @@
 use crate::api::process_session::IoState;
 use crate::api::processor::AdvancedProcessorFeatures;
 use crate::api::processor_wrappers::utils::context_session_flowfile_bundle::ContextSessionFlowFileBundle;
-use crate::api::raw_processor::{RawMultiThreadedTrigger, RawSingleThreadedTrigger};
+use crate::api::raw_processor::{MultiThreadedTrigger, SingleThreadedTrigger};
 use crate::{
     CalculateMetrics, Concurrent, Exclusive, GetAttribute, GetControllerService, GetProperty,
     InputStream, LogLevel, Logger, MinifiError, OnTriggerResult, OutputStream, ProcessContext,
@@ -118,7 +118,7 @@ where
 }
 
 // Concurrent Implementation (Multi-Threaded)
-impl<'a, Implementation, L> RawMultiThreadedTrigger
+impl<'a, Implementation, L> MultiThreadedTrigger
     for Processor<Implementation, FlowFileStreamTransformProcessorType, Concurrent, L>
 where
     Implementation:
@@ -147,7 +147,7 @@ where
 }
 
 // Exclusive Implementation (Single-Threaded)
-impl<'a, Implementation, L> RawSingleThreadedTrigger
+impl<'a, Implementation, L> SingleThreadedTrigger
     for Processor<Implementation, FlowFileStreamTransformProcessorType, Exclusive, L>
 where
     Implementation:
