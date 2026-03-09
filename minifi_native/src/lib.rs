@@ -55,8 +55,10 @@ pub static MinifiApiVersion: u32 = minifi_native_sys::MINIFI_API_VERSION;
 #[macro_export]
 macro_rules! declare_minifi_extension {
     (
-        processors: [ $($proc:path),* $(,)? ],
-        controllers: [ $($ctrl:path),* $(,)? ]
+        // Match a tuple of three types for each processor
+        processors: [ $( ($impl:ty, $kind:ty, $thread:ty) ),* $(,)? ],
+        // Match a single type for each controller service
+        controllers: [ $( $ctrl:ty ),* $(,)? ]
     ) => {
 
         #[unsafe(no_mangle)]
@@ -67,13 +69,19 @@ macro_rules! declare_minifi_extension {
         ) {
 
             use minifi_native::c_ffi::StaticStrAsMinifiCStr;
-
             unsafe {
                 let mut processor_list = minifi_native::c_ffi::CffiProcessorList::new();
 
                 $(
                     {
-                        processor_list.add::<$proc>();
+                        processor_list.add::<
+                            minifi_native::Processor<
+                                $impl,
+                                $kind,
+                                $thread,
+                                minifi_native::c_ffi::CffiLogger
+                            >
+                        >();
                     }
                 )*
 
@@ -81,7 +89,13 @@ macro_rules! declare_minifi_extension {
 
                 $(
                     {
-                        controller_list.add::<$ctrl>();
+                        // The macro injects the CffiLogger automatically here!
+                        controller_list.add::<
+                            minifi_native::ControllerService<
+                                $ctrl,
+                                minifi_native::c_ffi::CffiLogger
+                            >
+                        >();
                     }
                 )*
 
@@ -96,7 +110,10 @@ macro_rules! declare_minifi_extension {
                     controller_services_ptr: controller_list.get_controller_service_ptr(),
                 };
 
-                assert_eq!(minifi_native::sys::MinifiCreateExtension(extension, &extension_create_info), minifi_native::sys::MinifiStatus_MINIFI_STATUS_SUCCESS);
+                assert_eq!(
+                    minifi_native::sys::MinifiCreateExtension(extension, &extension_create_info),
+                    minifi_native::sys::MinifiStatus_MINIFI_STATUS_SUCCESS
+                );
             }
         }
     };

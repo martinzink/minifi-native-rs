@@ -1,8 +1,11 @@
 use crate::api::RawControllerService;
-use crate::c_ffi::StaticStrAsMinifiCStr;
 use crate::c_ffi::c_ffi_controller_service_context::CffiControllerServiceContext;
 use crate::c_ffi::c_ffi_property::CProperties;
-use crate::{ComponentIdentifier, ControllerServiceDefinition, LogLevel, Property};
+use crate::c_ffi::{CffiLogger, StaticStrAsMinifiCStr};
+use crate::{
+    ComponentIdentifier, ControllerService, ControllerServiceDefinition, EnableControllerService,
+    LogLevel, Property,
+};
 use minifi_native_sys::{
     MinifiControllerServiceCallbacks, MinifiControllerServiceClassDefinition,
     MinifiControllerServiceContext, MinifiControllerServiceMetadata, MinifiStatus,
@@ -42,7 +45,7 @@ where
 
 impl<T> CffiControllerServiceDefinition<T>
 where
-    T: RawControllerService + ComponentIdentifier,
+    T: RawControllerService<LoggerType = CffiLogger> + ComponentIdentifier,
 {
     pub fn new(description_text: &'static str, properties: &'static [Property]) -> Self {
         let c_properties = Property::create_c_properties(properties);
@@ -58,7 +61,7 @@ where
     unsafe extern "C" fn create_controller_service(
         metadata: MinifiControllerServiceMetadata,
     ) -> *mut c_void {
-        let logger = super::c_ffi_logger::CffiLogger::new(metadata.logger);
+        let logger = CffiLogger::new(metadata.logger);
         let controller_service = Box::new(T::new(logger));
         Box::into_raw(controller_service) as *mut c_void
     }
@@ -102,7 +105,7 @@ pub trait DynRawControllerServiceDefinition {
 
 impl<T> DynRawControllerServiceDefinition for CffiControllerServiceDefinition<T>
 where
-    T: RawControllerService + ComponentIdentifier,
+    T: RawControllerService<LoggerType = CffiLogger> + ComponentIdentifier,
 {
     fn class_description(&'_ self) -> ControllerServiceClassDefinition<'_> {
         unsafe {
@@ -128,12 +131,29 @@ pub trait RegisterableControllerService {
 
 impl<T> RegisterableControllerService for T
 where
-    T: ComponentIdentifier + ControllerServiceDefinition + RawControllerService + 'static,
+    T: ComponentIdentifier
+        + ControllerServiceDefinition
+        + RawControllerService<LoggerType = CffiLogger>
+        + 'static,
 {
     fn get_definition() -> Box<dyn DynRawControllerServiceDefinition> {
         Box::new(CffiControllerServiceDefinition::<T>::new(
             T::DESCRIPTION,
             T::PROPERTIES,
+        ))
+    }
+}
+
+impl<Implementation> RegisterableControllerService for ControllerService<Implementation, CffiLogger>
+where
+    Implementation:
+        EnableControllerService + ComponentIdentifier + ControllerServiceDefinition + 'static,
+{
+    fn get_definition() -> Box<dyn DynRawControllerServiceDefinition> {
+        Box::new(CffiControllerServiceDefinition::<
+            ControllerService<Implementation, CffiLogger>,
+        >::new(
+            Implementation::DESCRIPTION, Implementation::PROPERTIES
         ))
     }
 }

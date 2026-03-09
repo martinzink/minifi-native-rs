@@ -67,10 +67,11 @@ pub trait FlowFileTransform {
 
 pub struct FlowFileTransformProcessorType {}
 
-impl<'a, Implementation> RawMultiThreadedTrigger
-    for Processor<Implementation, FlowFileTransformProcessorType, Concurrent>
+impl<'a, Implementation, L> RawMultiThreadedTrigger
+    for Processor<Implementation, FlowFileTransformProcessorType, Concurrent, L>
 where
     Implementation: Schedule + CalculateMetrics + FlowFileTransform + AdvancedProcessorFeatures,
+    L: Logger,
 {
     fn on_trigger<PC, PS>(
         &self,

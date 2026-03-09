@@ -6,6 +6,7 @@ use super::c_ffi_process_context::CffiProcessContext;
 use super::c_ffi_process_session::CffiProcessSession;
 use crate::api::raw::raw_processor::{RawMultiThreadedTrigger, RawSingleThreadedTrigger};
 use crate::api::{ProcessorInputRequirement, RawProcessor, RawThreadingModel};
+use crate::c_ffi::CffiLogger;
 use crate::c_ffi::c_ffi_output_attribute::COutputAttributes;
 use crate::c_ffi::c_ffi_property::CProperties;
 use crate::{
@@ -92,7 +93,7 @@ where
 
 impl<T> RawProcessorDefinition<T>
 where
-    T: RawProcessor + DispatchOnTrigger<T::Threading>,
+    T: RawProcessor<LoggerType = CffiLogger> + DispatchOnTrigger<T::Threading>,
 {
     pub fn new(
         name: &'static str,
@@ -245,7 +246,7 @@ pub trait DynRawProcessorDefinition {
 
 impl<T> DynRawProcessorDefinition for RawProcessorDefinition<T>
 where
-    T: RawProcessor + DispatchOnTrigger<T::Threading>,
+    T: RawProcessor<LoggerType = CffiLogger> + DispatchOnTrigger<T::Threading>,
 {
     fn class_description(&'_ self) -> ProcessorClassDefinition<'_> {
         unsafe {
@@ -285,7 +286,7 @@ pub trait RawRegisterableProcessor {
 }
 
 impl<Implementation, Kind: 'static, Threading> RawRegisterableProcessor
-    for Processor<Implementation, Kind, Threading>
+    for Processor<Implementation, Kind, Threading, CffiLogger>
 where
     Threading: RawThreadingModel + 'static,
     Implementation: Schedule
@@ -294,12 +295,12 @@ where
         + ProcessorDefinition
         + AdvancedProcessorFeatures
         + 'static,
-    Processor<Implementation, Kind, Threading>:
-        RawProcessor<Threading = Threading> + DispatchOnTrigger<Threading>,
+    Processor<Implementation, Kind, Threading, CffiLogger>:
+        RawProcessor<Threading = Threading, LoggerType = CffiLogger> + DispatchOnTrigger<Threading>,
 {
     fn get_definition() -> Box<dyn DynRawProcessorDefinition> {
         Box::new(RawProcessorDefinition::<
-            Processor<Implementation, Kind, Threading>,
+            Processor<Implementation, Kind, Threading, CffiLogger>,
         >::new(
             Implementation::CLASS_NAME,
             Implementation::DESCRIPTION,

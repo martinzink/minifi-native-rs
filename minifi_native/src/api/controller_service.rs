@@ -1,11 +1,5 @@
 use crate::api::RawControllerService;
-use crate::c_ffi::{
-    CffiControllerServiceDefinition, CffiLogger, DynRawControllerServiceDefinition,
-    RegisterableControllerService,
-};
-use crate::{
-    ComponentIdentifier, ControllerServiceDefinition, GetProperty, LogLevel, Logger, MinifiError,
-};
+use crate::{ComponentIdentifier, GetProperty, LogLevel, Logger, MinifiError};
 
 pub trait EnableControllerService {
     fn enable<Ctx: GetProperty, L: Logger>(context: &Ctx, logger: &L) -> Result<Self, MinifiError>
@@ -14,28 +8,33 @@ pub trait EnableControllerService {
 }
 
 #[derive(Debug)]
-pub struct ControllerService<Implementation>
+pub struct ControllerService<Implementation, L>
 where
     Implementation: EnableControllerService + ComponentIdentifier,
+    L: Logger,
 {
-    logger: CffiLogger,
+    logger: L,
     enabled_impl: Option<Implementation>,
 }
 
-impl<Implementation> ControllerService<Implementation>
+impl<Implementation, L> ControllerService<Implementation, L>
 where
     Implementation: EnableControllerService + ComponentIdentifier,
+    L: Logger,
 {
     pub fn get_implementation(&self) -> Option<&Implementation> {
         self.enabled_impl.as_ref()
     }
 }
 
-impl<Implementation> RawControllerService for ControllerService<Implementation>
+impl<Implementation, L> RawControllerService for ControllerService<Implementation, L>
 where
     Implementation: EnableControllerService + ComponentIdentifier,
+    L: Logger,
 {
-    fn new(logger: CffiLogger) -> Self {
+    type LoggerType = L;
+
+    fn new(logger: Self::LoggerType) -> Self {
         Self {
             logger,
             enabled_impl: None,
@@ -52,25 +51,12 @@ where
     }
 }
 
-impl<Implementation> ComponentIdentifier for ControllerService<Implementation>
+impl<Implementation, L> ComponentIdentifier for ControllerService<Implementation, L>
 where
     Implementation: EnableControllerService + ComponentIdentifier,
+    L: Logger,
 {
     const CLASS_NAME: &'static str = Implementation::CLASS_NAME;
     const GROUP_NAME: &'static str = Implementation::GROUP_NAME;
     const VERSION: &'static str = Implementation::VERSION;
-}
-
-impl<Implementation> RegisterableControllerService for ControllerService<Implementation>
-where
-    Implementation:
-        EnableControllerService + ComponentIdentifier + ControllerServiceDefinition + 'static,
-{
-    fn get_definition() -> Box<dyn DynRawControllerServiceDefinition> {
-        Box::new(CffiControllerServiceDefinition::<
-            ControllerService<Implementation>,
-        >::new(
-            Implementation::DESCRIPTION, Implementation::PROPERTIES
-        ))
-    }
 }

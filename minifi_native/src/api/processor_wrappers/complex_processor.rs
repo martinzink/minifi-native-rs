@@ -33,8 +33,8 @@ pub trait Trigger {
 
 pub struct ComplexProcessorType {}
 
-impl<Implementation> RawSingleThreadedTrigger
-    for Processor<Implementation, ComplexProcessorType, Exclusive>
+impl<Implementation, L> RawSingleThreadedTrigger
+    for Processor<Implementation, ComplexProcessorType, Exclusive, L>
 where
     Implementation: Schedule
         + MutTrigger
@@ -42,6 +42,7 @@ where
         + ProcessorDefinition
         + CalculateMetrics
         + AdvancedProcessorFeatures,
+    L: Logger,
 {
     fn on_trigger<PC, PS>(
         &mut self,
@@ -62,8 +63,8 @@ where
     }
 }
 
-impl<Implementation> RawMultiThreadedTrigger
-    for Processor<Implementation, ComplexProcessorType, Concurrent>
+impl<Implementation, L> RawMultiThreadedTrigger
+    for Processor<Implementation, ComplexProcessorType, Concurrent, L>
 where
     Implementation: Schedule
         + Trigger
@@ -71,6 +72,7 @@ where
         + ProcessorDefinition
         + CalculateMetrics
         + AdvancedProcessorFeatures,
+    L: Logger,
 {
     fn on_trigger<PC, PS>(
         &self,

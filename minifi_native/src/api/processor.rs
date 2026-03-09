@@ -1,5 +1,4 @@
 use crate::api::{RawProcessor, RawThreadingModel};
-use crate::c_ffi::CffiLogger;
 use crate::{GetProperty, LogLevel, Logger, MinifiError, ProcessContext};
 use std::marker::PhantomData;
 
@@ -23,25 +22,28 @@ pub trait AdvancedProcessorFeatures {
     fn is_work_available(&self) -> bool;
 }
 
-pub struct Processor<Impl, Kind, T>
+pub struct Processor<Impl, Kind, T, L>
 where
     Impl: Schedule + CalculateMetrics + AdvancedProcessorFeatures,
     T: RawThreadingModel,
+    L: Logger,
 {
-    pub(crate) logger: CffiLogger,
+    pub(crate) logger: L,
     pub(crate) scheduled_impl: Option<Impl>,
     threading_model: PhantomData<T>,
     flow_file_type: PhantomData<Kind>,
 }
 
-impl<Impl, Kind, T> RawProcessor for Processor<Impl, Kind, T>
+impl<Impl, Kind, T, L> RawProcessor for Processor<Impl, Kind, T, L>
 where
     Impl: Schedule + CalculateMetrics + AdvancedProcessorFeatures,
     T: RawThreadingModel,
+    L: Logger,
 {
     type Threading = T;
+    type LoggerType = L;
 
-    fn new(logger: CffiLogger) -> Self {
+    fn new(logger: Self::LoggerType) -> Self {
         Self {
             logger,
             scheduled_impl: None,

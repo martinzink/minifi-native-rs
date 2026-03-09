@@ -1,9 +1,10 @@
-use crate::c_ffi::CffiLogger;
-use crate::{GetProperty, LogLevel, MinifiError};
+use crate::{GetProperty, LogLevel, Logger, MinifiError};
 
 /// This RawControllerService will be instantiated, and called on by the agent
 pub trait RawControllerService: Sized {
-    fn new(logger: CffiLogger) -> Self;
+    type LoggerType: Logger;
+
+    fn new(logger: Self::LoggerType) -> Self;
     fn log(&self, log_level: LogLevel, args: std::fmt::Arguments);
     fn enable<P: GetProperty>(&mut self, context: &P) -> Result<(), MinifiError>;
     fn disable(&mut self) {}

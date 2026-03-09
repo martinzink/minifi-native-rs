@@ -77,10 +77,11 @@ where
 
 pub struct FlowFileSourceProcessorType {}
 
-impl<'a, Implementation> RawMultiThreadedTrigger
-    for Processor<Implementation, FlowFileSourceProcessorType, Concurrent>
+impl<'a, Implementation, L> RawMultiThreadedTrigger
+    for Processor<Implementation, FlowFileSourceProcessorType, Concurrent, L>
 where
     Implementation: Schedule + CalculateMetrics + FlowFileSource + AdvancedProcessorFeatures,
+    L: Logger,
 {
     fn on_trigger<PC, PS>(
         &self,
@@ -102,10 +103,11 @@ where
     }
 }
 
-impl<'a, Implementation> RawSingleThreadedTrigger
-    for Processor<Implementation, FlowFileSourceProcessorType, Exclusive>
+impl<'a, Implementation, L> RawSingleThreadedTrigger
+    for Processor<Implementation, FlowFileSourceProcessorType, Exclusive, L>
 where
     Implementation: Schedule + CalculateMetrics + MutFlowFileSource + AdvancedProcessorFeatures,
+    L: Logger,
 {
     fn on_trigger<PC, PS>(
         &mut self,

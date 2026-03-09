@@ -2,6 +2,7 @@ use super::c_ffi_flow_file::CffiFlowFile;
 use super::c_ffi_primitives::{ConvertMinifiStringView, FfiConversionError, StringView};
 use crate::api::controller_service::ControllerService;
 use crate::api::{ProcessContext, RawControllerService};
+use crate::c_ffi::CffiLogger;
 use crate::{ComponentIdentifier, EnableControllerService, MinifiError, Property};
 use minifi_native_sys::*;
 use std::ffi::c_void;
@@ -176,7 +177,7 @@ impl<'a> ProcessContext for CffiProcessContext<'a> {
     where
         Cs: EnableControllerService + ComponentIdentifier + 'static,
     {
-        match self.get_raw_controller_service::<ControllerService<Cs>>(property)? {
+        match self.get_raw_controller_service::<ControllerService<Cs, CffiLogger>>(property)? {
             None => Ok(None),
             Some(f) => Ok(f.get_implementation()),
         }

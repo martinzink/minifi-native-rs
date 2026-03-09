@@ -118,11 +118,12 @@ where
 }
 
 // Concurrent Implementation (Multi-Threaded)
-impl<'a, Implementation> RawMultiThreadedTrigger
-    for Processor<Implementation, FlowFileStreamTransformProcessorType, Concurrent>
+impl<'a, Implementation, L> RawMultiThreadedTrigger
+    for Processor<Implementation, FlowFileStreamTransformProcessorType, Concurrent, L>
 where
     Implementation:
         Schedule + CalculateMetrics + FlowFileStreamTransform + AdvancedProcessorFeatures,
+    L: Logger,
 {
     fn on_trigger<PC, PS>(
         &self,
@@ -146,11 +147,12 @@ where
 }
 
 // Exclusive Implementation (Single-Threaded)
-impl<'a, Implementation> RawSingleThreadedTrigger
-    for Processor<Implementation, FlowFileStreamTransformProcessorType, Exclusive>
+impl<'a, Implementation, L> RawSingleThreadedTrigger
+    for Processor<Implementation, FlowFileStreamTransformProcessorType, Exclusive, L>
 where
     Implementation:
         Schedule + CalculateMetrics + MutFlowFileStreamTransform + AdvancedProcessorFeatures,
+    L: Logger,
 {
     fn on_trigger<PC, PS>(
         &mut self,

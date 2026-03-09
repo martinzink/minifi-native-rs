@@ -18,16 +18,16 @@ use minifi_native::{
 
 minifi_native::declare_minifi_extension!(
 processors: [
-    minifi_native::Processor<GenerateFlowFileRs, ComplexProcessorType, Concurrent>,
-    minifi_native::Processor<LogAttributeRs, ComplexProcessorType, Concurrent>,
-    minifi_native::Processor<GetFileRs, ComplexProcessorType, Concurrent>,
-    minifi_native::Processor<KamikazeProcessorRs, ComplexProcessorType, Concurrent>,
-    minifi_native::Processor<LoremIpsumCSUser, FlowFileSourceProcessorType, Concurrent>,
-    minifi_native::Processor<PutFileRs, FlowFileTransformProcessorType, Concurrent>,
-    minifi_native::Processor<AsciifyGerman, FlowFileStreamTransformProcessorType, Concurrent>,
-    minifi_native::Processor<CountActualLogging, ComplexProcessorType, Exclusive>,
+    (GenerateFlowFileRs, ComplexProcessorType, Concurrent),
+    (LogAttributeRs, ComplexProcessorType, Concurrent),
+    (GetFileRs, ComplexProcessorType, Concurrent),
+    (KamikazeProcessorRs, ComplexProcessorType, Concurrent),
+    (LoremIpsumCSUser, FlowFileSourceProcessorType, Concurrent),
+    (PutFileRs, FlowFileTransformProcessorType, Concurrent),
+    (AsciifyGerman, FlowFileStreamTransformProcessorType, Concurrent),
+    (CountActualLogging, ComplexProcessorType, Exclusive),
 ],
 controllers: [
-    minifi_native::ControllerService<LoremIpsumControllerService>,
-    minifi_native::ControllerService<DummyControllerService>,
+    LoremIpsumControllerService,
+    DummyControllerService,
 ]);

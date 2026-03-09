@@ -9,12 +9,12 @@ use minifi_native::{Concurrent, FlowFileStreamTransformProcessorType};
 
 minifi_native::declare_minifi_extension!(
     processors: [
-        minifi_native::Processor<EncryptContentPGP, FlowFileStreamTransformProcessorType, Concurrent>,
-        minifi_native::Processor<DecryptContentPGP, FlowFileStreamTransformProcessorType, Concurrent>,
+        (EncryptContentPGP, FlowFileStreamTransformProcessorType, Concurrent),
+        (DecryptContentPGP, FlowFileStreamTransformProcessorType, Concurrent),
     ],
     controllers: [
-        minifi_native::ControllerService<PGPPublicKeyService>,
-        minifi_native::ControllerService<PGPPrivateKeyService>,
+        PGPPublicKeyService,
+        PGPPrivateKeyService,
     ]
 );
 

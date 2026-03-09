@@ -1,6 +1,5 @@
 use crate::api::errors::MinifiError;
-use crate::c_ffi::CffiLogger;
-use crate::{LogLevel, ProcessContext, ProcessSession};
+use crate::{LogLevel, Logger, ProcessContext, ProcessSession};
 
 pub enum ProcessorInputRequirement {
     Required,
@@ -17,8 +16,9 @@ pub enum OnTriggerResult {
 /// This RawProcessor will be instantiated, and called on by the agent
 pub trait RawProcessor: Sized {
     type Threading: RawThreadingModel;
+    type LoggerType: Logger;
 
-    fn new(logger: CffiLogger) -> Self;
+    fn new(logger: Self::LoggerType) -> Self;
     fn restore(&self) -> bool;
     fn get_trigger_when_empty(&self) -> bool;
     fn is_work_available(&self) -> bool;
