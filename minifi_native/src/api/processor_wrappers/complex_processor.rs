@@ -1,5 +1,5 @@
 use crate::api::processor::{AdvancedProcessorFeatures, CalculateMetrics};
-use crate::api::raw::raw_processor::{RawMultiThreadedTrigger, RawSingleThreadedTrigger};
+use crate::api::raw_processor::{RawMultiThreadedTrigger, RawSingleThreadedTrigger};
 use crate::{
     ComponentIdentifier, Concurrent, Exclusive, Logger, MinifiError, OnTriggerResult,
     ProcessContext, ProcessSession, Processor, ProcessorDefinition, Schedule,

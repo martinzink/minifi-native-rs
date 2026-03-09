@@ -23,7 +23,7 @@ pub use api::processor_wrappers::utils::flow_file_content::Content;
 
 pub use api::processor::{AdvancedProcessorFeatures, CalculateMetrics, Processor, Schedule};
 
-pub use api::raw::raw_processor::{Concurrent, Exclusive};
+pub use api::raw_processor::{Concurrent, Exclusive};
 
 pub use api::logger::{LogLevel, Logger};
 
@@ -52,6 +52,7 @@ pub use mock::{
 #[cfg_attr(target_os = "windows", unsafe(link_section = ".rdata"))]
 pub static MinifiApiVersion: u32 = minifi_native_sys::MINIFI_API_VERSION;
 
+/// Defines the required MinifiInitExtension C function to register the listed processors and controller services
 #[macro_export]
 macro_rules! declare_minifi_extension {
     (
@@ -89,7 +90,6 @@ macro_rules! declare_minifi_extension {
 
                 $(
                     {
-                        // The macro injects the CffiLogger automatically here!
                         controller_list.add::<
                             minifi_native::ControllerService<
                                 $ctrl,

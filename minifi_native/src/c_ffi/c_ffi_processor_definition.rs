@@ -4,7 +4,7 @@ use std::ptr;
 use super::c_ffi_primitives::{StaticStrAsMinifiCStr, StringView};
 use super::c_ffi_process_context::CffiProcessContext;
 use super::c_ffi_process_session::CffiProcessSession;
-use crate::api::raw::raw_processor::{RawMultiThreadedTrigger, RawSingleThreadedTrigger};
+use crate::api::raw_processor::{RawMultiThreadedTrigger, RawSingleThreadedTrigger};
 use crate::api::{ProcessorInputRequirement, RawProcessor, RawThreadingModel};
 use crate::c_ffi::CffiLogger;
 use crate::c_ffi::c_ffi_output_attribute::COutputAttributes;

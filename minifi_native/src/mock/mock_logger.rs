@@ -31,6 +31,7 @@ impl MockLogger {
     }
 }
 
+/// For easier debugging
 #[derive(Debug)]
 pub struct StdLogger {
     pub log_level: LogLevel,
