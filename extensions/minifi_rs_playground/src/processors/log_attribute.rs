@@ -1,8 +1,8 @@
 use crate::processors::log_attribute::properties::{FLOW_FILES_TO_LOG, LOG_LEVEL, LOG_PAYLOAD};
 use minifi_native::macros::{ComponentIdentifier, DefaultMetrics, NoAdvancedProcessorFeatures};
 use minifi_native::{
-    ConstTrigger, GetProperty, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext,
-    ProcessSession, Property, Schedule, debug, log, trace,
+    GetProperty, LogLevel, Logger, MinifiError, OnTriggerResult, ProcessContext, ProcessSession,
+    Property, Schedule, Trigger, debug, log, trace,
 };
 
 mod properties;
@@ -62,7 +62,7 @@ impl LogAttributeRs {
     }
 }
 
-impl ConstTrigger for LogAttributeRs {
+impl Trigger for LogAttributeRs {
     fn trigger<PC, PS, L>(
         &self,
         _context: &mut PC,

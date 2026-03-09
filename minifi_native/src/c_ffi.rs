@@ -19,6 +19,7 @@ pub use c_ffi_controller_service_definition::RegisterableControllerService;
 pub use c_ffi_controller_service_list::CffiControllerServiceList;
 pub use c_ffi_logger::CffiLogger;
 pub use c_ffi_primitives::StaticStrAsMinifiCStr;
+pub use c_ffi_processor_definition::DispatchOnTrigger;
 pub use c_ffi_processor_definition::DynRawProcessorDefinition;
 pub use c_ffi_processor_definition::RawProcessorDefinition;
 pub use c_ffi_processor_definition::RawRegisterableProcessor;

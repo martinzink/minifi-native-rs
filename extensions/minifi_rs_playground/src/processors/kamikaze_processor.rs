@@ -5,8 +5,8 @@ use crate::controller_services::lorem_ipsum_controller_service::LoremIpsumContro
 use crate::processors::kamikaze_processor::properties::NOT_REGISTERED_PROPERTY;
 use minifi_native::macros::{ComponentIdentifier, NoAdvancedProcessorFeatures};
 use minifi_native::{
-    CalculateMetrics, ConstTrigger, GetProperty, Logger, MinifiError, OnTriggerResult,
-    ProcessContext, ProcessSession, Schedule,
+    CalculateMetrics, GetProperty, Logger, MinifiError, OnTriggerResult, ProcessContext,
+    ProcessSession, Schedule, Trigger,
 };
 use strum_macros::{Display, EnumString, IntoStaticStr, VariantNames};
 
@@ -63,7 +63,7 @@ impl Schedule for KamikazeProcessorRs {
     }
 }
 
-impl ConstTrigger for KamikazeProcessorRs {
+impl Trigger for KamikazeProcessorRs {
     fn trigger<PC, PS, L>(
         &self,
         context: &mut PC,

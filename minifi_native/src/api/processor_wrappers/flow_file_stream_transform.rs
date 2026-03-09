@@ -1,13 +1,11 @@
-use crate::api::RawProcessor;
 use crate::api::process_session::IoState;
 use crate::api::processor::AdvancedProcessorFeatures;
 use crate::api::processor_wrappers::utils::context_session_flowfile_bundle::ContextSessionFlowFileBundle;
-use crate::api::raw::raw_processor::RawMultiThreadedTrigger;
-use crate::c_ffi::{DynRawProcessorDefinition, RawProcessorDefinition, RawRegisterableProcessor};
+use crate::api::raw::raw_processor::{RawMultiThreadedTrigger, RawSingleThreadedTrigger};
 use crate::{
-    CalculateMetrics, ComponentIdentifier, Concurrent, GetAttribute, GetControllerService,
-    GetProperty, InputStream, LogLevel, Logger, MinifiError, OnTriggerResult, OutputStream,
-    ProcessContext, ProcessSession, Processor, ProcessorDefinition, Relationship, Schedule,
+    CalculateMetrics, Concurrent, Exclusive, GetAttribute, GetControllerService, GetProperty,
+    InputStream, LogLevel, Logger, MinifiError, OnTriggerResult, OutputStream, ProcessContext,
+    ProcessSession, Processor, Relationship, Schedule,
 };
 use std::collections::HashMap;
 
@@ -60,8 +58,66 @@ pub trait FlowFileStreamTransform {
     ) -> Result<TransformStreamResult, MinifiError>;
 }
 
+pub trait MutFlowFileStreamTransform {
+    fn transform<Ctx: GetProperty + GetControllerService + GetAttribute, LoggerImpl: Logger>(
+        &mut self,
+        context: &Ctx,
+        input_stream: &mut dyn InputStream,
+        output_stream: &mut dyn OutputStream,
+        logger: &LoggerImpl,
+    ) -> Result<TransformStreamResult, MinifiError>;
+}
+
 pub struct FlowFileStreamTransformProcessorType {}
 
+// Shared helper function to extract stream transformation logic
+fn handle_stream_transform<PC, PS, L, F>(
+    context: &mut PC,
+    session: &mut PS,
+    logger: &L,
+    mut transform_fn: F,
+) -> Result<OnTriggerResult, MinifiError>
+where
+    PC: ProcessContext,
+    PS: ProcessSession<FlowFile = PC::FlowFile>,
+    L: Logger,
+    F: FnMut(
+        &ContextSessionFlowFileBundle<PC, PS>,
+        &mut dyn InputStream,
+        &mut dyn OutputStream,
+    ) -> Result<TransformStreamResult, MinifiError>,
+{
+    if let Some(mut flow_file) = session.get() {
+        let simple_context = ContextSessionFlowFileBundle::new(context, session, Some(&flow_file));
+
+        let (relationship, attrs) = session.read_stream(&flow_file, |input_stream| {
+            session.write_stream(&flow_file, |output_stream| {
+                let transformed = transform_fn(&simple_context, input_stream, output_stream)?;
+
+                Ok((
+                    (
+                        transformed.target_relationship_name,
+                        transformed.attributes_to_add,
+                    ),
+                    transformed.write_status,
+                ))
+            })
+        })?;
+
+        for (k, v) in attrs {
+            session.set_attribute(&mut flow_file, &k, &v)?;
+        }
+
+        session.transfer(flow_file, relationship)?;
+
+        Ok(OnTriggerResult::Ok)
+    } else {
+        logger.log(LogLevel::Trace, format_args!("No flowfile to transform"));
+        Ok(OnTriggerResult::Yield)
+    }
+}
+
+// Concurrent Implementation (Multi-Threaded)
 impl<'a, Implementation> RawMultiThreadedTrigger
     for Processor<Implementation, FlowFileStreamTransformProcessorType, Concurrent>
 where
@@ -78,38 +134,9 @@ where
         PS: ProcessSession<FlowFile = PC::FlowFile>,
     {
         if let Some(ref scheduled_impl) = self.scheduled_impl {
-            if let Some(mut flow_file) = session.get() {
-                let simple_context =
-                    ContextSessionFlowFileBundle::new(context, session, Some(&flow_file));
-                let (relationship, attrs) = session.read_stream(&flow_file, |input_stream| {
-                    session.write_stream(&flow_file, |output_stream| {
-                        let transformed = scheduled_impl.transform(
-                            &simple_context,
-                            input_stream,
-                            output_stream,
-                            &self.logger,
-                        )?;
-
-                        Ok((
-                            (
-                                transformed.target_relationship_name,
-                                transformed.attributes_to_add,
-                            ),
-                            transformed.write_status,
-                        ))
-                    })
-                })?;
-                for (k, v) in attrs {
-                    session.set_attribute(&mut flow_file, &k, &v)?;
-                }
-
-                session.transfer(flow_file, relationship)?;
-
-                Ok(OnTriggerResult::Ok)
-            } else {
-                self.log(LogLevel::Trace, format_args!("No flowfile to transform"));
-                Ok(OnTriggerResult::Yield)
-            }
+            handle_stream_transform(context, session, &self.logger, |ctx, input, output| {
+                scheduled_impl.transform(ctx, input, output, &self.logger)
+            })
         } else {
             Err(MinifiError::trigger_err(
                 "The processor hasn't been scheduled yet",
@@ -118,29 +145,30 @@ where
     }
 }
 
-impl<Implementation> RawRegisterableProcessor
-    for Processor<Implementation, FlowFileStreamTransformProcessorType, Concurrent>
+// Exclusive Implementation (Single-Threaded)
+impl<'a, Implementation> RawSingleThreadedTrigger
+    for Processor<Implementation, FlowFileStreamTransformProcessorType, Exclusive>
 where
-    Implementation: Schedule
-        + FlowFileStreamTransform
-        + CalculateMetrics
-        + ComponentIdentifier
-        + ProcessorDefinition
-        + AdvancedProcessorFeatures
-        + 'static,
+    Implementation:
+        Schedule + CalculateMetrics + MutFlowFileStreamTransform + AdvancedProcessorFeatures,
 {
-    fn get_definition() -> Box<dyn DynRawProcessorDefinition> {
-        Box::new(RawProcessorDefinition::<
-            Processor<Implementation, FlowFileStreamTransformProcessorType, Concurrent>,
-        >::new(
-            Implementation::CLASS_NAME,
-            Implementation::DESCRIPTION,
-            Implementation::INPUT_REQUIREMENT,
-            Implementation::SUPPORTS_DYNAMIC_PROPERTIES,
-            Implementation::SUPPORTS_DYNAMIC_RELATIONSHIPS,
-            Implementation::OUTPUT_ATTRIBUTES,
-            Implementation::RELATIONSHIPS,
-            Implementation::PROPERTIES,
-        ))
+    fn on_trigger<PC, PS>(
+        &mut self,
+        context: &mut PC,
+        session: &mut PS,
+    ) -> Result<OnTriggerResult, MinifiError>
+    where
+        PC: ProcessContext,
+        PS: ProcessSession<FlowFile = PC::FlowFile>,
+    {
+        if let Some(ref mut scheduled_impl) = self.scheduled_impl {
+            handle_stream_transform(context, session, &self.logger, |ctx, input, output| {
+                scheduled_impl.transform(ctx, input, output, &self.logger)
+            })
+        } else {
+            Err(MinifiError::trigger_err(
+                "The processor hasn't been scheduled yet",
+            ))
+        }
     }
 }

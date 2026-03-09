@@ -1,7 +1,7 @@
 use minifi_native::macros::{ComponentIdentifier, NoAdvancedProcessorFeatures};
 use minifi_native::{
-    CalculateMetrics, ConstTrigger, GetProperty, Logger, MinifiError, OnTriggerResult,
-    ProcessContext, ProcessSession, Schedule,
+    CalculateMetrics, GetProperty, Logger, MinifiError, OnTriggerResult, ProcessContext,
+    ProcessSession, Schedule, Trigger,
 };
 use rand::RngExt;
 use rand::distr::Alphanumeric;
@@ -122,7 +122,7 @@ impl GenerateFlowFileRs {
     }
 }
 
-impl ConstTrigger for GenerateFlowFileRs {
+impl Trigger for GenerateFlowFileRs {
     fn trigger<PC, PS, L>(
         &self,
         context: &mut PC,

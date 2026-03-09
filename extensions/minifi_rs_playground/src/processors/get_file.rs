@@ -7,8 +7,8 @@ use crate::processors::get_file::properties::{
 };
 use minifi_native::macros::{ComponentIdentifier, NoAdvancedProcessorFeatures};
 use minifi_native::{
-    CalculateMetrics, ConstTrigger, GetProperty, IoState, Logger, MinifiError, OnTriggerResult,
-    ProcessContext, ProcessSession, Schedule, debug, info, trace, warn,
+    CalculateMetrics, GetProperty, IoState, Logger, MinifiError, OnTriggerResult, ProcessContext,
+    ProcessSession, Schedule, Trigger, debug, info, trace, warn,
 };
 use std::collections::VecDeque;
 use std::error;
@@ -260,7 +260,7 @@ impl Schedule for GetFileRs {
     }
 }
 
-impl ConstTrigger for GetFileRs {
+impl Trigger for GetFileRs {
     fn trigger<PC, PS, L>(
         &self,
         _context: &mut PC,

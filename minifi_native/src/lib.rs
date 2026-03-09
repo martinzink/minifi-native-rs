@@ -8,9 +8,7 @@ pub use api::component_definition_traits::{
     ComponentIdentifier, ControllerServiceDefinition, ProcessorDefinition,
 };
 pub use api::controller_service::{ControllerService, EnableControllerService};
-pub use api::processor_wrappers::complex_processor::{
-    ComplexProcessorType, ConstTrigger, MutTrigger,
-};
+pub use api::processor_wrappers::complex_processor::{ComplexProcessorType, MutTrigger, Trigger};
 pub use api::processor_wrappers::flow_file_source::{
     FlowFileSource, FlowFileSourceProcessorType, GeneratedFlowFile,
 };

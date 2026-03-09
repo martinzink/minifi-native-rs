@@ -1,6 +1,12 @@
 use crate::api::{RawProcessor, RawThreadingModel};
-use crate::c_ffi::CffiLogger;
-use crate::{GetProperty, LogLevel, Logger, MinifiError, ProcessContext, warn};
+use crate::c_ffi::{
+    CffiLogger, DispatchOnTrigger, DynRawProcessorDefinition, RawProcessorDefinition,
+    RawRegisterableProcessor,
+};
+use crate::{
+    ComponentIdentifier, GetProperty, LogLevel, Logger, MinifiError, ProcessContext,
+    ProcessorDefinition, warn,
+};
 use std::marker::PhantomData;
 
 pub trait Schedule {
@@ -96,5 +102,34 @@ where
             );
             vec![]
         }
+    }
+}
+
+impl<Implementation, Kind: 'static, Threading> RawRegisterableProcessor
+    for Processor<Implementation, Kind, Threading>
+where
+    Threading: RawThreadingModel + 'static,
+    Implementation: Schedule
+        + CalculateMetrics
+        + ComponentIdentifier
+        + ProcessorDefinition
+        + AdvancedProcessorFeatures
+        + 'static,
+    Processor<Implementation, Kind, Threading>:
+        RawProcessor<Threading = Threading> + DispatchOnTrigger<Threading>,
+{
+    fn get_definition() -> Box<dyn DynRawProcessorDefinition> {
+        Box::new(RawProcessorDefinition::<
+            Processor<Implementation, Kind, Threading>,
+        >::new(
+            Implementation::CLASS_NAME,
+            Implementation::DESCRIPTION,
+            Implementation::INPUT_REQUIREMENT,
+            Implementation::SUPPORTS_DYNAMIC_PROPERTIES,
+            Implementation::SUPPORTS_DYNAMIC_RELATIONSHIPS,
+            Implementation::OUTPUT_ATTRIBUTES,
+            Implementation::RELATIONSHIPS,
+            Implementation::PROPERTIES,
+        ))
     }
 }

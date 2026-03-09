@@ -3,8 +3,10 @@ use crate::api::processor_wrappers::utils::context_session_flowfile_bundle::Cont
 use crate::api::processor_wrappers::utils::flow_file_content::Content;
 use crate::api::property::{GetControllerService, GetProperty};
 use crate::api::raw::raw_processor::RawMultiThreadedTrigger;
-use crate::api::{InputStream, ProcessorDefinition, RawProcessor};
-use crate::c_ffi::{DynRawProcessorDefinition, RawProcessorDefinition, RawRegisterableProcessor};
+use crate::api::{InputStream, ProcessorDefinition, RawProcessor, RawThreadingModel};
+use crate::c_ffi::{
+    DispatchOnTrigger, DynRawProcessorDefinition, RawProcessorDefinition, RawRegisterableProcessor,
+};
 use crate::{
     CalculateMetrics, ComponentIdentifier, Concurrent, GetAttribute, LogLevel, Logger, MinifiError,
     OnTriggerResult, ProcessContext, ProcessSession, Relationship, Schedule,
@@ -125,32 +127,5 @@ where
                 "The processor hasn't been scheduled yet",
             ))
         }
-    }
-}
-
-impl<Implementation> RawRegisterableProcessor
-    for Processor<Implementation, FlowFileTransformProcessorType, Concurrent>
-where
-    Implementation: Schedule
-        + FlowFileTransform
-        + CalculateMetrics
-        + ComponentIdentifier
-        + ProcessorDefinition
-        + AdvancedProcessorFeatures
-        + 'static,
-{
-    fn get_definition() -> Box<dyn DynRawProcessorDefinition> {
-        Box::new(RawProcessorDefinition::<
-            Processor<Implementation, FlowFileTransformProcessorType, Concurrent>,
-        >::new(
-            Implementation::CLASS_NAME,
-            Implementation::DESCRIPTION,
-            Implementation::INPUT_REQUIREMENT,
-            Implementation::SUPPORTS_DYNAMIC_PROPERTIES,
-            Implementation::SUPPORTS_DYNAMIC_RELATIONSHIPS,
-            Implementation::OUTPUT_ATTRIBUTES,
-            Implementation::RELATIONSHIPS,
-            Implementation::PROPERTIES,
-        ))
     }
 }

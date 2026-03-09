@@ -1,9 +1,8 @@
 use crate::api::processor::AdvancedProcessorFeatures;
 use crate::api::processor_wrappers::utils::flow_file_content::Content;
-use crate::api::raw::raw_processor::RawMultiThreadedTrigger;
-use crate::c_ffi::{DynRawProcessorDefinition, RawProcessorDefinition, RawRegisterableProcessor};
+use crate::api::raw::raw_processor::{RawMultiThreadedTrigger, RawSingleThreadedTrigger};
 use crate::{
-    CalculateMetrics, ComponentIdentifier, Concurrent, GetControllerService, GetProperty, Logger,
+    CalculateMetrics, Concurrent, Exclusive, GetControllerService, GetProperty, Logger,
     MinifiError, OnTriggerResult, ProcessContext, ProcessSession, Processor, ProcessorDefinition,
     Relationship, Schedule,
 };
@@ -41,6 +40,41 @@ pub trait FlowFileSource {
     ) -> Result<Vec<GeneratedFlowFile<'a>>, MinifiError>;
 }
 
+pub trait MutFlowFileSource {
+    fn generate<'a, Context: GetProperty + GetControllerService, LoggerImpl: Logger>(
+        &mut self,
+        context: &'a mut Context,
+        logger: &LoggerImpl,
+    ) -> Result<Vec<GeneratedFlowFile<'a>>, MinifiError>;
+}
+
+fn handle_generated_flow_files<PC, PS>(
+    session: &mut PS,
+    generated_flow_files: Vec<GeneratedFlowFile>,
+) -> Result<OnTriggerResult, MinifiError>
+where
+    PC: ProcessContext,
+    PS: ProcessSession<FlowFile = PC::FlowFile>,
+{
+    if generated_flow_files.is_empty() {
+        return Ok(OnTriggerResult::Yield);
+    }
+
+    for new_flow_file_data in generated_flow_files {
+        let mut ff = session.create()?;
+        match new_flow_file_data.new_content {
+            None => {}
+            Some(Content::Buffer(buffer)) => session.write(&mut ff, &buffer)?,
+            Some(Content::Stream(stream)) => session.write_lazy(&mut ff, stream)?,
+        }
+        for (k, v) in &new_flow_file_data.attributes_to_add {
+            session.set_attribute(&mut ff, k, v)?;
+        }
+        session.transfer(ff, new_flow_file_data.target_relationship_name)?;
+    }
+    Ok(OnTriggerResult::Ok)
+}
+
 pub struct FlowFileSourceProcessorType {}
 
 impl<'a, Implementation> RawMultiThreadedTrigger
@@ -58,28 +92,8 @@ where
         PS: ProcessSession<FlowFile = PC::FlowFile>,
     {
         if let Some(ref scheduled_impl) = self.scheduled_impl {
-            let generated_flow_files = scheduled_impl.generate(context, &self.logger)?;
-            if generated_flow_files.is_empty() {
-                return Ok(OnTriggerResult::Yield);
-            }
-
-            for new_flow_file_data in generated_flow_files {
-                let mut ff = session.create()?;
-                match new_flow_file_data.new_content {
-                    None => {}
-                    Some(Content::Buffer(buffer)) => {
-                        session.write(&mut ff, &buffer)?;
-                    }
-                    Some(Content::Stream(stream)) => {
-                        session.write_lazy(&mut ff, stream)?;
-                    }
-                }
-                for (k, v) in &new_flow_file_data.attributes_to_add {
-                    session.set_attribute(&mut ff, k, v)?;
-                }
-                session.transfer(ff, new_flow_file_data.target_relationship_name)?;
-            }
-            Ok(OnTriggerResult::Ok)
+            let files = scheduled_impl.generate(context, &self.logger)?;
+            handle_generated_flow_files::<PC, PS>(session, files)
         } else {
             Err(MinifiError::trigger_err(
                 "The processor hasn't been scheduled yet",
@@ -88,29 +102,27 @@ where
     }
 }
 
-impl<Implementation> RawRegisterableProcessor
-    for Processor<Implementation, FlowFileSourceProcessorType, Concurrent>
+impl<'a, Implementation> RawSingleThreadedTrigger
+    for Processor<Implementation, FlowFileSourceProcessorType, Exclusive>
 where
-    Implementation: Schedule
-        + FlowFileSource
-        + CalculateMetrics
-        + ComponentIdentifier
-        + ProcessorDefinition
-        + AdvancedProcessorFeatures
-        + 'static,
+    Implementation: Schedule + CalculateMetrics + MutFlowFileSource + AdvancedProcessorFeatures,
 {
-    fn get_definition() -> Box<dyn DynRawProcessorDefinition> {
-        Box::new(RawProcessorDefinition::<
-            Processor<Implementation, FlowFileSourceProcessorType, Concurrent>,
-        >::new(
-            Implementation::CLASS_NAME,
-            Implementation::DESCRIPTION,
-            Implementation::INPUT_REQUIREMENT,
-            Implementation::SUPPORTS_DYNAMIC_PROPERTIES,
-            Implementation::SUPPORTS_DYNAMIC_RELATIONSHIPS,
-            Implementation::OUTPUT_ATTRIBUTES,
-            Implementation::RELATIONSHIPS,
-            Implementation::PROPERTIES,
-        ))
+    fn on_trigger<PC, PS>(
+        &mut self,
+        context: &mut PC,
+        session: &mut PS,
+    ) -> Result<OnTriggerResult, MinifiError>
+    where
+        PC: ProcessContext,
+        PS: ProcessSession<FlowFile = PC::FlowFile>,
+    {
+        if let Some(ref mut scheduled_impl) = self.scheduled_impl {
+            let files = scheduled_impl.generate(context, &self.logger)?;
+            handle_generated_flow_files::<PC, PS>(session, files)
+        } else {
+            Err(MinifiError::trigger_err(
+                "The processor hasn't been scheduled yet",
+            ))
+        }
     }
 }

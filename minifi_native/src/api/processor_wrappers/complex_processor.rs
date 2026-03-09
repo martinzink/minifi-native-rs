@@ -1,6 +1,5 @@
 use crate::api::processor::{AdvancedProcessorFeatures, CalculateMetrics};
 use crate::api::raw::raw_processor::{RawMultiThreadedTrigger, RawSingleThreadedTrigger};
-use crate::c_ffi::{DynRawProcessorDefinition, RawProcessorDefinition, RawRegisterableProcessor};
 use crate::{
     ComponentIdentifier, Concurrent, Exclusive, Logger, MinifiError, OnTriggerResult,
     ProcessContext, ProcessSession, Processor, ProcessorDefinition, Schedule,
@@ -19,7 +18,7 @@ pub trait MutTrigger {
         L: Logger;
 }
 
-pub trait ConstTrigger {
+pub trait Trigger {
     fn trigger<PC, PS, L>(
         &self,
         context: &mut PC,
@@ -67,7 +66,7 @@ impl<Implementation> RawMultiThreadedTrigger
     for Processor<Implementation, ComplexProcessorType, Concurrent>
 where
     Implementation: Schedule
-        + ConstTrigger
+        + Trigger
         + ComponentIdentifier
         + ProcessorDefinition
         + CalculateMetrics
@@ -89,59 +88,5 @@ where
                 "The processor hasnt been scheduled yet",
             ))
         }
-    }
-}
-
-impl<Implementation> RawRegisterableProcessor
-    for Processor<Implementation, ComplexProcessorType, Exclusive>
-where
-    Implementation: Schedule
-        + MutTrigger
-        + ComponentIdentifier
-        + ProcessorDefinition
-        + CalculateMetrics
-        + AdvancedProcessorFeatures
-        + 'static,
-{
-    fn get_definition() -> Box<dyn DynRawProcessorDefinition> {
-        Box::new(RawProcessorDefinition::<
-            Processor<Implementation, ComplexProcessorType, Exclusive>,
-        >::new(
-            Implementation::CLASS_NAME,
-            Implementation::DESCRIPTION,
-            Implementation::INPUT_REQUIREMENT,
-            Implementation::SUPPORTS_DYNAMIC_PROPERTIES,
-            Implementation::SUPPORTS_DYNAMIC_RELATIONSHIPS,
-            Implementation::OUTPUT_ATTRIBUTES,
-            Implementation::RELATIONSHIPS,
-            Implementation::PROPERTIES,
-        ))
-    }
-}
-
-impl<Implementation> RawRegisterableProcessor
-    for Processor<Implementation, ComplexProcessorType, Concurrent>
-where
-    Implementation: Schedule
-        + ConstTrigger
-        + ComponentIdentifier
-        + ProcessorDefinition
-        + CalculateMetrics
-        + AdvancedProcessorFeatures
-        + 'static,
-{
-    fn get_definition() -> Box<dyn DynRawProcessorDefinition> {
-        Box::new(RawProcessorDefinition::<
-            Processor<Implementation, ComplexProcessorType, Concurrent>,
-        >::new(
-            Implementation::CLASS_NAME,
-            Implementation::DESCRIPTION,
-            Implementation::INPUT_REQUIREMENT,
-            Implementation::SUPPORTS_DYNAMIC_PROPERTIES,
-            Implementation::SUPPORTS_DYNAMIC_RELATIONSHIPS,
-            Implementation::OUTPUT_ATTRIBUTES,
-            Implementation::RELATIONSHIPS,
-            Implementation::PROPERTIES,
-        ))
     }
 }
