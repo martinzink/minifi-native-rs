@@ -3,13 +3,10 @@ use crate::api::processor_wrappers::utils::context_session_flowfile_bundle::Cont
 use crate::api::processor_wrappers::utils::flow_file_content::Content;
 use crate::api::property::{GetControllerService, GetProperty};
 use crate::api::raw::raw_processor::RawMultiThreadedTrigger;
-use crate::api::{InputStream, ProcessorDefinition, RawProcessor, RawThreadingModel};
-use crate::c_ffi::{
-    DispatchOnTrigger, DynRawProcessorDefinition, RawProcessorDefinition, RawRegisterableProcessor,
-};
+use crate::api::{InputStream, RawProcessor};
 use crate::{
-    CalculateMetrics, ComponentIdentifier, Concurrent, GetAttribute, LogLevel, Logger, MinifiError,
-    OnTriggerResult, ProcessContext, ProcessSession, Relationship, Schedule,
+    CalculateMetrics, Concurrent, GetAttribute, LogLevel, Logger, MinifiError, OnTriggerResult,
+    ProcessContext, ProcessSession, Relationship, Schedule,
 };
 use std::collections::HashMap;
 

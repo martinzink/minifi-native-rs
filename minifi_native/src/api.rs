@@ -12,8 +12,6 @@ pub(crate) mod property;
 pub(crate) mod raw;
 mod relationship;
 
-pub use component_definition_traits::ProcessorDefinition;
-
 pub use flow_file::FlowFile;
 pub use logger::{LogLevel, Logger};
 pub use process_context::ProcessContext;
