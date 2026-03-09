@@ -8,7 +8,10 @@ use crate::api::raw::raw_processor::{RawMultiThreadedTrigger, RawSingleThreadedT
 use crate::api::{ProcessorInputRequirement, RawProcessor, RawThreadingModel};
 use crate::c_ffi::c_ffi_output_attribute::COutputAttributes;
 use crate::c_ffi::c_ffi_property::CProperties;
-use crate::{Concurrent, Exclusive, LogLevel, OutputAttribute, Property};
+use crate::{
+    AdvancedProcessorFeatures, CalculateMetrics, ComponentIdentifier, Concurrent, Exclusive,
+    LogLevel, OutputAttribute, Processor, ProcessorDefinition, Property, Schedule,
+};
 use crate::{OnTriggerResult, Relationship};
 use minifi_native_sys::*;
 
@@ -279,4 +282,33 @@ where
 
 pub trait RawRegisterableProcessor {
     fn get_definition() -> Box<dyn DynRawProcessorDefinition>;
+}
+
+impl<Implementation, Kind: 'static, Threading> RawRegisterableProcessor
+    for Processor<Implementation, Kind, Threading>
+where
+    Threading: RawThreadingModel + 'static,
+    Implementation: Schedule
+        + CalculateMetrics
+        + ComponentIdentifier
+        + ProcessorDefinition
+        + AdvancedProcessorFeatures
+        + 'static,
+    Processor<Implementation, Kind, Threading>:
+        RawProcessor<Threading = Threading> + DispatchOnTrigger<Threading>,
+{
+    fn get_definition() -> Box<dyn DynRawProcessorDefinition> {
+        Box::new(RawProcessorDefinition::<
+            Processor<Implementation, Kind, Threading>,
+        >::new(
+            Implementation::CLASS_NAME,
+            Implementation::DESCRIPTION,
+            Implementation::INPUT_REQUIREMENT,
+            Implementation::SUPPORTS_DYNAMIC_PROPERTIES,
+            Implementation::SUPPORTS_DYNAMIC_RELATIONSHIPS,
+            Implementation::OUTPUT_ATTRIBUTES,
+            Implementation::RELATIONSHIPS,
+            Implementation::PROPERTIES,
+        ))
+    }
 }

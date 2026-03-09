@@ -14,13 +14,8 @@ from minifi_behave.core.minifi_test_context import MinifiTestContext
 from minifi_behave.minifi.controller_service import ControllerService
 from minifi_behave.minifi.processor import Processor
 
-
-@when("MiNiFi is started")
-def step_impl(context: MinifiTestContext):
-    context.get_or_create_default_minifi_container().deploy(context)  # without assert
-
 @step("an EncryptContentPGP processor with a PGPPublicKeyService is set up")
-def step_impl(context: MinifiTestContext):
+def step_encrypt_content_with_service(context: MinifiTestContext):
     dir_path = os.path.dirname(os.path.realpath(__file__))
 
     public_key_service = ControllerService(class_name="PGPPublicKeyService", service_name="my_public_keys")
@@ -34,7 +29,7 @@ def step_impl(context: MinifiTestContext):
 
 
 @step("a DecryptContentPGP processor named DecryptAlice with a PGPPrivateKeyService is set up for Alice")
-def step_impl(context: MinifiTestContext):
+def step_decrypt_content_for_alice(context: MinifiTestContext):
     dir_path = os.path.dirname(os.path.realpath(__file__))
 
     private_key_service = ControllerService(class_name="PGPPrivateKeyService", service_name="alice_private_key")
@@ -49,7 +44,7 @@ def step_impl(context: MinifiTestContext):
 
 
 @step("a DecryptContentPGP processor named DecryptBob with a PGPPrivateKeyService is set up for Bob")
-def step_impl(context: MinifiTestContext):
+def step_decrypt_content_for_bob(context: MinifiTestContext):
     dir_path = os.path.dirname(os.path.realpath(__file__))
 
     private_key_service = ControllerService(class_name="PGPPrivateKeyService", service_name="bob_private_key")
@@ -62,7 +57,7 @@ def step_impl(context: MinifiTestContext):
     context.get_or_create_default_minifi_container().flow_definition.processors.append(processor)
 
 @then('an encrypted armored pgp file is placed in the "{directory}" directory in less than {duration}')
-def step_impl(context: MinifiTestContext, directory: str, duration: str):
+def then_armored_pgp_file_in_dir(context: MinifiTestContext, directory: str, duration: str):
     duration_seconds = humanfriendly.parse_timespan(duration)
     assert wait_for_condition(
         condition=lambda: context.get_or_create_default_minifi_container().directory_contains_file_with_regex(directory,

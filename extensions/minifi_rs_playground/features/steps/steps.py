@@ -9,11 +9,11 @@ from minifi_behave.core.helpers import wait_for_condition
 from minifi_behave.core.minifi_test_context import MinifiTestContext
 
 @when("the MiNiFi instance is started without assertions")
-def step_impl(context: MinifiTestContext):
+def minifi_starts_wo_assertions(context: MinifiTestContext):
     context.get_or_create_default_minifi_container().deploy(context)
 
 @then('Minifi crashes with the following "{crash_msg}" in less than {duration}')
-def step_impl(context: MinifiTestContext, crash_msg: str, duration: str):
+def minifi_crashes(context: MinifiTestContext, crash_msg: str, duration: str):
     duration_seconds = humanfriendly.parse_timespan(duration)
     assert wait_for_condition(condition=lambda: context.get_or_create_default_minifi_container().exited and crash_msg in context.get_or_create_default_minifi_container().get_logs(),
                               timeout_seconds=duration_seconds, bail_condition=lambda: False, context=context)
