@@ -1,19 +1,23 @@
 @SUPPORTS_WINDOWS
 Feature: Testing custom and default metrics
 
-  Scenario: GetFileRs's custom metrics
+  Scenario: CustomMetrics(GetFileRs), DefaultMetrics from streaming(DuplicateStreamText) API and DefaultMetrics from buffer(PutFileRs) API
     Given a GetFileRs processor with the "Input Directory" property set to "/tmp/input"
-    And GetFileRs's success relationship is auto-terminated
-    And a directory at "/tmp/input" has a file ("input.txt") with the content "the brown fox jumps over the lazy dog"
+    And a DuplicateStreamText processor
+    And a PutFileRs processor with the "Directory" property set to "/tmp/output"
+    And the "success" relationship of the GetFileRs processor is connected to the DuplicateStreamText
+    And the "success" relationship of the DuplicateStreamText processor is connected to the PutFileRs
+    And PutFileRs's success relationship is auto-terminated
+    And PutFileRs's failure relationship is auto-terminated
+    And a directory at "/tmp/input" has a file ("hello.txt") with the content "hello"
     And MiNiFi logs processor metrics
 
     When the MiNiFi instance starts up
 
-    Then the Minifi logs contain the following message: ""InputBytes": "37"" in less than 10 seconds
-    And the Minifi logs contain the following message: ""AcceptedFiles": "1"" in less than 10 seconds
-    And the Minifi logs contain the following message: ""TransferredToSuccess": "1"" in less than 10 seconds
-    And the Minifi logs contain the following message: ""OnTriggerInvocations": "1"" in less than 10 seconds
-    And the Minifi logs contain the following message: ""BytesRead": "0"" in less than 10 seconds
-    And the Minifi logs contain the following message: ""BytesWritten": "37"" in less than 10 seconds
-    And the Minifi logs do not contain errors
-    And the Minifi logs do not contain warnings
+    Then at least one file with the content "hheelllloo" is placed in the "/tmp/output" directory in less than 10 seconds
+    And the Minifi logs match the following regex: "GetFileRsMetrics": {\n[ ]+\"[0-9a-z-]+\": \{\n[ a-zA-Z0-9":,\n]*"BytesRead": "0",[\n ]*"BytesWritten": "5"[ a-zA-Z0-9":,\n]*"InputBytes": "5"[ a-zA-Z0-9":,\n]*}" in less than 10 seconds
+    And the Minifi logs match the following regex: "DuplicateStreamTextMetrics": {\n[ ]+\"[0-9a-z-]+\": \{\n[ a-zA-Z0-9":,\n]*"BytesRead": "5",[\n ]*"BytesWritten": "10"[ a-zA-Z0-9":,\n]*}" in less than 10 seconds
+    And the Minifi logs match the following regex: "PutFileRsMetrics": {\n[ ]+\"[0-9a-z-]+\": \{\n[ a-zA-Z0-9":,\n]*"BytesRead": "10"[ a-zA-Z0-9":,\n]*}" in less than 10 seconds
+
+#    And the Minifi logs do not contain errors
+#    And the Minifi logs do not contain warnings

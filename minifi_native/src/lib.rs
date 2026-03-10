@@ -13,7 +13,8 @@ pub use api::processor_wrappers::flow_file_source::{
     FlowFileSource, FlowFileSourceProcessorType, GeneratedFlowFile,
 };
 pub use api::processor_wrappers::flow_file_stream_transform::{
-    FlowFileStreamTransform, FlowFileStreamTransformProcessorType, TransformStreamResult,
+    FlowFileStreamTransform, FlowFileStreamTransformProcessorType, MutFlowFileStreamTransform,
+    TransformStreamResult,
 };
 pub use api::processor_wrappers::flow_file_transform::{
     FlowFileTransform, FlowFileTransformProcessorType, TransformedFlowFile,

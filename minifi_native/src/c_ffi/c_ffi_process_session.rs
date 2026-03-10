@@ -85,7 +85,7 @@ impl<'a> CffiProcessSession<'a> {
 
             match MinifiProcessSessionWrite(
                 self.ptr,
-                flow_file.ptr,
+                flow_file.get_ptr(),
                 Some(cb::<F>),
                 &mut state as *mut _ as *mut c_void,
             ) {
@@ -126,7 +126,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
         unsafe {
             match MinifiProcessSessionTransfer(
                 self.ptr,
-                flow_file.ptr,
+                flow_file.get_ptr(),
                 MinifiStringView {
                     data: c_relationship.as_ptr(),
                     length: c_relationship.as_bytes().len(),
@@ -144,7 +144,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
 
     fn remove(&mut self, flow_file: Self::FlowFile) -> Result<(), MinifiError> {
         unsafe {
-            match MinifiProcessSessionRemove(self.ptr, flow_file.ptr) {
+            match MinifiProcessSessionRemove(self.ptr, flow_file.get_ptr()) {
                 #[allow(non_upper_case_globals)]
                 MinifiStatus_MINIFI_STATUS_SUCCESS => Ok(()),
                 err_code => Err(MinifiError::StatusError((
@@ -166,7 +166,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
             let attr_value_string_view = StringView::new(attr_value);
             match MinifiFlowFileSetAttribute(
                 self.ptr,
-                flow_file.ptr,
+                flow_file.get_ptr(),
                 attr_key_string_view.as_raw(),
                 &attr_value_string_view.as_raw(),
             ) {
@@ -196,7 +196,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
             let attr_key_string_view = StringView::new(attr_key);
             MinifiFlowFileGetAttribute(
                 self.ptr,
-                flow_file.ptr,
+                flow_file.get_ptr(),
                 attr_key_string_view.as_raw(),
                 Some(cb),
                 &mut attr_value as *mut _ as *mut c_void,
@@ -240,7 +240,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
         unsafe {
             MinifiFlowFileGetAttributes(
                 self.ptr,
-                flow_file.ptr,
+                flow_file.get_ptr(),
                 Some(get_attributes_callback::<F>),
                 &mut on_attr_helper as *mut _ as *mut c_void,
             )
@@ -271,7 +271,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
 
             match MinifiProcessSessionWrite(
                 self.ptr,
-                flow_file.ptr,
+                flow_file.get_ptr(),
                 Some(cb),
                 &mut dt as *mut _ as *mut c_void,
             ) {
@@ -347,7 +347,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
         unsafe {
             let session_status = MinifiProcessSessionWrite(
                 self.ptr,
-                flow_file.ptr,
+                flow_file.get_ptr(),
                 Some(write_cb::<F, R>),
                 &mut ctx as *mut _ as *mut c_void,
             );
@@ -400,7 +400,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
 
             MinifiProcessSessionRead(
                 self.ptr,
-                flow_file.ptr,
+                flow_file.get_ptr(),
                 Some(cb),
                 &mut output as *mut _ as *mut c_void,
             );
@@ -444,7 +444,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
 
             MinifiProcessSessionRead(
                 self.ptr,
-                flow_file.ptr,
+                flow_file.get_ptr(),
                 Some(read_cb::<F, R>),
                 &mut ctx as *mut _ as *mut c_void,
             );
@@ -519,7 +519,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
 
             match MinifiProcessSessionRead(
                 self.ptr,
-                flow_file.ptr,
+                flow_file.get_ptr(),
                 Some(cb::<F>),
                 &mut batch_helper as *mut _ as *mut c_void,
             ) {

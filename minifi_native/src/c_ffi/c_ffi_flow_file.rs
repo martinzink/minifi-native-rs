@@ -2,7 +2,7 @@ use crate::api::FlowFile;
 use minifi_native_sys::MinifiFlowFile;
 
 pub struct CffiFlowFile<'a> {
-    pub(crate) ptr: *mut MinifiFlowFile,
+    ptr: *mut MinifiFlowFile,
     _lifetime: std::marker::PhantomData<&'a ()>,
 }
 
@@ -12,6 +12,10 @@ impl CffiFlowFile<'_> {
             ptr,
             _lifetime: std::marker::PhantomData,
         }
+    }
+
+    pub(crate) fn get_ptr(&self) -> *mut MinifiFlowFile {
+        self.ptr
     }
 }
 

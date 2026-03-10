@@ -78,3 +78,18 @@ macro_rules! critical {
         $crate::log!($logger, $crate::LogLevel::Critical, $($arg)+)
     };
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::LogLevel;
+
+    #[test]
+    fn order_test() {
+        assert!(LogLevel::Debug > LogLevel::Trace);
+        assert!(LogLevel::Info > LogLevel::Debug);
+        assert!(LogLevel::Warn > LogLevel::Info);
+        assert!(LogLevel::Error > LogLevel::Warn);
+        assert!(LogLevel::Critical > LogLevel::Error);
+        assert!(LogLevel::Off > LogLevel::Critical);
+    }
+}

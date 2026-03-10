@@ -21,8 +21,8 @@ fn get_venv_behave(venv_path: &Path) -> PathBuf {
 
 #[allow(dead_code)]
 fn run_build_in_docker(root_path: &Path) {
-    let mut rocky_build = Command::new("./rockybuild.sh");
-    let status = rocky_build
+    let mut build_linux = Command::new("./linux_build.sh");
+    let status = build_linux
         .current_dir(root_path)
         .status()
         .expect("Failed to run behave");

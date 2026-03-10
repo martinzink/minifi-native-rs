@@ -6,7 +6,7 @@ cd "$PROJECT_ROOT"
 
 echo "$PROJECT_ROOT"
 
-DOCKERFILE="minifi_rs_behave/rocky.dockerfile"
+DOCKERFILE="minifi_rs_behave/linux.dockerfile"
 TARGET_DIR="target/release"
 
 mkdir -p "$TARGET_DIR"

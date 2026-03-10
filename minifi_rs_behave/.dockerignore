@@ -1,8 +1,0 @@
-.git
-.vscode
-.gitmodules
-.idea
-.target
-output
-docker
-**/target

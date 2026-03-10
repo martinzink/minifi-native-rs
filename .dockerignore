@@ -3,6 +3,7 @@
 .gitmodules
 .idea
 output
+features
 target/debug
 target/release/build
 target/release/deps

@@ -3,7 +3,10 @@ use crate::{GetProperty, LogLevel, Logger, MinifiError, ProcessContext};
 use std::marker::PhantomData;
 
 pub trait Schedule {
-    fn schedule<P: GetProperty, L: Logger>(context: &P, logger: &L) -> Result<Self, MinifiError>
+    fn schedule<Ctx: GetProperty, L: Logger>(
+        context: &Ctx,
+        logger: &L,
+    ) -> Result<Self, MinifiError>
     where
         Self: Sized;
 

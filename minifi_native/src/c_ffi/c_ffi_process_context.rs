@@ -95,7 +95,7 @@ impl<'a> ProcessContext for CffiProcessContext<'a> {
         property: &Property,
         flow_file: Option<&Self::FlowFile>,
     ) -> Result<Option<String>, MinifiError> {
-        let ff_ptr = flow_file.map_or(std::ptr::null_mut(), |ff| ff.ptr);
+        let ff_ptr = flow_file.map_or(std::ptr::null_mut(), |ff| ff.get_ptr());
 
         let mut result: Option<String> = None;
         let property_name: StringView = StringView::new(property.name);

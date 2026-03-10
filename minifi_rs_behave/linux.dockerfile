@@ -15,19 +15,23 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-ARG BASE_IMAGE="rockylinux:8"
+FROM rust:slim AS chef
+RUN apt-get update && apt-get install -y clang lld pkg-config
+RUN cargo install cargo-chef
+WORKDIR /app
 
-FROM ${BASE_IMAGE} AS builder
-LABEL maintainer="Martin Zink <martinzink@apache.org>"
+FROM chef AS planner
+COPY . .
+RUN cargo chef prepare --recipe-path recipe.json
 
-RUN dnf install -y clang
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+FROM chef AS builder
+COPY --from=planner /app/recipe.json recipe.json
+RUN cargo chef cook --release --recipe-path recipe.json
 
-ENV BUILD_DIR=/opt/minifi-native-rs
-COPY . ${BUILD_DIR}
-RUN cd ${BUILD_DIR} && /root/.cargo/bin/cargo build --release
+COPY . .
+RUN cargo build --release
 
+# 5. Export Stage
 FROM scratch AS bin-export
-
-COPY --from=builder /opt/minifi-native-rs/target/release/libminifi_rs_playground.so /
-COPY --from=builder /opt/minifi-native-rs/target/release/libminifi_pgp.so /
+COPY --from=builder /app/target/release/libminifi_rs_playground.so /
+COPY --from=builder /app/target/release/libminifi_pgp.so /
