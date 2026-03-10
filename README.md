@@ -8,7 +8,7 @@ The framework completely encapsulates the unsafe C FFI (Foreign Function Interfa
 
 ## Project Philosophy
  - **Safety First**: Leverage Rust's compile-time guarantees to prevent common bugs like null pointers, buffer overflows, and data races.
- - **Zero-Cost Abstraction**: The safe API wrapper is designed to compile down with zero runtime overhead compared to writing raw C FFI code.
+ - **Zero-Cost Abstraction**: The safe API wrapper is designed to compile down with zero runtime overhead compared to writing raw C code.
  - **Ergonomics**: Provide a clean, idiomatic Rust API that is a pleasure to use. Developers should not need to think about unsafe code or C++ interoperability.
  - **Testability**: Every component of a processor's logic should be unit-testable in a pure Rust environment, without needing a C++ host.
  - **Cross Platform**: The library should work on all platforms that are supported by [Apache NiFi MiNiFi C++](https://github.com/apache/nifi-minifi-cpp)
@@ -34,24 +34,50 @@ Concrete structs (CffiSession, CffiLogger, etc.) that implement the API traits b
 The trait system differentiates between thread-safe (&self) and single-threaded (&mut self) processors at compile time.
 #### Comprehensive Mocking:
 A full suite of mock objects allows for fast and reliable unit testing of all processor logic.
-
+### [minifi_native_macros](minifi_native_macros)
+Helper crate that includes the procedural macros
 ### [minifi_rs_behave](minifi_rs_behave)
 Run the behave integration tests using Minifi's docker framework. This will test the release artifacts against the latest released [MiNiFi native docker container](https://hub.docker.com/r/apache/nifi-minifi-cpp).
 There is a handy alias to initiate all behave tests.
 
 `cargo behave`
 
-## How to Use the Library in the MiNiFi C++ Application
-Copy the built shared library (.so, .dll, or .dylib) to the MiNiFi C++ application's extensions/ directory.
+## Creating an Extension
+Building an extension is straightforward. The framework provides a declare_minifi_extension! macro that automatically generates the C-compatible entry points and registers your components.
 
-## Extensions
+```rust
+declare_minifi_extension!(
+    processors: [
+        (MyFlowFileSource, FlowFileSourceProcessorType, Concurrent),
+        (MyDataTransformer, FlowFileTransformProcessorType, Exclusive),
+    ],
+    controllers: [
+        MyCustomControllerService,
+    ]
+);
+```
+
+
+## Deployment
+Build your extension as a dynamic library (cd extensions/your_extension && cargo build --release).
+
+Locate the output artifact in target/release/ (it will be a .so on Linux, .dll on Windows, or .dylib on macOS).
+
+Copy the library file into the MiNiFi C++ application's extensions/ directory.
+
+Restart the MiNiFi Native agent to automatically discover and load the new processors.
+
+## Included Extensions
 ### [minifi_rs_playground](extensions/minifi_rs_playground)
-A concrete example of a processor extension built using the minifi-native crate.
-- Demonstrates how to implement the Processor traits. Shows how to define properties and relationships.
-- Includes comprehensive unit tests using the mocking framework.
-- Includes integration testing that verifies the processor works as expected in a real MiNiFi environment.
+A concrete example and testing ground for extensions built using the minifi-native crate.
+- Demonstrates how to implement the Processor traits, define processor properties, and route to relationships.
+- Includes comprehensive unit tests using the pure-Rust mocking framework.
+- Includes integration testing that verifies the processor works as expected in a real, containerized MiNiFi environment.
 
 ### [minifi_pgp](extensions/minifi_pgp)
+A production-ready extension that leverages the Rust ecosystem (specifically the rpgp crate) to mimic and enhance standard NiFi's pgp-nar functionality.
+
 An extension that uses [rpgp](https://docs.rs/pgp/latest/pgp/) to mimic NiFi's [pgp-nar's](https://nifi.apache.org/docs/nifi-docs/components/org.apache.nifi/nifi-pgp-nar/) functionality
-- EncryptContentPGP
-- DecryptContentPGP
+- EncryptContentPGP: Encrypts FlowFile content using password-based or public-key cryptography.
+- DecryptContentPGP: Decrypts PGP-encrypted FlowFiles streamingly.
+
