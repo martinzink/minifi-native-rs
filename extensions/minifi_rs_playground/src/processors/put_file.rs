@@ -186,19 +186,15 @@ impl Schedule for PutFileRs {
 
 impl FlowFileTransform for PutFileRs {
     fn transform<
-        'ctx,
-        'stream,
+        'a,
         Context: GetProperty + GetControllerService + GetAttribute,
         LoggerImpl: Logger,
     >(
         &self,
-        context: &'ctx Context,
-        input_stream: &'stream mut dyn InputStream,
+        context: &Context,
+        input_stream: &'a mut dyn InputStream,
         logger: &LoggerImpl,
-    ) -> Result<TransformedFlowFile<'stream>, MinifiError>
-    where
-        'ctx: 'stream,
-    {
+    ) -> Result<TransformedFlowFile<'a>, MinifiError> {
         trace!(logger, "on_trigger: {:?}", self);
 
         let Ok(destination_path) = Self::get_destination_path(context) else {
