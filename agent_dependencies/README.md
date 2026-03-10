@@ -1,1 +1,1 @@
-This is only temporary solution while there is no stable released C API.
+This is only temporary solution while there is no stable released C API and SDK.

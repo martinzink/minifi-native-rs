@@ -15,14 +15,14 @@ use std::ffi::c_void;
 #[derive(Debug)]
 pub struct ControllerServiceClassDefinition<'a> {
     inner: MinifiControllerServiceClassDefinition,
-    _marker: std::marker::PhantomData<&'a ()>,
+    _lifetime: std::marker::PhantomData<&'a ()>,
 }
 
 impl<'a> ControllerServiceClassDefinition<'a> {
     pub(crate) fn new(inner: MinifiControllerServiceClassDefinition) -> Self {
         Self {
             inner,
-            _marker: std::marker::PhantomData,
+            _lifetime: std::marker::PhantomData,
         }
     }
 

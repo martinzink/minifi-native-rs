@@ -6,29 +6,29 @@ use crate::{
 };
 
 pub trait MutTrigger {
-    fn trigger<PC, PS, L>(
+    fn trigger<Ctx, Session, Lggr>(
         &mut self,
-        context: &mut PC,
-        session: &mut PS,
-        logger: &L,
+        context: &mut Ctx,
+        session: &mut Session,
+        logger: &Lggr,
     ) -> Result<OnTriggerResult, MinifiError>
     where
-        PC: ProcessContext,
-        PS: ProcessSession<FlowFile = PC::FlowFile>,
-        L: Logger;
+        Ctx: ProcessContext,
+        Session: ProcessSession<FlowFile = Ctx::FlowFile>,
+        Lggr: Logger;
 }
 
 pub trait Trigger {
-    fn trigger<PC, PS, L>(
+    fn trigger<Context, Session, Lggr>(
         &self,
-        context: &mut PC,
-        session: &mut PS,
-        logger: &L,
+        context: &mut Context,
+        session: &mut Session,
+        logger: &Lggr,
     ) -> Result<OnTriggerResult, MinifiError>
     where
-        PC: ProcessContext,
-        PS: ProcessSession<FlowFile = PC::FlowFile>,
-        L: Logger;
+        Context: ProcessContext,
+        Session: ProcessSession<FlowFile = Context::FlowFile>,
+        Lggr: Logger;
 }
 
 pub struct ComplexProcessorType {}

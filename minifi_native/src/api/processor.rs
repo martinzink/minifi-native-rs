@@ -10,12 +10,14 @@ pub trait Schedule {
     fn unschedule(&mut self) {}
 }
 
+/// Custom metrics for the processor, the default implementation can be derived #[derive(DefaultMetrics)]
 pub trait CalculateMetrics {
     fn calculate_metrics(&self) -> Vec<(String, f64)> {
         vec![]
     }
 }
 
+/// Rarely used processor features, the default implementation can be derived #[derive(NoAdvancedProcessorFeatures)]
 pub trait AdvancedProcessorFeatures {
     fn restore(&self) -> bool;
     fn get_trigger_when_empty(&self) -> bool;
