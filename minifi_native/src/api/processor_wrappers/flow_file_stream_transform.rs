@@ -70,7 +70,6 @@ pub trait MutFlowFileStreamTransform {
 
 pub struct FlowFileStreamTransformProcessorType {}
 
-// Shared helper function to extract stream transformation logic
 fn handle_stream_transform<PC, PS, L, F>(
     context: &mut PC,
     session: &mut PS,
