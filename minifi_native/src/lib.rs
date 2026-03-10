@@ -58,7 +58,7 @@ pub static MinifiApiVersion: u32 = minifi_native_sys::MINIFI_API_VERSION;
 macro_rules! declare_minifi_extension {
     (
         // Match a tuple of three types for each processor
-        processors: [ $( ($impl:ty, $kind:ty, $thread:ty) ),* $(,)? ],
+        processors: [ $( ($kind:ty, $thread:ty, $impl:ty) ),* $(,)? ],
         // Match a single type for each controller service
         controllers: [ $( $ctrl:ty ),* $(,)? ]
     ) => {

@@ -48,8 +48,8 @@ Building an extension is straightforward. The framework provides a declare_minif
 ```rust
 declare_minifi_extension!(
     processors: [
-        (MyFlowFileSource, FlowFileSourceProcessorType, Concurrent),
-        (MyDataTransformer, FlowFileTransformProcessorType, Exclusive),
+        (FlowFileSourceProcessorType, Concurrent, MyFlowFileSource),
+        (FlowFileTransformProcessorType, Exclusive, MyDataTransformer),
     ],
     controllers: [
         MyCustomControllerService,

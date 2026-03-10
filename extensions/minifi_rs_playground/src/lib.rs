@@ -20,17 +20,18 @@ use minifi_native::{
 
 minifi_native::declare_minifi_extension!(
 processors: [
-    (GenerateFlowFileRs, ComplexProcessorType, Concurrent),
-    (LogAttributeRs, ComplexProcessorType, Concurrent),
-    (GetFileRs, ComplexProcessorType, Concurrent),
-    (KamikazeProcessorRs, ComplexProcessorType, Concurrent),
-    (LoremIpsumCSUser, FlowFileSourceProcessorType, Concurrent),
-    (PutFileRs, FlowFileTransformProcessorType, Concurrent),
-    (AsciifyGerman, FlowFileStreamTransformProcessorType, Concurrent),
-    (CountActualLogging, ComplexProcessorType, Exclusive),
-    (DuplicateStreamText, FlowFileStreamTransformProcessorType, Exclusive),
+    (ComplexProcessorType, Concurrent, GenerateFlowFileRs),
+    (ComplexProcessorType, Concurrent, LogAttributeRs),
+    (ComplexProcessorType, Concurrent, GetFileRs),
+    (ComplexProcessorType, Concurrent, KamikazeProcessorRs),
+    (ComplexProcessorType, Exclusive, CountActualLogging),
+    (FlowFileSourceProcessorType, Concurrent, LoremIpsumCSUser),
+    (FlowFileTransformProcessorType, Concurrent, PutFileRs),
+    (FlowFileStreamTransformProcessorType, Concurrent, AsciifyGerman),
+    (FlowFileStreamTransformProcessorType, Exclusive, DuplicateStreamText),
 ],
 controllers: [
     LoremIpsumControllerService,
     DummyControllerService,
-]);
+]
+);
