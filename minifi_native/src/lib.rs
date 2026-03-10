@@ -1,0 +1,121 @@
+mod api;
+pub mod c_ffi;
+pub mod mock;
+
+pub use api::errors::MinifiError;
+
+pub use api::component_definition_traits::{
+    ComponentIdentifier, ControllerServiceDefinition, ProcessorDefinition,
+};
+pub use api::controller_service::{ControllerService, EnableControllerService};
+pub use api::processor_wrappers::complex_processor::{ComplexProcessorType, MutTrigger, Trigger};
+pub use api::processor_wrappers::flow_file_source::{
+    FlowFileSource, FlowFileSourceProcessorType, GeneratedFlowFile,
+};
+pub use api::processor_wrappers::flow_file_stream_transform::{
+    FlowFileStreamTransform, FlowFileStreamTransformProcessorType, MutFlowFileStreamTransform,
+    TransformStreamResult,
+};
+pub use api::processor_wrappers::flow_file_transform::{
+    FlowFileTransform, FlowFileTransformProcessorType, TransformedFlowFile,
+};
+
+pub use api::processor_wrappers::utils::flow_file_content::Content;
+
+pub use api::processor::{AdvancedProcessorFeatures, CalculateMetrics, Processor, Schedule};
+
+pub use api::raw_processor::{Concurrent, Exclusive};
+
+pub use api::logger::{LogLevel, Logger};
+
+pub use api::property::{GetControllerService, GetProperty, Property};
+
+pub use api::process_session::IoState;
+
+pub use api::attribute::{GetAttribute, OutputAttribute};
+
+pub use api::{
+    FlowFile, InputStream, OnTriggerResult, OutputStream, ProcessContext, ProcessSession,
+    ProcessorInputRequirement, Relationship, StandardPropertyValidator,
+};
+
+pub use minifi_native_macros as macros;
+pub use minifi_native_sys as sys;
+pub use mock::{
+    MockControllerServiceContext, MockFlowFile, MockLogger, MockProcessContext, MockProcessSession,
+    StdLogger,
+};
+
+#[unsafe(no_mangle)]
+#[allow(non_upper_case_globals)]
+#[cfg_attr(target_os = "linux", unsafe(link_section = ".rodata"))]
+#[cfg_attr(target_os = "macos", unsafe(link_section = "__DATA,__const"))]
+#[cfg_attr(target_os = "windows", unsafe(link_section = ".rdata"))]
+pub static MinifiApiVersion: u32 = minifi_native_sys::MINIFI_API_VERSION;
+
+/// Defines the required MinifiInitExtension C function to register the listed processors and controller services
+#[macro_export]
+macro_rules! declare_minifi_extension {
+    (
+        // Match a tuple of three types for each processor
+        processors: [ $( ($impl:ty, $kind:ty, $thread:ty) ),* $(,)? ],
+        // Match a single type for each controller service
+        controllers: [ $( $ctrl:ty ),* $(,)? ]
+    ) => {
+
+        #[unsafe(no_mangle)]
+        #[allow(non_snake_case)]
+        pub extern "C" fn MinifiInitExtension(
+            extension: *mut minifi_native::sys::MinifiExtension,
+            _config: *mut minifi_native::sys::MinifiConfig,
+        ) {
+
+            use minifi_native::c_ffi::StaticStrAsMinifiCStr;
+            unsafe {
+                let mut processor_list = minifi_native::c_ffi::CffiProcessorList::new();
+
+                $(
+                    {
+                        processor_list.add::<
+                            minifi_native::Processor<
+                                $impl,
+                                $kind,
+                                $thread,
+                                minifi_native::c_ffi::CffiLogger
+                            >
+                        >();
+                    }
+                )*
+
+                let mut controller_list = minifi_native::c_ffi::CffiControllerServiceList::new();
+
+                $(
+                    {
+                        controller_list.add::<
+                            minifi_native::ControllerService<
+                                $ctrl,
+                                minifi_native::c_ffi::CffiLogger
+                            >
+                        >();
+                    }
+                )*
+
+                let extension_create_info = minifi_native::sys::MinifiExtensionCreateInfo {
+                    name: env!("CARGO_PKG_NAME").as_minifi_c_type(),
+                    version: env!("CARGO_PKG_VERSION").as_minifi_c_type(),
+                    deinit: None,
+                    user_data: std::ptr::null_mut(),
+                    processors_count: processor_list.get_processor_count(),
+                    processors_ptr: processor_list.get_processor_ptr(),
+                    controller_services_count: controller_list.get_controller_service_count(),
+                    controller_services_ptr: controller_list.get_controller_service_ptr(),
+                };
+
+                assert_eq!(
+                    minifi_native::sys::MinifiCreateExtension(extension, &extension_create_info),
+                    minifi_native::sys::MinifiStatus_MINIFI_STATUS_SUCCESS
+                );
+            }
+        }
+    };
+}

@@ -2,7 +2,11 @@
 .vscode
 .gitmodules
 .idea
-.target
 output
-docker_builder
-**/target
+features
+target/debug
+target/release/build
+target/release/deps
+target/release/.fingerprint
+target/release/examples
+target/release/incremental

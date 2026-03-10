@@ -18,9 +18,9 @@ The framework completely encapsulates the unsafe C FFI (Foreign Function Interfa
 
 
 The project is structured as a Cargo workspace with a clear, layered architecture:
-## [minifi-native-sys](minifi-native-sys)
+### [minifi-native-sys](minifi_native_sys)
 Contains the raw, unsafe FFI bindings to the minifi-c.h C API.
-## [minifi-native](minifi-native)
+### [minifi-native](minifi_native)
 Provides the public, safe, and idiomatic Rust API. This is the crate that developers will use to build their processors.
 #### API Traits
 Pure Rust traits (Processor, ProcessSession, Logger, etc.) that define the abstract behavior of the MiNiFi environment.
@@ -35,18 +35,23 @@ The trait system differentiates between thread-safe (&self) and single-threaded 
 #### Comprehensive Mocking:
 A full suite of mock objects allows for fast and reliable unit testing of all processor logic.
 
+### [minifi_rs_behave](minifi_rs_behave)
+Run the behave integration tests using Minifi's docker framework. This will test the release artifacts against the latest released [MiNiFi native docker container](https://hub.docker.com/r/apache/nifi-minifi-cpp).
+There is a handy alias to initiate all behave tests.
 
-## [rust_reference_extension](rust_reference_extension)
-A concrete example of a processor extension built using the minifi-native crate.
-  - Demonstrates how to implement the Processor traits. Shows how to define properties and relationships.
-  - Includes comprehensive unit tests using the mocking framework.
-  - Includes integration testing that verifies the processor works as expected in a real MiNiFi environment.
-     
-## [minifi_pgp](minifi_pgp)
-An extension that uses [rpgp](https://docs.rs/pgp/latest/pgp/) to mimic NiFi's [pgp-nar's](https://nifi.apache.org/docs/nifi-docs/components/org.apache.nifi/nifi-pgp-nar/) functionality
-   - EncryptContentPGP
-   - DecryptContentPGP
-
+`cargo behave`
 
 ## How to Use the Library in the MiNiFi C++ Application
-Copy the shared library (.so, .dll, or .dylib) to the MiNiFi C++ application's extensions/ directory.
+Copy the built shared library (.so, .dll, or .dylib) to the MiNiFi C++ application's extensions/ directory.
+
+## Extensions
+### [minifi_rs_playground](extensions/minifi_rs_playground)
+A concrete example of a processor extension built using the minifi-native crate.
+- Demonstrates how to implement the Processor traits. Shows how to define properties and relationships.
+- Includes comprehensive unit tests using the mocking framework.
+- Includes integration testing that verifies the processor works as expected in a real MiNiFi environment.
+
+### [minifi_pgp](extensions/minifi_pgp)
+An extension that uses [rpgp](https://docs.rs/pgp/latest/pgp/) to mimic NiFi's [pgp-nar's](https://nifi.apache.org/docs/nifi-docs/components/org.apache.nifi/nifi-pgp-nar/) functionality
+- EncryptContentPGP
+- DecryptContentPGP
