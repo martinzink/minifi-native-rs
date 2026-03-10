@@ -31,7 +31,8 @@ def minifi_crashes(context: MinifiTestContext, crash_msg: str, duration: str):
 @given("MiNiFi logs processor metrics")
 def minifi_logs_processor_metrics(context: MinifiTestContext):
     context.get_or_create_default_minifi_container().set_property(
-        "nifi.metrics.publisher.LogMetricsPublisher.metrics", "GetFileRsMetrics,DuplicateStreamTextMetrics,PutFileRsMetrics"
+        "nifi.metrics.publisher.LogMetricsPublisher.metrics",
+        "GetFileRsMetrics,DuplicateStreamTextMetrics,PutFileRsMetrics",
     )
     context.get_or_create_default_minifi_container().set_property(
         "nifi.metrics.publisher.LogMetricsPublisher.logging.interval", "1s"
