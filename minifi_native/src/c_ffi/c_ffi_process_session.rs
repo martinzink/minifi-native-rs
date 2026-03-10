@@ -101,14 +101,14 @@ impl<'a> CffiProcessSession<'a> {
 }
 
 impl<'a> ProcessSession for CffiProcessSession<'a> {
-    type FlowFile = CffiFlowFile;
+    type FlowFile = CffiFlowFile<'a>; // FlowFile shouldn't outlive the Session
 
     fn create(&mut self) -> Result<Self::FlowFile, MinifiError> {
         let ff_ptr = unsafe { MinifiProcessSessionCreate(self.ptr, std::ptr::null_mut()) };
         if ff_ptr.is_null() {
             Err(MinifiError::UnknownError)
         } else {
-            Ok(Self::FlowFile { ptr: ff_ptr })
+            Ok(CffiFlowFile::new(ff_ptr))
         }
     }
 
@@ -117,7 +117,7 @@ impl<'a> ProcessSession for CffiProcessSession<'a> {
         if ff_ptr.is_null() {
             None
         } else {
-            Some(Self::FlowFile { ptr: ff_ptr })
+            Some(CffiFlowFile::new(ff_ptr))
         }
     }
 

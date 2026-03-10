@@ -89,7 +89,7 @@ unsafe extern "C" fn get_controller_service_callback(
 }
 
 impl<'a> ProcessContext for CffiProcessContext<'a> {
-    type FlowFile = CffiFlowFile;
+    type FlowFile = CffiFlowFile<'a>; // FlowFile shouldn't outlive the ProcessContext
     fn get_property(
         &self,
         property: &Property,
