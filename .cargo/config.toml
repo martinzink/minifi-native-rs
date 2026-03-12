@@ -6,3 +6,6 @@ rustflags = ["-C", "link-arg=-undefined", "-C", "link-arg=dynamic_lookup"]
 
 [alias]
 behave = ["run", "--release", "--bin", "minifi_rs_behave"]
+
+[env]
+MINIFI_SDK_PATH = "../agent_dependencies"

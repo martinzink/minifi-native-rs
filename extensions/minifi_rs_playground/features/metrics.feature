@@ -19,5 +19,5 @@ Feature: Testing custom and default metrics
     And the Minifi logs match the following regex: "DuplicateStreamTextMetrics": {\n[ ]+\"[0-9a-z-]+\": \{\n[ a-zA-Z0-9":,\n]*"BytesRead": "5",[\n ]*"BytesWritten": "10"[ a-zA-Z0-9":,\n]*}" in less than 10 seconds
     And the Minifi logs match the following regex: "PutFileRsMetrics": {\n[ ]+\"[0-9a-z-]+\": \{\n[ a-zA-Z0-9":,\n]*"BytesRead": "10"[ a-zA-Z0-9":,\n]*}" in less than 10 seconds
 
-#    And the Minifi logs do not contain errors
-#    And the Minifi logs do not contain warnings
+    And the Minifi logs do not contain errors
+    And the Minifi logs do not contain warnings

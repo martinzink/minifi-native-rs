@@ -123,7 +123,7 @@ where
     }
 
     unsafe extern "C" fn create_processor(metadata: MinifiProcessorMetadata) -> *mut c_void {
-        let logger = super::c_ffi_logger::CffiLogger::new(metadata.logger);
+        let logger = CffiLogger::new(metadata.logger);
         let processor = Box::new(T::new(logger));
         Box::into_raw(processor) as *mut c_void
     }

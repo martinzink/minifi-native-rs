@@ -15,7 +15,7 @@ pub enum LogLevel {
     Off,
 }
 
-pub trait Logger: std::fmt::Debug {
+pub trait Logger: Debug {
     fn log(&self, level: LogLevel, args: fmt::Arguments);
     fn should_log(&self, level: LogLevel) -> bool;
 }
