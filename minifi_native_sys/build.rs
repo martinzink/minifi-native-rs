@@ -6,6 +6,7 @@ struct SDK {
     header_path: PathBuf,
     #[cfg_attr(not(windows), allow(dead_code))]
     def_path: PathBuf,
+    behave_path: PathBuf,
 }
 
 impl SDK {
@@ -14,6 +15,7 @@ impl SDK {
             .to_path_buf()
             .join("minifi-api/include/minifi-c/minifi-c.h");
         let def_path = repo_root.to_path_buf().join("minifi-api/minifi-c-api.def");
+        let behave_path = repo_root.to_path_buf().join("behave_framework");
 
         if !header_path.exists() || !def_path.exists() {
             return None;
@@ -22,6 +24,7 @@ impl SDK {
         Some(Self {
             header_path,
             def_path,
+            behave_path,
         })
     }
 
@@ -36,18 +39,24 @@ impl SDK {
 
         let header_path = base_path.join("minifi-c.h");
         let def_path = base_path.join("minifi-c-api.def");
+        let behave_path = std::fs::read_dir(&base_path)
+            .ok()?
+            .filter_map(|e| e.ok())
+            .find(|e| e.path().extension().unwrap_or_default() == "whl")
+            .map(|e| e.path())?;
 
-        if !header_path.exists() || !def_path.exists() {
+        if !header_path.exists() || !def_path.exists() || !behave_path.exists() {
             return None;
         }
 
         Some(Self {
             header_path,
             def_path,
+            behave_path,
         })
     }
 
-    fn setup() -> Option<Self> {
+    fn new_from_env_variable() -> Option<Self> {
         let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
         let sdk_path = env::var("MINIFI_SDK_PATH").expect(
             "MINIFI_SDK_PATH must be set. Please define it in your environment or .cargo/config.toml"
@@ -146,13 +155,14 @@ fn generate_minifi_c_api_lib(def_path: &Path) {
 fn main() {
     println!("cargo:rerun-if-env-changed=MINIFI_SDK_PATH");
 
-    let sdk =
-        SDK::setup().expect("Couldn't find valid SDK. Ensure MINIFI_SDK_PATH is set correctly.");
+    let sdk = SDK::new_from_env_variable()
+        .expect("Couldn't find valid SDK. Ensure MINIFI_SDK_PATH is set correctly.");
 
     #[cfg(windows)]
     generate_minifi_c_api_lib(&sdk.def_path);
 
     println!("cargo:rerun-if-changed={}", sdk.header_path.display());
+    println!("cargo:behave_path={}", sdk.behave_path.display());
 
     let bindings = bindgen::Builder::default()
         .header(sdk.header_path.to_str().unwrap())

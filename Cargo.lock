@@ -1228,6 +1228,7 @@ name = "minifi_rs_behave"
 version = "0.1.0"
 dependencies = [
  "glob",
+ "minifi_native_sys",
  "minifi_pgp",
  "minifi_rs_playground",
 ]
