@@ -162,7 +162,10 @@ fn main() {
     generate_minifi_c_api_lib(&sdk.def_path);
 
     println!("cargo:rerun-if-changed={}", sdk.header_path.display());
-    println!("cargo:behave_path={}", sdk.behave_path.display());
+    println!(
+        "cargo:behave_path={}",
+        sdk.behave_path.canonicalize().unwrap().display()
+    );
 
     let bindings = bindgen::Builder::default()
         .header(sdk.header_path.to_str().unwrap())

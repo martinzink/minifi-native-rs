@@ -3,6 +3,7 @@ use crate::{
     ComponentIdentifier, EnableControllerService, GetAttribute, MinifiError, MockFlowFile, Property,
 };
 use std::any::Any;
+use std::borrow::Cow;
 use std::collections::HashMap;
 
 pub struct MockPropertyMap {
@@ -48,7 +49,9 @@ impl MockPropertyMap {
                 return Ok(Some(default_val.to_string()));
             }
             match property.is_required {
-                true => Err(MinifiError::MissingRequiredProperty(property.name)),
+                true => Err(MinifiError::MissingRequiredProperty(Cow::from(
+                    property.name,
+                ))),
                 false => Ok(None),
             }
         }

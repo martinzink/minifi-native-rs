@@ -45,7 +45,7 @@ impl FlowFileSource for LoremIpsumCSUser {
         trace!(logger, "generate call {:?}", self);
         let controller_service = context
             .get_controller_service::<LoremIpsumControllerService>(&CONTROLLER_SERVICE)?
-            .ok_or(MinifiError::MissingRequiredProperty(
+            .ok_or(MinifiError::missing_required_property(
                 "A valid usable controller service is required",
             ))?;
         match self.write_method {

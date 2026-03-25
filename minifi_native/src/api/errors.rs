@@ -20,8 +20,8 @@ pub enum ParseError {
 pub enum MinifiError {
     UnknownError,
     StatusError((Cow<'static, str>, NonZeroU32)),
-    MissingRequiredProperty(&'static str), // maybe Cow instead?
-    ControllerServiceError(&'static str),  // maybe Cow instead?
+    MissingRequiredProperty(Cow<'static, str>),
+    ControllerServiceError(Cow<'static, str>),
     ValidationError(Cow<'static, str>),
     ScheduleError(Cow<'static, str>),
     TriggerError(Cow<'static, str>),
@@ -86,6 +86,14 @@ impl MinifiError {
 
     pub fn trigger_err<S: Into<Cow<'static, str>>>(msg: S) -> Self {
         MinifiError::TriggerError(msg.into())
+    }
+
+    pub fn missing_required_property<S: Into<Cow<'static, str>>>(msg: S) -> Self {
+        MinifiError::MissingRequiredProperty(msg.into())
+    }
+
+    pub fn controller_service_err<S: Into<Cow<'static, str>>>(msg: S) -> Self {
+        MinifiError::ControllerServiceError(msg.into())
     }
 }
 

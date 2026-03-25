@@ -4,6 +4,7 @@ use minifi_native_sys::{
     MinifiControllerServiceContext, MinifiControllerServiceContextGetProperty,
     MinifiStatus_MINIFI_STATUS_SUCCESS, MinifiStringView,
 };
+use std::borrow::Cow;
 use std::ffi::c_void;
 
 pub struct CffiControllerServiceContext<'a> {
@@ -58,7 +59,9 @@ impl<'a> GetProperty for CffiControllerServiceContext<'a> {
         match status {
             MinifiStatus_MINIFI_STATUS_SUCCESS => Ok(result),
             _ => match property.is_required {
-                true => Err(MinifiError::MissingRequiredProperty(property.name)),
+                true => Err(MinifiError::MissingRequiredProperty(Cow::from(
+                    property.name,
+                ))),
                 false => Ok(None),
             },
         }

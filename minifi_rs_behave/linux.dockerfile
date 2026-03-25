@@ -1,4 +1,4 @@
-FROM rust:slim AS chef
+FROM rust:slim-bullseye AS chef
 RUN apt-get update && apt-get install -y clang lld pkg-config
 RUN cargo install cargo-chef
 WORKDIR /app
@@ -18,3 +18,4 @@ RUN cargo build --release
 FROM scratch AS bin-export
 COPY --from=builder /app/target/release/libminifi_rs_playground.so /
 COPY --from=builder /app/target/release/libminifi_pgp.so /
+COPY --from=builder /app/target/release/libminifi_aws_rs.so /

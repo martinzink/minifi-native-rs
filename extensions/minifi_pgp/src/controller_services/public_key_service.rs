@@ -33,7 +33,7 @@ impl EnableControllerService for PGPPublicKeyService {
         }
 
         if public_keys.is_empty() {
-            return Err(MinifiError::ControllerServiceError(
+            return Err(MinifiError::controller_service_err(
                 "Could not load any valid keys",
             ));
         }

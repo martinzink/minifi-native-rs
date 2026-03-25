@@ -2,7 +2,6 @@ mod properties;
 
 use crate::controller_services::lorem_ipsum_controller_service::properties::LENGTH;
 use lipsum::lipsum;
-use minifi_native::MinifiError::MissingRequiredProperty;
 use minifi_native::macros::ComponentIdentifier;
 use minifi_native::{
     ControllerServiceDefinition, EnableControllerService, GetProperty, Logger, MinifiError,
@@ -21,7 +20,7 @@ impl EnableControllerService for LoremIpsumControllerService {
     {
         let length = context
             .get_u64_property(&LENGTH)?
-            .ok_or(MissingRequiredProperty("Length is required"))?;
+            .ok_or(MinifiError::missing_required_property("Length is required"))?;
 
         let data = lipsum(length as usize);
         Ok(Self { data })

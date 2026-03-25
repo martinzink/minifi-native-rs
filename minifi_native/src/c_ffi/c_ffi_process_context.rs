@@ -5,6 +5,7 @@ use crate::api::{ProcessContext, RawControllerService};
 use crate::c_ffi::CffiLogger;
 use crate::{ComponentIdentifier, EnableControllerService, MinifiError, Property};
 use minifi_native_sys::*;
+use std::borrow::Cow;
 use std::ffi::c_void;
 use std::num::NonZeroU32;
 
@@ -111,7 +112,9 @@ impl<'a> ProcessContext for CffiProcessContext<'a> {
             ) {
                 MinifiStatus_MINIFI_STATUS_SUCCESS => Ok(result),
                 MinifiStatus_MINIFI_STATUS_PROPERTY_NOT_SET => match property.is_required {
-                    true => Err(MinifiError::MissingRequiredProperty(property.name)),
+                    true => Err(MinifiError::MissingRequiredProperty(Cow::from(
+                        property.name,
+                    ))),
                     false => Ok(None),
                 },
                 err_code => Err(MinifiError::StatusError((

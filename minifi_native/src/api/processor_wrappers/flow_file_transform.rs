@@ -6,10 +6,11 @@ use crate::api::property::{GetControllerService, GetProperty};
 use crate::api::raw_processor::{MultiThreadedTrigger, SingleThreadedTrigger};
 use crate::{
     CalculateMetrics, Concurrent, Exclusive, GetAttribute, LogLevel, Logger, MinifiError,
-    OnTriggerResult, ProcessContext, ProcessSession, Relationship, Schedule,
+    OnTriggerResult, ProcessContext, ProcessSession, Relationship, Schedule, info,
 };
 use std::collections::HashMap;
 
+#[derive(Debug)]
 pub struct TransformedFlowFile<'a> {
     target_relationship_name: &'static str,
     new_content: Option<Content<'a>>,
@@ -32,7 +33,7 @@ impl<'a> TransformedFlowFile<'a> {
     ) -> Self {
         Self {
             target_relationship_name: target_relationship.name,
-            new_content: Some(Content::Buffer(new_content.unwrap_or_default())),
+            new_content: new_content.map(|b| Content::Buffer(b)),
             attributes_to_add,
         }
     }
@@ -99,6 +100,7 @@ where
         let (attrs_to_add, relationship) = session.read_stream(&flow_file, |input_stream| {
             let transformed = transform_fn(&simple_context, input_stream)?;
 
+            info!(logger, "{:?}", transformed);
             match transformed.new_content {
                 None => {}
                 Some(Content::Buffer(buffer)) => {

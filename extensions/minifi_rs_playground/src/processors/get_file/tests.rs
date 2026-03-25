@@ -10,7 +10,7 @@ fn schedule_fails_without_input_dir() {
         GetFileRs::schedule(&MockProcessContext::new(), &MockLogger::new())
             .err()
             .unwrap(),
-        MinifiError::MissingRequiredProperty("Input Directory")
+        MinifiError::MissingRequiredProperty(_)
     ));
 }
 
