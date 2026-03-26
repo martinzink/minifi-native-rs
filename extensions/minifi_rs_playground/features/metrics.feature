@@ -9,7 +9,7 @@ Feature: Testing custom and default metrics
     And the "success" relationship of the DuplicateStreamText processor is connected to the PutFileRs
     And PutFileRs's success relationship is auto-terminated
     And PutFileRs's failure relationship is auto-terminated
-    And a directory at "/tmp/input" has a file ("hello.txt") with the content "hello"
+    And a directory at "/tmp/input" has a file "hello.txt" with the content "hello"
     And MiNiFi logs processor metrics
 
     When the MiNiFi instance starts up

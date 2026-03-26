@@ -40,7 +40,6 @@ pub fn derive_no_advanced_processor_features(input: TokenStream) -> TokenStream 
     let name = &input.ident;
     let expanded = quote! {
         impl ::minifi_native::AdvancedProcessorFeatures for #name {
-                fn restore(&self) -> bool { false }
                 fn get_trigger_when_empty(&self) -> bool { false }
                 fn is_work_available(&self) -> bool { false }
         }

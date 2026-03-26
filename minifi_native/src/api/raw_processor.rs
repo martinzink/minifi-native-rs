@@ -19,7 +19,6 @@ pub trait RawProcessor: Sized {
     type LoggerType: Logger;
 
     fn new(logger: Self::LoggerType) -> Self;
-    fn restore(&self) -> bool;
     fn get_trigger_when_empty(&self) -> bool;
     fn is_work_available(&self) -> bool;
     fn log(&self, log_level: LogLevel, args: std::fmt::Arguments);

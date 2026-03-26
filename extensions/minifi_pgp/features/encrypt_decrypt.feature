@@ -45,7 +45,7 @@ Feature: Test PGP extension's encryption and decryption capabilities
     And AliceSuccess's success relationship is auto-terminated
     And BobFailure's success relationship is auto-terminated
 
-    And a directory at "/tmp/input" has a file ("test_file.log") with the content "test content"
+    And a directory at "/tmp/input" has a file "test_file.log" with the content "test content"
 
     When the MiNiFi instance starts up
 

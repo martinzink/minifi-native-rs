@@ -22,7 +22,6 @@ pub trait CalculateMetrics {
 
 /// Rarely used processor features, the default implementation can be derived #[derive(NoAdvancedProcessorFeatures)]
 pub trait AdvancedProcessorFeatures {
-    fn restore(&self) -> bool;
     fn get_trigger_when_empty(&self) -> bool;
     fn is_work_available(&self) -> bool;
 }
@@ -55,13 +54,6 @@ where
             threading_model: PhantomData,
             flow_file_type: PhantomData,
         }
-    }
-
-    fn restore(&self) -> bool {
-        self.scheduled_impl
-            .as_ref()
-            .and_then(|i| Some(i.restore()))
-            .unwrap_or(false)
     }
 
     fn get_trigger_when_empty(&self) -> bool {

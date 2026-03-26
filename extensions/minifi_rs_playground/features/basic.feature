@@ -35,7 +35,7 @@ Feature: Basic scenarios
     And the "success" relationship of the GetFileRs processor is connected to the PutFileRs
     And PutFileRs's success relationship is auto-terminated
     And PutFileRs's failure relationship is auto-terminated
-    And a directory at "/tmp/input" has a file ("test_file.log") with the content "test content"
+    And a directory at "/tmp/input" has a file "test_file.log" with the content "test content"
 
     When the MiNiFi instance starts up
 

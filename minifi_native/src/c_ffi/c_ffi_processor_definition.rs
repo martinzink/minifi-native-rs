@@ -184,10 +184,6 @@ where
         }
     }
 
-    unsafe extern "C" fn restore(_processor_ptr: *mut c_void, _flow_file: *mut MinifiFlowFile) {
-        eprintln!("Restore is not implemented for this processor.");
-    }
-
     unsafe extern "C" fn get_trigger_when_empty(processor_ptr: *mut c_void) -> bool {
         unsafe {
             let processor = &*(processor_ptr as *const T);
@@ -269,7 +265,6 @@ where
                     create: Some(Self::create_processor),
                     destroy: Some(Self::destroy_processor),
                     isWorkAvailable: Some(Self::is_work_available),
-                    restore: Some(Self::restore),
                     getTriggerWhenEmpty: Some(Self::get_trigger_when_empty),
                     onTrigger: Some(Self::on_trigger_processor),
                     onSchedule: Some(Self::on_schedule_processor),

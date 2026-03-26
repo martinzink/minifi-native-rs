@@ -9,7 +9,7 @@ Feature: Testing streaming reads and writes
     And the "success" relationship of the AsciifyGerman processor is connected to the PutFileRs
     And PutFileRs's success relationship is auto-terminated
     And PutFileRs's failure relationship is auto-terminated
-    And a directory at "/tmp/input" has a file ("german.txt") with the content "Üben von Xylophon und Querflöte ist ja zweckmäßig."
+    And a directory at "/tmp/input" has a file "german.txt" with the content "Üben von Xylophon und Querflöte ist ja zweckmäßig."
 
     When the MiNiFi instance starts up
 
@@ -25,7 +25,7 @@ Feature: Testing streaming reads and writes
     And the "failure" relationship of the AsciifyGerman processor is connected to the PutFileRs
     And PutFileRs's success relationship is auto-terminated
     And PutFileRs's failure relationship is auto-terminated
-    And a directory at "/tmp/input" has a file ("french.txt") with the content "Voix ambiguë d'un cœur qui, au zéphyr, préfère les jattes de kiwis."
+    And a directory at "/tmp/input" has a file "french.txt" with the content "Voix ambiguë d'un cœur qui, au zéphyr, préfère les jattes de kiwis."
 
     When the MiNiFi instance starts up
 

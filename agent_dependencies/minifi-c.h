@@ -165,7 +165,6 @@ typedef struct MinifiProcessorCallbacks {
   MINIFI_OWNED void*(*create)(MinifiProcessorMetadata);
   void(*destroy)(MINIFI_OWNED void*);
   MinifiBool(*isWorkAvailable)(void*);
-  void(*restore)(void*, MINIFI_OWNED MinifiFlowFile*);
   MinifiBool(*getTriggerWhenEmpty)(void*);
   MinifiStatus(*onTrigger)(void*, MinifiProcessContext*, MinifiProcessSession*);
   MinifiStatus(*onSchedule)(void*, MinifiProcessContext*);
@@ -251,8 +250,6 @@ size_t MinifiInputStreamSize(MinifiInputStream*);
 
 int64_t MinifiInputStreamRead(MinifiInputStream* stream, char* buffer, size_t size);
 int64_t MinifiOutputStreamWrite(MinifiOutputStream* stream, const char* data, size_t size);
-
-void MinifiStatusToString(MinifiStatus, void(*cb)(void* user_ctx, MinifiStringView str), void* user_ctx);
 
 MinifiStatus MinifiFlowFileSetAttribute(MinifiProcessSession* session, MinifiFlowFile* flowfile, MinifiStringView attribute_name, const MinifiStringView* attribute_value);
 MinifiBool MinifiFlowFileGetAttribute(MinifiProcessSession* session, MinifiFlowFile* flowfile, MinifiStringView attribute_name,
