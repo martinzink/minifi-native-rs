@@ -139,7 +139,6 @@ impl FlowFileTransform for PutS3ObjectRs {
         input_stream.read_to_end(&mut buffer).map_err(|e| {
             MinifiError::trigger_err(format!("Failed to read flow file content: {}", e))
         })?;
-        info!(logger, "{:?}", buffer);
         let byte_stream = ByteStream::from(buffer);
 
         let upload_result = self.runtime.block_on(async {
