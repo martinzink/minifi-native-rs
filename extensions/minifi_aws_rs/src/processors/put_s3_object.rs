@@ -3,7 +3,7 @@ use minifi_native::macros::{ComponentIdentifier, DefaultMetrics, NoAdvancedProce
 use minifi_native::{
     ComponentIdentifier, FlowFileTransform, GetAttribute, GetControllerService, GetProperty,
     Logger, MinifiError, OutputAttribute, ProcessorDefinition, ProcessorInputRequirement, Property,
-    Relationship, Schedule, StandardPropertyValidator, TransformedFlowFile, error, info,
+    Relationship, Schedule, StandardPropertyValidator, TransformedFlowFile, error,
 };
 use std::collections::HashMap;
 

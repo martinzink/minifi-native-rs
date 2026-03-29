@@ -30,7 +30,7 @@ from minifi_behave.minifi.processor import Processor
 from minifi_behave.minifi.controller_service import ControllerService
 from minifi_behave.core.helpers import wait_for_condition, log_due_to_failure
 
-from containers.s3_server_container import S3ServerContainer
+from ..containers.s3_server_container import S3ServerContainer
 
 
 @step('a {processor_name} processor set up to communicate with an s3 server')

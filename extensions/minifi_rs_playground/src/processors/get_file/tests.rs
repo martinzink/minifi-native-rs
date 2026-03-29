@@ -6,7 +6,7 @@ use tempfile::TempDir;
 
 #[test]
 fn schedule_fails_without_input_dir() {
-    assert!(std::matches!(
+    assert!(matches!(
         GetFileRs::schedule(&MockProcessContext::new(), &MockLogger::new())
             .err()
             .unwrap(),
@@ -21,7 +21,7 @@ fn schedule_fails_with_invalid_input_dir() {
         "Input Directory".to_string(),
         "/invalid_directory".to_string(),
     );
-    assert!(std::matches!(
+    assert!(matches!(
         GetFileRs::schedule(&context, &MockLogger::new()),
         Err(MinifiError::ScheduleError(_))
     ));

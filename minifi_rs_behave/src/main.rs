@@ -15,7 +15,7 @@ impl BehaveRunner {
         let venv_dir = out_dir.join(".venv");
         if !venv_dir.exists() {
             println!("Creating virtual environment at {:?}", venv_dir);
-            let status = Command::new("python3")
+            let status = Command::new("python")
                 .arg("-m")
                 .arg("venv")
                 .arg(&venv_dir)
@@ -33,7 +33,7 @@ impl BehaveRunner {
 
     fn get_venv_behave(&self) -> PathBuf {
         if cfg!(windows) {
-            self.venv_path.join("Scripts").join("behave.exe")
+            self.venv_path.join("Scripts").join("behavex.exe")
         } else {
             self.venv_path.join("bin").join("behavex")
         }

@@ -58,7 +58,9 @@ class S3ServerContainer(LinuxContainer):
         file_hash = md5_output.split(' ')[0].strip()
         return file_hash == expected_file_hash
 
-    def check_s3_server_object_metadata(self, content_type="application/octet-stream", metadata=dict()):
+    def check_s3_server_object_metadata(self, content_type="application/octet-stream", metadata=None):
+        if metadata is None:
+            metadata = dict()
         (code, output) = self.exec_run(["find", "/s3mockroot/test_bucket", "-mindepth", "1", "-maxdepth", "1", "-type", "d"])
         if code != 0:
             return False
